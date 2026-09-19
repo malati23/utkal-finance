@@ -91,6 +91,33 @@ export function Navbar({ onOpenApplyModal }) {
             About Us
           </Link>
 
+          <Link
+            to="/register"
+            className={`text-xs sm:text-sm font-bold transition-colors ${
+              isActive('/register') ? 'text-blue-700 font-extrabold' : 'text-slate-700 hover:text-blue-700'
+            }`}
+          >
+            Become a Member
+          </Link>
+
+          <Link
+            to="/brochure"
+            className={`text-xs sm:text-sm font-bold transition-colors ${
+              isActive('/brochure') ? 'text-blue-700 font-extrabold' : 'text-slate-700 hover:text-blue-700'
+            }`}
+          >
+            Brochure
+          </Link>
+
+          <Link
+            to="/gallery"
+            className={`text-xs sm:text-sm font-bold transition-colors ${
+              isActive('/gallery') ? 'text-blue-700 font-extrabold' : 'text-slate-700 hover:text-blue-700'
+            }`}
+          >
+            Gallery
+          </Link>
+
           {/* DESKTOP PRODUCTS DROPDOWN */}
           <div 
             className="relative" 
@@ -134,33 +161,6 @@ export function Navbar({ onOpenApplyModal }) {
               </div>
             )}
           </div>
-
-          <Link
-            to="/register"
-            className={`text-xs sm:text-sm font-bold transition-colors ${
-              isActive('/register') ? 'text-blue-700 font-extrabold' : 'text-slate-700 hover:text-blue-700'
-            }`}
-          >
-            Become a Member
-          </Link>
-
-          <Link
-            to="/brochure"
-            className={`text-xs sm:text-sm font-bold transition-colors ${
-              isActive('/brochure') ? 'text-blue-700 font-extrabold' : 'text-slate-700 hover:text-blue-700'
-            }`}
-          >
-            Brochure
-          </Link>
-
-          <Link
-            to="/gallery"
-            className={`text-xs sm:text-sm font-bold transition-colors ${
-              isActive('/gallery') ? 'text-blue-700 font-extrabold' : 'text-slate-700 hover:text-blue-700'
-            }`}
-          >
-            Gallery
-          </Link>
 
           <Link
             to="/contact"
@@ -247,6 +247,39 @@ export function Navbar({ onOpenApplyModal }) {
               <ChevronRight className="w-4 h-4 text-slate-400" />
             </Link>
 
+            <Link
+              to="/register"
+              onClick={() => setMobileMenuOpen(false)}
+              className={`flex items-center justify-between px-4 py-3 rounded-xl text-sm font-bold ${
+                isActive('/register') ? 'bg-blue-50 text-blue-700' : 'text-slate-700 hover:bg-slate-50'
+              }`}
+            >
+              <span>Become a Member</span>
+              <ChevronRight className="w-4 h-4 text-slate-400" />
+            </Link>
+
+            <Link
+              to="/brochure"
+              onClick={() => setMobileMenuOpen(false)}
+              className={`flex items-center justify-between px-4 py-3 rounded-xl text-sm font-bold ${
+                isActive('/brochure') ? 'bg-blue-50 text-blue-700' : 'text-slate-700 hover:bg-slate-50'
+              }`}
+            >
+              <span>Brochure</span>
+              <ChevronRight className="w-4 h-4 text-slate-400" />
+            </Link>
+
+            <Link
+              to="/gallery"
+              onClick={() => setMobileMenuOpen(false)}
+              className={`flex items-center justify-between px-4 py-3 rounded-xl text-sm font-bold ${
+                isActive('/gallery') ? 'bg-blue-50 text-blue-700' : 'text-slate-700 hover:bg-slate-50'
+              }`}
+            >
+              <span>Gallery</span>
+              <ChevronRight className="w-4 h-4 text-slate-400" />
+            </Link>
+
             {/* MOBILE PRODUCTS ACCORDION */}
             <div>
               <button
@@ -290,39 +323,6 @@ export function Navbar({ onOpenApplyModal }) {
                 </div>
               )}
             </div>
-
-            <Link
-              to="/register"
-              onClick={() => setMobileMenuOpen(false)}
-              className={`flex items-center justify-between px-4 py-3 rounded-xl text-sm font-bold ${
-                isActive('/register') ? 'bg-blue-50 text-blue-700' : 'text-slate-700 hover:bg-slate-50'
-              }`}
-            >
-              <span>Become a Member</span>
-              <ChevronRight className="w-4 h-4 text-slate-400" />
-            </Link>
-
-            <Link
-              to="/brochure"
-              onClick={() => setMobileMenuOpen(false)}
-              className={`flex items-center justify-between px-4 py-3 rounded-xl text-sm font-bold ${
-                isActive('/brochure') ? 'bg-blue-50 text-blue-700' : 'text-slate-700 hover:bg-slate-50'
-              }`}
-            >
-              <span>Brochure</span>
-              <ChevronRight className="w-4 h-4 text-slate-400" />
-            </Link>
-
-            <Link
-              to="/gallery"
-              onClick={() => setMobileMenuOpen(false)}
-              className={`flex items-center justify-between px-4 py-3 rounded-xl text-sm font-bold ${
-                isActive('/gallery') ? 'bg-blue-50 text-blue-700' : 'text-slate-700 hover:bg-slate-50'
-              }`}
-            >
-              <span>Gallery</span>
-              <ChevronRight className="w-4 h-4 text-slate-400" />
-            </Link>
 
             <Link
               to="/contact"
