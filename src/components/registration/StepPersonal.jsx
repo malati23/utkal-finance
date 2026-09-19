@@ -119,15 +119,16 @@ export function StepPersonal({ data = {}, errors = {}, onChange }) {
           error={errors.dob}
         />
 
-        {/* Age (Years) - Automatically calculated */}
+        {/* Age (Years) */}
         <FormInput
           label="Age (Years)"
           name="age"
           type="number"
           value={data.age}
           onChange={(e) => onChange('age', e.target.value)}
-          placeholder="Auto calculated"
-          readOnly
+          placeholder="e.g. 25"
+          min="18"
+          max="120"
           helperText="Min age 18 required"
           required
           error={errors.age}
