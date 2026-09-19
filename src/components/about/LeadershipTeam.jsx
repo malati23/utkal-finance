@@ -3,7 +3,6 @@ import { UserCheck } from 'lucide-react';
 import mdPhoto from '../../assets/image copy 9.png';
 import shPhoto1 from '../../assets/image copy 18.png';
 import shPhoto2 from '../../assets/image copy 19.png';
-import shPhoto3 from '../../assets/image copy 20.png';
 
 export function LeadershipTeam() {
   const leaders = [
@@ -21,11 +20,6 @@ export function LeadershipTeam() {
       id: 3,
       image: shPhoto2,
       name: "Govinda Behera",
-    },
-    {
-      id: 4,
-      image: shPhoto3,
-      name: "Moral Mohapatra",
     },
   ];
 
@@ -54,8 +48,8 @@ export function LeadershipTeam() {
           </p>
         </div>
 
-        {/* Leadership Cards Grid (4 Side-by-Side Cards) */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5 sm:gap-6 max-w-7xl mx-auto">
+        {/* Leadership Cards Grid (3 Side-by-Side Cards) */}
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 sm:gap-8 max-w-5xl mx-auto">
           {leaders.map((leader) => (
             <div
               key={leader.id}
