@@ -4,7 +4,7 @@ import { GalleryCard } from './GalleryCard';
 import { GalleryLightbox } from './GalleryLightbox';
 
 import teamPhoto1 from '../../assets/image copy 22.png';
-import teamPhoto2 from '../../assets/image copy 13.png';
+import teamPhoto2 from '../../assets/image copy 24.png';
 
 export function TeamGallery() {
   const [lightboxOpen, setLightboxOpen] = useState(false);
