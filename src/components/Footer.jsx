@@ -267,7 +267,7 @@ export function Footer({ onOpenApplyModal }) {
             <p>
               Digital Ecosystem by{' '}
               <a 
-                href="https://briskode.com" 
+                href="https://briskodetechnology.com/" 
                 target="_blank" 
                 rel="noreferrer" 
                 className="text-emerald-400 font-bold hover:underline"
