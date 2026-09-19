@@ -13,21 +13,21 @@ export function TeamGallery() {
   const teamPhotos = [
     {
       id: 1,
+      image: teamPhoto1,
+      label: "OUR TEAM",
+      title: "Executive Leadership & Board Team",
+      description: "Working together with a shared vision for growth and service.",
+      modalTitle: "Executive Leadership & Board Team",
+      modalCaption: "Working together with a shared vision for growth and service."
+    },
+    {
+      id: 2,
       image: teamPhoto2,
       label: "OUR TEAM",
       title: "Team Moments",
       description: "Celebrating the people and teamwork behind New Utkal Finance.",
       modalTitle: "Team Moments",
       modalCaption: "Celebrating the people and teamwork behind New Utkal Finance."
-    },
-    {
-      id: 2,
-      image: teamPhoto1,
-      label: "OUR TEAM",
-      title: "Team Together",
-      description: "Working together with a shared vision for growth and service.",
-      modalTitle: "Team Together",
-      modalCaption: "Working together with a shared vision for growth and service."
     }
   ];
 

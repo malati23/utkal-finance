@@ -477,19 +477,19 @@ export const INITIAL_NOTICES = [
 export const INITIAL_GALLERY = [
   {
     id: 'GAL-1',
-    title: 'Bhubaneswar Corporate Branch Team',
-    category: 'Team',
-    imageUrl: teamPhoto2,
-    date: '08 Aug 2026',
-    description: 'Dedicated financial advisory and operational staff at Nayapalli HQ.',
-  },
-  {
-    id: 'GAL-2',
     title: 'Executive Leadership & Board Team',
     category: 'Team',
     imageUrl: teamPhoto1,
     date: '12 Sep 2026',
     description: 'Senior management team of New Utkal Finance Limited.',
+  },
+  {
+    id: 'GAL-2',
+    title: 'Bhubaneswar Corporate Branch Team',
+    category: 'Team',
+    imageUrl: teamPhoto2,
+    date: '08 Aug 2026',
+    description: 'Dedicated financial advisory and operational staff at Nayapalli HQ.',
   },
 ];
 
