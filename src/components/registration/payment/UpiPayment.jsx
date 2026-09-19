@@ -57,12 +57,15 @@ export function UpiPayment({ utrValue, onUtrChange, error }) {
   };
 
   const [activeAppToast, setActiveAppToast] = useState(null);
+  const [activeApp, setActiveApp] = useState(null);
 
   const handleUpiAppClick = async (appName) => {
+    // Set active button visual state instantly
+    setActiveApp(appName);
+
     // 1. Copy UPI ID automatically (guaranteed copy)
     const copied = await copyToClipboard(BANK_CONFIG.BANK_VPA);
     setCopiedField('vpa');
-    setTimeout(() => setCopiedField(null), 3500);
 
     // 2. Show active toast feedback with copied confirmation
     setActiveAppToast(`✓ UPI ID (${BANK_CONFIG.BANK_VPA}) Copied to Clipboard! Launching ${appName}...`);
@@ -77,7 +80,11 @@ export function UpiPayment({ utrValue, onUtrChange, error }) {
       }
     }, 300);
 
-    setTimeout(() => setActiveAppToast(null), 5000);
+    setTimeout(() => {
+      setActiveAppToast(null);
+      setCopiedField(null);
+      setActiveApp(null);
+    }, 4500);
   };
 
   return (
@@ -191,18 +198,29 @@ export function UpiPayment({ utrValue, onUtrChange, error }) {
             </div>
 
             <div className="flex flex-wrap items-center gap-2">
-              {['Google Pay', 'PhonePe', 'Paytm', 'BHIM UPI', 'Cred / Navi'].map((app) => (
-                <button
-                  key={app}
-                  type="button"
-                  onClick={() => handleUpiAppClick(app)}
-                  className="px-3 py-1.5 rounded-xl bg-white hover:bg-blue-50 active:bg-blue-100 text-slate-800 hover:text-blue-700 text-xs font-bold border border-slate-200 hover:border-blue-300 transition-all shadow-xs flex items-center gap-1.5 cursor-pointer active:scale-95 group"
-                  title={`Click to launch ${app} and copy UPI ID`}
-                >
-                  <span className="w-2 h-2 rounded-full bg-emerald-500 group-hover:scale-125 transition-transform" />
-                  <span>{app}</span>
-                </button>
-              ))}
+              {['Google Pay', 'PhonePe', 'Paytm', 'BHIM UPI', 'Cred / Navi'].map((app) => {
+                const isSelected = activeApp === app;
+                return (
+                  <button
+                    key={app}
+                    type="button"
+                    onClick={() => handleUpiAppClick(app)}
+                    className={`px-3 py-2 rounded-xl text-xs font-extrabold transition-all shadow-xs flex items-center gap-1.5 cursor-pointer active:scale-95 border ${
+                      isSelected
+                        ? 'bg-blue-700 text-white border-blue-800 shadow-md ring-2 ring-blue-600/30'
+                        : 'bg-white hover:bg-blue-50 active:bg-blue-100 text-slate-800 hover:text-blue-700 border-slate-200 hover:border-blue-300'
+                    }`}
+                    title={`Click to launch ${app} and copy UPI ID`}
+                  >
+                    {isSelected ? (
+                      <Check className="w-3.5 h-3.5 text-emerald-300 shrink-0" />
+                    ) : (
+                      <span className="w-2 h-2 rounded-full bg-emerald-500 shrink-0" />
+                    )}
+                    <span>{isSelected ? `${app} (Copied!)` : app}</span>
+                  </button>
+                );
+              })}
             </div>
 
             {activeAppToast && (
