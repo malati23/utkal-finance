@@ -3,7 +3,7 @@ import { Bell } from 'lucide-react';
 
 export function NoticeTicker() {
   return (
-    <section className="my-4 bg-gradient-to-r from-purple-950 via-slate-900 to-indigo-950 text-white py-3 px-4 sm:px-8 border-y border-purple-800/40 shadow-md relative z-10">
+    <section className="my-4 bg-gradient-to-r from-[#00266B] via-[#0B1528] to-[#003B95] text-white py-3 px-4 sm:px-8 border-y border-blue-800/50 shadow-md relative z-10">
       <div className="max-w-7xl mx-auto flex items-center gap-4">
         <span className="bg-amber-400 text-slate-950 text-[11px] font-extrabold px-3 py-1 rounded-md uppercase tracking-wider shrink-0 flex items-center gap-1 shadow-sm z-10">
           <Bell className="w-3.5 h-3.5 fill-slate-950" /> Notice
