@@ -1,6 +1,7 @@
 import React from 'react';
 import { UserCheck } from 'lucide-react';
 import mdPhoto from '../../assets/image copy 9.png';
+import sureshPhoto from '../../assets/WhatsApp Image 2026-09-19 at 12.41.27.jpeg';
 import shPhoto1 from '../../assets/image copy 18.png';
 import shPhoto2 from '../../assets/image copy 19.png';
 
@@ -13,11 +14,16 @@ export function LeadershipTeam() {
     },
     {
       id: 2,
+      image: sureshPhoto,
+      name: "Suresh Kumar Behera",
+    },
+    {
+      id: 3,
       image: shPhoto1,
       name: "Ajit Bhuria",
     },
     {
-      id: 3,
+      id: 4,
       image: shPhoto2,
       name: "Govinda Behera",
     },
@@ -48,8 +54,8 @@ export function LeadershipTeam() {
           </p>
         </div>
 
-        {/* Leadership Cards Grid (3 Side-by-Side Cards) */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 sm:gap-8 max-w-5xl mx-auto">
+        {/* Leadership Cards Grid (4 Side-by-Side Cards) */}
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5 sm:gap-6 max-w-7xl mx-auto">
           {leaders.map((leader) => (
             <div
               key={leader.id}
