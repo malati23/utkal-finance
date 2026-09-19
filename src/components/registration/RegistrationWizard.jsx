@@ -227,6 +227,12 @@ export function RegistrationWizard({ activeStep = 1, onQuickFillTrigger }) {
 
     if (step === 3) {
       const acc = formData.account;
+      if (!acc.mobile || !validatePhone(acc.mobile)) {
+        newErrors.mobile = 'Valid 10-digit mobile number required';
+      }
+      if (!acc.email || !validateEmail(acc.email)) {
+        newErrors.email = 'Valid email address required';
+      }
       if (acc.password && acc.password.length > 0 && acc.password.length < 6) {
         newErrors.password = 'Password must be at least 6 characters';
       }
@@ -312,7 +318,22 @@ export function RegistrationWizard({ activeStep = 1, onQuickFillTrigger }) {
   };
 
   const handleStepClick = (stepId) => {
-    if (stepId >= 1 && stepId <= 9) {
+    if (stepId < currentStep) {
+      // Allow navigating back to completed steps
+      setCurrentStep(stepId);
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    } else if (stepId > currentStep) {
+      // Validate preceding steps sequentially before advancing forward
+      for (let s = currentStep; s < stepId; s++) {
+        if (!validateStep(s)) {
+          setCurrentStep(s);
+          window.scrollTo({ top: 0, behavior: 'smooth' });
+          return;
+        }
+        if (!completedSteps.includes(s)) {
+          setCompletedSteps((prev) => [...prev, s]);
+        }
+      }
       setCurrentStep(stepId);
       window.scrollTo({ top: 0, behavior: 'smooth' });
     }
@@ -451,18 +472,6 @@ export function RegistrationWizard({ activeStep = 1, onQuickFillTrigger }) {
         </button>
 
         <div className="flex items-center gap-3 ml-auto">
-          {/* Shortcut to Review & Pay */}
-          {currentStep < 9 && (
-            <button
-              type="button"
-              onClick={() => handleStepClick(9)}
-              className="inline-flex items-center gap-1.5 px-4 py-2.5 rounded-xl bg-white hover:bg-slate-100 text-slate-700 text-xs font-bold transition-colors border border-slate-300 shadow-xs"
-            >
-              <span>Slide 9 (Review &amp; Pay)</span>
-              <ArrowRight className="w-3.5 h-3.5 text-slate-500" />
-            </button>
-          )}
-
           {/* Continue to Next Step / Submit */}
           {currentStep < 9 ? (
             <button
