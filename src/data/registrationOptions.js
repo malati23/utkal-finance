@@ -47,12 +47,6 @@ export const EDUCATION_OPTIONS = [
 
 export const RELIGION_OPTIONS = [
   'Hinduism',
-  'Islam',
-  'Christianity',
-  'Sikhism',
-  'Buddhism',
-  'Jainism',
-  'Other',
 ];
 
 export const CATEGORY_OPTIONS = [

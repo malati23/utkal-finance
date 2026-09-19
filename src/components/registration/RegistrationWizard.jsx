@@ -35,7 +35,7 @@ export function RegistrationWizard({ activeStep = 1, onQuickFillTrigger }) {
       gender: '',
       maritalStatus: '',
       education: '',
-      religion: '',
+      religion: 'Hinduism',
       category: '',
       occupation: '',
     },
