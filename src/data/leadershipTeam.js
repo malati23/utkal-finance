@@ -1,7 +1,9 @@
 import mdPhoto from '../assets/image copy 9.png';
 import sureshPhoto from '../assets/WhatsApp Image 2026-09-19 at 12.41.27.jpeg';
-import shPhoto1 from '../assets/image copy 18.png';
-import shPhoto2 from '../assets/image copy 19.png';
+import hemantaPhoto from '../assets/WhatsApp Image 2026-09-19 at 13.58.06.jpeg';
+import ajitBhuriaPhoto from '../assets/image copy 18.png';
+import govindaPhoto from '../assets/image copy 19.png';
+import ajitBhueiaPhoto from '../assets/WhatsApp Image 2026-09-19 at 13.55.28.jpeg';
 
 export const LEADERSHIP_TEAM = [
   {
@@ -16,13 +18,23 @@ export const LEADERSHIP_TEAM = [
   },
   {
     id: 3,
-    image: shPhoto1,
-    name: "Ajit Bhuria",
+    image: hemantaPhoto,
+    name: "Hemanta Kumar Nayak",
   },
   {
     id: 4,
-    image: shPhoto2,
+    image: ajitBhuriaPhoto,
+    name: "Ajit Bhuria",
+  },
+  {
+    id: 5,
+    image: govindaPhoto,
     name: "Govinda Behera",
+  },
+  {
+    id: 6,
+    image: ajitBhueiaPhoto,
+    name: "Ajit Kumar Bhueia",
   },
 ];
 
