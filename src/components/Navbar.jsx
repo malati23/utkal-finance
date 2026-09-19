@@ -6,9 +6,11 @@ import {
   Shield,
   Bell,
   UserPlus,
-  LogOut,
   ChevronRight,
   ChevronDown,
+  Landmark,
+  Building2,
+  ShieldCheck,
 } from 'lucide-react';
 import { useAuth } from '../hooks/useAuth';
 import brandLogo from '../assets/image copy 7.png';
@@ -23,9 +25,27 @@ export function Navbar({ onOpenApplyModal }) {
   const { user, isAuthenticated, logout } = useAuth();
 
   const productItems = [
-    { name: 'Finance', path: '/finance' },
-    { name: 'Real Estate', path: '/real-estate' },
-    { name: 'Insurance', path: '/insurance' },
+    {
+      name: 'Finance',
+      path: '/finance',
+      description: 'Deposits, Micro-credit & Savings',
+      icon: Landmark,
+      color: 'text-blue-600 bg-blue-50',
+    },
+    {
+      name: 'Real Estate',
+      path: '/real-estate',
+      description: 'Commercial & Property Investments',
+      icon: Building2,
+      color: 'text-amber-600 bg-amber-50',
+    },
+    {
+      name: 'Insurance',
+      path: '/insurance',
+      description: 'Life, Medical & Enterprise Cover',
+      icon: ShieldCheck,
+      color: 'text-emerald-600 bg-emerald-50',
+    },
   ];
 
   const isActive = (path) => {
@@ -48,13 +68,13 @@ export function Navbar({ onOpenApplyModal }) {
 
   return (
     <header className="sticky top-0 z-40 bg-white/98 backdrop-blur-md border-b border-slate-200/90 shadow-xs font-sans select-none">
-      {/* Main Navbar */}
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-3 flex items-center justify-between gap-4">
+      {/* Main Navbar Container */}
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-2.5 sm:py-3 flex items-center justify-between gap-3 sm:gap-4">
         
         {/* Left: Brand Logo & Title */}
-        <Link to="/" className="flex items-center gap-3 shrink-0 group">
+        <Link to="/" className="flex items-center gap-2.5 sm:gap-3 shrink-0 group">
           <div className="relative">
-            <div className="w-11 h-11 rounded-2xl bg-white border border-slate-200/90 p-1 shadow-sm flex items-center justify-center overflow-hidden group-hover:shadow-md transition-shadow">
+            <div className="w-10 h-10 sm:w-11 sm:h-11 rounded-2xl bg-white border border-slate-200/90 p-1 shadow-sm flex items-center justify-center overflow-hidden group-hover:shadow-md transition-shadow">
               <img 
                 src={brandLogo} 
                 alt="New Utkal Finance Emblem" 
@@ -65,35 +85,26 @@ export function Navbar({ onOpenApplyModal }) {
             <span className="w-2.5 h-2.5 rounded-full bg-emerald-400 border-2 border-white absolute -top-0.5 -right-0.5" />
           </div>
 
-          <div>
-            <div className="flex items-center gap-1.5 leading-none">
-              <span className="text-base sm:text-lg font-black text-slate-900 tracking-tight">
+          <div className="shrink-0">
+            <div className="flex items-center gap-1 leading-none">
+              <span className="text-sm sm:text-base xl:text-lg font-black text-slate-900 tracking-tight whitespace-nowrap">
                 NEW UTKAL
               </span>
-              <span className="text-base sm:text-lg font-black text-blue-800 tracking-tight">
+              <span className="text-sm sm:text-base xl:text-lg font-black text-blue-800 tracking-tight whitespace-nowrap">
                 FINANCE
               </span>
             </div>
-            <span className="text-[9px] sm:text-[10px] font-extrabold text-slate-500 tracking-widest uppercase mt-0.5 block">
+            <span className="text-[8px] sm:text-[9px] xl:text-[10px] font-extrabold text-slate-500 tracking-widest uppercase mt-0.5 block whitespace-nowrap">
               TRUST • GROWTH • PROSPERITY
             </span>
           </div>
         </Link>
 
-        {/* Center: Desktop Navigation Links */}
-        <nav className="hidden lg:flex items-center gap-6 xl:gap-8">
-          <Link
-            to="/"
-            className={`text-xs sm:text-sm font-bold transition-colors ${
-              isActive('/') ? 'text-blue-700 font-extrabold' : 'text-slate-700 hover:text-blue-700'
-            }`}
-          >
-            Home
-          </Link>
-
+        {/* Center: Desktop Navigation Links (Visible on XL screens 1150px+) */}
+        <nav className="hidden xl:flex items-center gap-4 xl:gap-6">
           <Link
             to="/about"
-            className={`text-xs sm:text-sm font-bold transition-colors ${
+            className={`text-xs xl:text-sm font-bold transition-colors whitespace-nowrap ${
               isActive('/about') ? 'text-blue-700 font-extrabold' : 'text-slate-700 hover:text-blue-700'
             }`}
           >
@@ -102,7 +113,7 @@ export function Navbar({ onOpenApplyModal }) {
 
           <Link
             to="/register"
-            className={`text-xs sm:text-sm font-bold transition-colors ${
+            className={`text-xs xl:text-sm font-bold transition-colors whitespace-nowrap ${
               isActive('/register') ? 'text-blue-700 font-extrabold' : 'text-slate-700 hover:text-blue-700'
             }`}
           >
@@ -111,7 +122,7 @@ export function Navbar({ onOpenApplyModal }) {
 
           <Link
             to="/brochure"
-            className={`text-xs sm:text-sm font-bold transition-colors ${
+            className={`text-xs xl:text-sm font-bold transition-colors whitespace-nowrap ${
               isActive('/brochure') ? 'text-blue-700 font-extrabold' : 'text-slate-700 hover:text-blue-700'
             }`}
           >
@@ -120,7 +131,7 @@ export function Navbar({ onOpenApplyModal }) {
 
           <Link
             to="/gallery"
-            className={`text-xs sm:text-sm font-bold transition-colors ${
+            className={`text-xs xl:text-sm font-bold transition-colors whitespace-nowrap ${
               isActive('/gallery') ? 'text-blue-700 font-extrabold' : 'text-slate-700 hover:text-blue-700'
             }`}
           >
@@ -137,7 +148,7 @@ export function Navbar({ onOpenApplyModal }) {
             <button
               type="button"
               onClick={() => setDesktopProductsOpen(!desktopProductsOpen)}
-              className={`text-xs sm:text-sm font-bold transition-colors flex items-center gap-1 cursor-pointer py-1 ${
+              className={`text-xs xl:text-sm font-bold transition-colors flex items-center gap-1 cursor-pointer py-1 whitespace-nowrap ${
                 isProductsActive ? 'text-blue-700 font-extrabold' : 'text-slate-700 hover:text-blue-700'
               }`}
             >
@@ -146,34 +157,48 @@ export function Navbar({ onOpenApplyModal }) {
             </button>
 
             {desktopProductsOpen && (
-              <div className="absolute top-full left-0 mt-1 w-52 bg-white rounded-2xl border border-slate-200/90 shadow-xl py-2 z-50 text-left animate-fade-in">
-                <div className="px-3 pb-1.5 mb-1 border-b border-slate-100">
+              <div className="absolute top-full left-0 mt-1.5 w-64 bg-white rounded-2xl border border-slate-200/90 shadow-xl py-2 z-50 text-left animate-fade-in">
+                <div className="px-3.5 pb-2 mb-1.5 border-b border-slate-100">
                   <span className="text-[10px] font-extrabold tracking-widest text-slate-400 uppercase block">
-                    OUR PRODUCTS
+                    OUR FINANCIAL PRODUCTS
                   </span>
                 </div>
-                {productItems.map((prod) => (
-                  <Link
-                    key={prod.name}
-                    to={prod.path}
-                    onClick={() => setDesktopProductsOpen(false)}
-                    className={`flex items-center justify-between px-3.5 py-2.5 rounded-xl text-xs font-bold transition-colors mx-1 ${
-                      isActive(prod.path)
-                        ? 'bg-blue-50 text-blue-700 font-extrabold'
-                        : 'text-slate-700 hover:bg-slate-50 hover:text-blue-700'
-                    }`}
-                  >
-                    <span>{prod.name}</span>
-                    <ChevronRight className="w-3.5 h-3.5 text-slate-400" />
-                  </Link>
-                ))}
+                {productItems.map((prod) => {
+                  const Icon = prod.icon;
+                  const active = isActive(prod.path);
+                  return (
+                    <Link
+                      key={prod.name}
+                      to={prod.path}
+                      onClick={() => setDesktopProductsOpen(false)}
+                      className={`flex items-start gap-3 px-3.5 py-2.5 rounded-xl transition-all mx-1 group ${
+                        active
+                          ? 'bg-blue-50 text-blue-700 font-extrabold'
+                          : 'text-slate-700 hover:bg-slate-50 hover:text-blue-700'
+                      }`}
+                    >
+                      <div className={`p-2 rounded-lg shrink-0 mt-0.5 transition-colors ${prod.color}`}>
+                        <Icon className="w-4 h-4" />
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <div className="flex items-center justify-between">
+                          <span className="text-xs font-bold leading-snug">{prod.name}</span>
+                          <ChevronRight className="w-3.5 h-3.5 text-slate-400 group-hover:translate-x-0.5 transition-transform" />
+                        </div>
+                        <span className="text-[10px] text-slate-500 font-normal block truncate mt-0.5">
+                          {prod.description}
+                        </span>
+                      </div>
+                    </Link>
+                  );
+                })}
               </div>
             )}
           </div>
 
           <Link
             to="/contact"
-            className={`text-xs sm:text-sm font-bold transition-colors ${
+            className={`text-xs xl:text-sm font-bold transition-colors whitespace-nowrap ${
               isActive('/contact') ? 'text-blue-700 font-extrabold' : 'text-slate-700 hover:text-blue-700'
             }`}
           >
@@ -182,33 +207,33 @@ export function Navbar({ onOpenApplyModal }) {
         </nav>
 
         {/* Right: Notification Bell & Action Buttons */}
-        <div className="hidden sm:flex items-center gap-3 shrink-0">
+        <div className="hidden xl:flex items-center gap-2.5 xl:gap-3 shrink-0">
           {/* Bell Notification Button */}
           <button
             type="button"
-            className="relative w-10 h-10 rounded-xl bg-slate-50 border border-slate-200/90 text-slate-700 hover:bg-slate-100 flex items-center justify-center transition-colors shadow-xs"
+            className="relative w-9 h-9 xl:w-10 xl:h-10 rounded-xl bg-slate-50 border border-slate-200/90 text-slate-700 hover:bg-slate-100 flex items-center justify-center transition-colors shadow-xs cursor-pointer"
             title="Notifications"
             onClick={() => alert("No new notifications")}
           >
             <Bell className="w-4 h-4 text-slate-600" />
-            <span className="w-2.5 h-2.5 rounded-full bg-rose-400 border-2 border-white absolute top-2 right-2" />
+            <span className="w-2 h-2 rounded-full bg-rose-500 border-2 border-white absolute top-2 right-2" />
           </button>
 
           {/* Join Button */}
           <Link
             to="/register"
-            className="bg-blue-700 hover:bg-blue-800 text-white font-bold text-xs sm:text-sm px-4.5 py-2.5 rounded-xl shadow-md shadow-blue-700/20 transition-all flex items-center gap-1.5"
+            className="bg-blue-700 hover:bg-blue-800 text-white font-bold text-xs xl:text-sm px-3.5 py-2 xl:px-4.5 xl:py-2.5 rounded-xl shadow-md shadow-blue-700/20 transition-all flex items-center gap-1.5 whitespace-nowrap"
           >
-            <UserPlus className="w-4 h-4" />
+            <UserPlus className="w-3.5 h-3.5 xl:w-4 xl:h-4" />
             <span>Join</span>
           </Link>
 
           {/* Console Button */}
           <Link
             to="/admin"
-            className="bg-[#0B1528] hover:bg-slate-900 text-white font-bold text-xs sm:text-sm px-4.5 py-2.5 rounded-xl shadow-md transition-all flex items-center gap-1.5 border border-slate-800"
+            className="bg-[#0B1528] hover:bg-slate-900 text-white font-bold text-xs xl:text-sm px-3.5 py-2 xl:px-4.5 xl:py-2.5 rounded-xl shadow-md transition-all flex items-center gap-1.5 border border-slate-800 whitespace-nowrap"
           >
-            <Shield className="w-4 h-4 text-amber-400" />
+            <Shield className="w-3.5 h-3.5 xl:w-4 xl:h-4 text-amber-400" />
             <span>Console</span>
           </Link>
 
@@ -216,25 +241,25 @@ export function Navbar({ onOpenApplyModal }) {
           {isAuthenticated ? (
             <button
               onClick={logout}
-              className="text-xs sm:text-sm font-semibold text-slate-500 hover:text-red-600 transition-colors ml-1 cursor-pointer"
+              className="text-xs xl:text-sm font-semibold text-slate-500 hover:text-red-600 transition-colors ml-1 cursor-pointer whitespace-nowrap"
             >
               Sign Out
             </button>
           ) : (
             <Link
               to="/login"
-              className="text-xs sm:text-sm font-semibold text-slate-500 hover:text-slate-800 transition-colors ml-1"
+              className="text-xs xl:text-sm font-semibold text-slate-500 hover:text-slate-800 transition-colors ml-1 whitespace-nowrap"
             >
               Sign In
             </Link>
           )}
         </div>
 
-        {/* Mobile menu toggle */}
+        {/* Mobile / Tablet menu toggle (visible below XL breakpoint) */}
         <button
           type="button"
           onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
-          className="lg:hidden p-2 rounded-xl text-slate-700 hover:bg-slate-100 focus:outline-none cursor-pointer"
+          className="xl:hidden p-2 rounded-xl text-slate-700 hover:bg-slate-100 focus:outline-none cursor-pointer"
           aria-label="Toggle menu"
         >
           {mobileMenuOpen ? <X className="w-6 h-6" /> : <Menu className="w-6 h-6" />}
@@ -243,19 +268,8 @@ export function Navbar({ onOpenApplyModal }) {
 
       {/* Mobile Navigation Drawer */}
       {mobileMenuOpen && (
-        <div className="lg:hidden bg-white border-t border-slate-200 px-4 pt-3 pb-6 space-y-3 shadow-xl animate-fade-in text-left">
+        <div className="xl:hidden bg-white border-t border-slate-200 px-4 pt-3 pb-6 space-y-3 shadow-xl animate-fade-in text-left">
           <nav className="flex flex-col gap-1">
-            <Link
-              to="/"
-              onClick={() => setMobileMenuOpen(false)}
-              className={`flex items-center justify-between px-4 py-3 rounded-xl text-sm font-bold ${
-                isActive('/') ? 'bg-blue-50 text-blue-700' : 'text-slate-700 hover:bg-slate-50'
-              }`}
-            >
-              <span>Home</span>
-              <ChevronRight className="w-4 h-4 text-slate-400" />
-            </Link>
-
             <Link
               to="/about"
               onClick={() => setMobileMenuOpen(false)}
@@ -319,27 +333,35 @@ export function Navbar({ onOpenApplyModal }) {
                 />
               </button>
 
-              {/* Accordion Submenu Items */}
+              {/* Accordion Submenu Items with Icons */}
               {mobileProductsOpen && (
-                <div className="ml-3 mt-1 pl-3 border-l-2 border-blue-200 space-y-1 py-1">
-                  {productItems.map((item) => (
-                    <Link
-                      key={item.name}
-                      to={item.path}
-                      onClick={() => {
-                        setMobileMenuOpen(false);
-                        setMobileProductsOpen(false);
-                      }}
-                      className={`flex items-center gap-2 px-3.5 py-2.5 rounded-xl text-xs font-bold transition-colors ${
-                        isActive(item.path)
-                          ? 'bg-blue-600 text-white shadow-xs'
-                          : 'text-slate-700 hover:bg-blue-50 hover:text-blue-700'
-                      }`}
-                    >
-                      <span className="text-blue-500 font-extrabold text-sm">›</span>
-                      <span>{item.name}</span>
-                    </Link>
-                  ))}
+                <div className="ml-3 mt-1 pl-3 border-l-2 border-blue-200 space-y-1.5 py-1">
+                  {productItems.map((item) => {
+                    const Icon = item.icon;
+                    const active = isActive(item.path);
+                    return (
+                      <Link
+                        key={item.name}
+                        to={item.path}
+                        onClick={() => {
+                          setMobileMenuOpen(false);
+                          setMobileProductsOpen(false);
+                        }}
+                        className={`flex items-center justify-between px-3.5 py-2.5 rounded-xl text-xs font-bold transition-colors ${
+                          active
+                            ? 'bg-blue-600 text-white shadow-xs'
+                            : 'text-slate-700 hover:bg-blue-50 hover:text-blue-700'
+                        }`}
+                      >
+                        <div className="flex items-center gap-2.5">
+                          <span className={active ? 'text-white' : 'text-blue-500 font-extrabold text-sm'}>›</span>
+                          <Icon className={`w-4 h-4 ${active ? 'text-white' : 'text-blue-600'}`} />
+                          <span>{item.name}</span>
+                        </div>
+                        <ChevronRight className={`w-3.5 h-3.5 ${active ? 'text-white' : 'text-slate-400'}`} />
+                      </Link>
+                    );
+                  })}
                 </div>
               )}
             </div>
@@ -402,4 +424,3 @@ export function Navbar({ onOpenApplyModal }) {
 }
 
 export default Navbar;
-
