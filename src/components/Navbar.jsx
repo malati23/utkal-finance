@@ -83,6 +83,15 @@ export function Navbar({ onOpenApplyModal }) {
         {/* Center: Desktop Navigation Links */}
         <nav className="hidden lg:flex items-center gap-6 xl:gap-8">
           <Link
+            to="/"
+            className={`text-xs sm:text-sm font-bold transition-colors ${
+              isActive('/') ? 'text-blue-700 font-extrabold' : 'text-slate-700 hover:text-blue-700'
+            }`}
+          >
+            Home
+          </Link>
+
+          <Link
             to="/about"
             className={`text-xs sm:text-sm font-bold transition-colors ${
               isActive('/about') ? 'text-blue-700 font-extrabold' : 'text-slate-700 hover:text-blue-700'
@@ -236,6 +245,17 @@ export function Navbar({ onOpenApplyModal }) {
       {mobileMenuOpen && (
         <div className="lg:hidden bg-white border-t border-slate-200 px-4 pt-3 pb-6 space-y-3 shadow-xl animate-fade-in text-left">
           <nav className="flex flex-col gap-1">
+            <Link
+              to="/"
+              onClick={() => setMobileMenuOpen(false)}
+              className={`flex items-center justify-between px-4 py-3 rounded-xl text-sm font-bold ${
+                isActive('/') ? 'bg-blue-50 text-blue-700' : 'text-slate-700 hover:bg-slate-50'
+              }`}
+            >
+              <span>Home</span>
+              <ChevronRight className="w-4 h-4 text-slate-400" />
+            </Link>
+
             <Link
               to="/about"
               onClick={() => setMobileMenuOpen(false)}
