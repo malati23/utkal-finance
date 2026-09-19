@@ -12,9 +12,11 @@ import {
   MessageCircle, 
   ShieldAlert
 } from 'lucide-react';
+import { StatutoryPdfModal } from './common/StatutoryPdfModal';
 
 export function Footer({ onOpenApplyModal }) {
   const [showDisclosures, setShowDisclosures] = useState(false);
+  const [pdfModalOpen, setPdfModalOpen] = useState(false);
 
   return (
     <footer className="bg-[#070D18] text-slate-300 font-sans border-t border-slate-900 selection:bg-blue-600 selection:text-white">
@@ -45,19 +47,19 @@ export function Footer({ onOpenApplyModal }) {
           <div className="flex flex-wrap items-center justify-center gap-3 w-full lg:w-auto shrink-0">
             <button
               onClick={onOpenApplyModal}
-              className="bg-blue-600 hover:bg-blue-500 text-white font-bold text-xs sm:text-sm px-5 py-3 rounded-xl transition-all duration-200 shadow-lg shadow-blue-600/30 tracking-wide uppercase flex items-center gap-2"
+              className="bg-blue-600 hover:bg-blue-500 text-white font-bold text-xs sm:text-sm px-5 py-3 rounded-xl transition-all duration-200 shadow-lg shadow-blue-600/30 tracking-wide uppercase flex items-center gap-2 cursor-pointer"
             >
               <span>Become a Member (₹200)</span>
             </button>
             
-            <a
-              href="#brochure"
-              onClick={(e) => { e.preventDefault(); alert("Downloading Statutory Form..."); }}
-              className="border border-slate-700 hover:border-slate-500 bg-slate-900/60 hover:bg-slate-800 text-slate-200 font-semibold text-xs sm:text-sm px-4 py-3 rounded-xl transition-all duration-200 flex items-center gap-2"
+            <button
+              type="button"
+              onClick={() => setPdfModalOpen(true)}
+              className="border border-slate-700 hover:border-slate-500 bg-slate-900/60 hover:bg-slate-800 text-slate-200 font-semibold text-xs sm:text-sm px-4 py-3 rounded-xl transition-all duration-200 flex items-center gap-2 cursor-pointer"
             >
               <FileText className="w-4 h-4 text-blue-400" />
               <span>STATUTORY FORM (PDF)</span>
-            </a>
+            </button>
 
             <Link
               to="/brochure"
@@ -150,7 +152,7 @@ export function Footer({ onOpenApplyModal }) {
               <li><Link to="/about" className="hover:text-blue-400 transition-colors">About Utkal Finance Limited</Link></li>
               <li><Link to="/about" className="hover:text-blue-400 transition-colors">Board of Directors &amp; MD Desk</Link></li>
               <li><Link to="/about" className="hover:text-blue-400 transition-colors">Corporate Profile &amp; Handover</Link></li>
-              <li><a href="#brochure" onClick={(e) => { e.preventDefault(); alert("Statutory forms menu"); }} className="hover:text-blue-400 transition-colors">Download Statutory Forms</a></li>
+              <li><button type="button" onClick={() => setPdfModalOpen(true)} className="hover:text-blue-400 transition-colors cursor-pointer text-left">Download Statutory Forms</button></li>
               <li><Link to="/contact" className="hover:text-blue-400 transition-colors">Grievance Redressal Officer</Link></li>
               <li>
                 <Link to="/admin" className="text-amber-400 hover:text-amber-300 font-bold transition-colors">
@@ -322,6 +324,12 @@ export function Footer({ onOpenApplyModal }) {
           </div>
         </div>
       </div>
+
+      {/* Statutory PDF Viewer Modal */}
+      <StatutoryPdfModal
+        isOpen={pdfModalOpen}
+        onClose={() => setPdfModalOpen(false)}
+      />
     </footer>
   );
 }
