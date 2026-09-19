@@ -56,37 +56,6 @@ export function UpiPayment({ utrValue, onUtrChange, error }) {
     });
   };
 
-  const [activeAppToast, setActiveAppToast] = useState(null);
-  const [activeApp, setActiveApp] = useState(null);
-
-  const handleUpiAppClick = async (appName) => {
-    // Set active button visual state instantly
-    setActiveApp(appName);
-
-    // 1. Copy UPI ID automatically (guaranteed copy)
-    const copied = await copyToClipboard(BANK_CONFIG.BANK_VPA);
-    setCopiedField('vpa');
-
-    // 2. Show active toast feedback with copied confirmation
-    setActiveAppToast(`✓ UPI ID (${BANK_CONFIG.BANK_VPA}) Copied to Clipboard! Launching ${appName}...`);
-
-    // 3. Delay deep link launch slightly (300ms) to ensure clipboard operation flushes cleanly
-    setTimeout(() => {
-      const upiLink = `upi://pay?pa=${encodeURIComponent(BANK_CONFIG.BANK_VPA)}&pn=${encodeURIComponent('NEW UTKAL FINANCE')}&am=200&cu=INR&tn=${encodeURIComponent('Membership Application Fee')}`;
-      try {
-        window.location.href = upiLink;
-      } catch (e) {
-        console.log('UPI link launched:', upiLink);
-      }
-    }, 300);
-
-    setTimeout(() => {
-      setActiveAppToast(null);
-      setCopiedField(null);
-      setActiveApp(null);
-    }, 4500);
-  };
-
   return (
     <div className="bg-white border border-slate-200/90 rounded-2xl p-5 sm:p-6 space-y-6 shadow-xs animate-fade-in">
       <div className="grid grid-cols-1 md:grid-cols-12 gap-6 items-start">
@@ -184,51 +153,6 @@ export function UpiPayment({ utrValue, onUtrChange, error }) {
                 </button>
               </div>
             </div>
-          </div>
-
-          {/* Accepted UPI Apps (CLICKABLE & INTERACTIVE) */}
-          <div className="space-y-2">
-            <div className="flex items-center justify-between">
-              <span className="text-[11px] font-bold text-slate-600 uppercase tracking-wider block">
-                Tap to Pay via UPI App:
-              </span>
-              <span className="text-[10px] text-blue-600 font-semibold">
-                (Copies UPI ID &amp; Launches App)
-              </span>
-            </div>
-
-            <div className="flex flex-wrap items-center gap-2">
-              {['Google Pay', 'PhonePe', 'Paytm', 'BHIM UPI', 'Cred / Navi'].map((app) => {
-                const isSelected = activeApp === app;
-                return (
-                  <button
-                    key={app}
-                    type="button"
-                    onClick={() => handleUpiAppClick(app)}
-                    className={`px-3 py-2 rounded-xl text-xs font-extrabold transition-all shadow-xs flex items-center gap-1.5 cursor-pointer active:scale-95 border ${
-                      isSelected
-                        ? 'bg-blue-700 text-white border-blue-800 shadow-md ring-2 ring-blue-600/30'
-                        : 'bg-white hover:bg-blue-50 active:bg-blue-100 text-slate-800 hover:text-blue-700 border-slate-200 hover:border-blue-300'
-                    }`}
-                    title={`Click to launch ${app} and copy UPI ID`}
-                  >
-                    {isSelected ? (
-                      <Check className="w-3.5 h-3.5 text-emerald-300 shrink-0" />
-                    ) : (
-                      <span className="w-2 h-2 rounded-full bg-emerald-500 shrink-0" />
-                    )}
-                    <span>{isSelected ? `${app} (Copied!)` : app}</span>
-                  </button>
-                );
-              })}
-            </div>
-
-            {activeAppToast && (
-              <div className="p-2.5 rounded-xl bg-emerald-50 border border-emerald-200 text-emerald-800 text-xs font-bold flex items-center gap-2 animate-fade-in">
-                <Check className="w-4 h-4 text-emerald-600 shrink-0" />
-                <span>{activeAppToast}</span>
-              </div>
-            )}
           </div>
 
           {/* UTR Input Section */}
