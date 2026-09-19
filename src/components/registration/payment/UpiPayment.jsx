@@ -27,6 +27,30 @@ export function UpiPayment({ utrValue, onUtrChange, error }) {
     });
   };
 
+  const [activeAppToast, setActiveAppToast] = useState(null);
+
+  const handleUpiAppClick = (appName) => {
+    // 1. Copy UPI ID automatically
+    if (navigator.clipboard) {
+      navigator.clipboard.writeText(BANK_CONFIG.BANK_VPA);
+      setCopiedField('vpa');
+      setTimeout(() => setCopiedField(null), 3000);
+    }
+
+    // 2. Show active toast feedback
+    setActiveAppToast(`Opening ${appName}... (UPI ID: ${BANK_CONFIG.BANK_VPA} copied!)`);
+    setTimeout(() => setActiveAppToast(null), 4000);
+
+    // 3. Launch universal UPI deep link
+    const upiLink = `upi://pay?pa=${encodeURIComponent(BANK_CONFIG.BANK_VPA)}&pn=${encodeURIComponent('NEW UTKAL FINANCE')}&am=200&cu=INR&tn=${encodeURIComponent('Membership Application Fee')}`;
+    
+    try {
+      window.location.href = upiLink;
+    } catch (e) {
+      console.log('UPI link launched:', upiLink);
+    }
+  };
+
   return (
     <div className="bg-white border border-slate-200/90 rounded-2xl p-5 sm:p-6 space-y-6 shadow-xs animate-fade-in">
       <div className="grid grid-cols-1 md:grid-cols-12 gap-6 items-start">
@@ -81,7 +105,7 @@ export function UpiPayment({ utrValue, onUtrChange, error }) {
                 <button
                   type="button"
                   onClick={() => handleCopy('ifsc', BANK_CONFIG.BANK_IFSC)}
-                  className="inline-flex items-center gap-1.5 px-3 py-1 rounded-lg bg-white hover:bg-blue-50 text-blue-700 text-[11px] font-bold border border-slate-200 transition-colors shadow-2xs"
+                  className="inline-flex items-center gap-1.5 px-3 py-1 rounded-lg bg-white hover:bg-blue-50 text-blue-700 text-[11px] font-bold border border-slate-200 transition-colors shadow-2xs cursor-pointer"
                 >
                   {copiedField === 'ifsc' ? <Check className="w-3 h-3 text-emerald-600" /> : <Copy className="w-3 h-3" />}
                   <span>{copiedField === 'ifsc' ? 'Copied' : 'Copy IFSC'}</span>
@@ -99,7 +123,7 @@ export function UpiPayment({ utrValue, onUtrChange, error }) {
                 <button
                   type="button"
                   onClick={() => handleCopy('acc', BANK_CONFIG.BANK_ACCOUNT_MASKED)}
-                  className="inline-flex items-center gap-1.5 px-3 py-1 rounded-lg bg-white hover:bg-blue-50 text-blue-700 text-[11px] font-bold border border-slate-200 transition-colors shadow-2xs"
+                  className="inline-flex items-center gap-1.5 px-3 py-1 rounded-lg bg-white hover:bg-blue-50 text-blue-700 text-[11px] font-bold border border-slate-200 transition-colors shadow-2xs cursor-pointer"
                 >
                   {copiedField === 'acc' ? <Check className="w-3 h-3 text-emerald-600" /> : <Copy className="w-3 h-3" />}
                   <span>{copiedField === 'acc' ? 'Copied' : 'Copy Account Number'}</span>
@@ -117,7 +141,7 @@ export function UpiPayment({ utrValue, onUtrChange, error }) {
                 <button
                   type="button"
                   onClick={() => handleCopy('vpa', BANK_CONFIG.BANK_VPA)}
-                  className="inline-flex items-center gap-1.5 px-3 py-1 rounded-lg bg-white hover:bg-blue-50 text-blue-700 text-[11px] font-bold border border-slate-200 transition-colors shadow-2xs"
+                  className="inline-flex items-center gap-1.5 px-3 py-1 rounded-lg bg-white hover:bg-blue-50 text-blue-700 text-[11px] font-bold border border-slate-200 transition-colors shadow-2xs cursor-pointer"
                 >
                   {copiedField === 'vpa' ? <Check className="w-3 h-3 text-emerald-600" /> : <Copy className="w-3 h-3" />}
                   <span>{copiedField === 'vpa' ? 'Copied' : 'Copy UPI ID'}</span>
@@ -126,21 +150,38 @@ export function UpiPayment({ utrValue, onUtrChange, error }) {
             </div>
           </div>
 
-          {/* Accepted UPI Apps */}
-          <div className="space-y-1.5">
-            <span className="text-[11px] font-bold text-slate-500 uppercase tracking-wider block">
-              Accepted UPI Apps:
-            </span>
-            <div className="flex flex-wrap items-center gap-1.5">
+          {/* Accepted UPI Apps (CLICKABLE & INTERACTIVE) */}
+          <div className="space-y-2">
+            <div className="flex items-center justify-between">
+              <span className="text-[11px] font-bold text-slate-600 uppercase tracking-wider block">
+                Tap to Pay via UPI App:
+              </span>
+              <span className="text-[10px] text-blue-600 font-semibold">
+                (Copies UPI ID &amp; Launches App)
+              </span>
+            </div>
+
+            <div className="flex flex-wrap items-center gap-2">
               {['Google Pay', 'PhonePe', 'Paytm', 'BHIM UPI', 'Cred / Navi'].map((app) => (
-                <span
+                <button
                   key={app}
-                  className="px-2.5 py-1 rounded-md bg-slate-100 text-slate-700 text-[11px] font-semibold border border-slate-200"
+                  type="button"
+                  onClick={() => handleUpiAppClick(app)}
+                  className="px-3 py-1.5 rounded-xl bg-white hover:bg-blue-50 active:bg-blue-100 text-slate-800 hover:text-blue-700 text-xs font-bold border border-slate-200 hover:border-blue-300 transition-all shadow-xs flex items-center gap-1.5 cursor-pointer active:scale-95 group"
+                  title={`Click to launch ${app} and copy UPI ID`}
                 >
-                  {app}
-                </span>
+                  <span className="w-2 h-2 rounded-full bg-emerald-500 group-hover:scale-125 transition-transform" />
+                  <span>{app}</span>
+                </button>
               ))}
             </div>
+
+            {activeAppToast && (
+              <div className="p-2.5 rounded-xl bg-emerald-50 border border-emerald-200 text-emerald-800 text-xs font-bold flex items-center gap-2 animate-fade-in">
+                <Check className="w-4 h-4 text-emerald-600 shrink-0" />
+                <span>{activeAppToast}</span>
+              </div>
+            )}
           </div>
 
           {/* UTR Input Section */}
