@@ -7,11 +7,40 @@ export function UpiPayment({ utrValue, onUtrChange, error }) {
   const [copiedField, setCopiedField] = useState(null);
   const [testUtrStatus, setTestUtrStatus] = useState(null);
 
-  const handleCopy = (fieldKey, textToCopy) => {
-    if (navigator.clipboard) {
-      navigator.clipboard.writeText(textToCopy);
+  const copyToClipboard = async (textToCopy) => {
+    // Strategy 1: Modern Clipboard API
+    if (navigator.clipboard && window.isSecureContext) {
+      try {
+        await navigator.clipboard.writeText(textToCopy);
+        return true;
+      } catch (err) {
+        console.warn('Async clipboard writeText failed:', err);
+      }
+    }
+    // Strategy 2: Reliable execCommand fallback for all browsers/HTTP/local environments
+    try {
+      const textArea = document.createElement('textarea');
+      textArea.value = textToCopy;
+      textArea.style.position = 'fixed';
+      textArea.style.left = '-999999px';
+      textArea.style.top = '-999999px';
+      document.body.appendChild(textArea);
+      textArea.focus();
+      textArea.select();
+      const successful = document.execCommand('copy');
+      document.body.removeChild(textArea);
+      return successful;
+    } catch (err) {
+      console.error('Fallback execCommand copy failed:', err);
+      return false;
+    }
+  };
+
+  const handleCopy = async (fieldKey, textToCopy) => {
+    const success = await copyToClipboard(textToCopy);
+    if (success) {
       setCopiedField(fieldKey);
-      setTimeout(() => setCopiedField(null), 2000);
+      setTimeout(() => setCopiedField(null), 2500);
     }
   };
 
@@ -29,26 +58,26 @@ export function UpiPayment({ utrValue, onUtrChange, error }) {
 
   const [activeAppToast, setActiveAppToast] = useState(null);
 
-  const handleUpiAppClick = (appName) => {
-    // 1. Copy UPI ID automatically
-    if (navigator.clipboard) {
-      navigator.clipboard.writeText(BANK_CONFIG.BANK_VPA);
-      setCopiedField('vpa');
-      setTimeout(() => setCopiedField(null), 3000);
-    }
+  const handleUpiAppClick = async (appName) => {
+    // 1. Copy UPI ID automatically (guaranteed copy)
+    const copied = await copyToClipboard(BANK_CONFIG.BANK_VPA);
+    setCopiedField('vpa');
+    setTimeout(() => setCopiedField(null), 3500);
 
-    // 2. Show active toast feedback
-    setActiveAppToast(`Opening ${appName}... (UPI ID: ${BANK_CONFIG.BANK_VPA} copied!)`);
-    setTimeout(() => setActiveAppToast(null), 4000);
+    // 2. Show active toast feedback with copied confirmation
+    setActiveAppToast(`✓ UPI ID (${BANK_CONFIG.BANK_VPA}) Copied to Clipboard! Launching ${appName}...`);
 
-    // 3. Launch universal UPI deep link
-    const upiLink = `upi://pay?pa=${encodeURIComponent(BANK_CONFIG.BANK_VPA)}&pn=${encodeURIComponent('NEW UTKAL FINANCE')}&am=200&cu=INR&tn=${encodeURIComponent('Membership Application Fee')}`;
-    
-    try {
-      window.location.href = upiLink;
-    } catch (e) {
-      console.log('UPI link launched:', upiLink);
-    }
+    // 3. Delay deep link launch slightly (300ms) to ensure clipboard operation flushes cleanly
+    setTimeout(() => {
+      const upiLink = `upi://pay?pa=${encodeURIComponent(BANK_CONFIG.BANK_VPA)}&pn=${encodeURIComponent('NEW UTKAL FINANCE')}&am=200&cu=INR&tn=${encodeURIComponent('Membership Application Fee')}`;
+      try {
+        window.location.href = upiLink;
+      } catch (e) {
+        console.log('UPI link launched:', upiLink);
+      }
+    }, 300);
+
+    setTimeout(() => setActiveAppToast(null), 5000);
   };
 
   return (
