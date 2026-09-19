@@ -1,5 +1,6 @@
 import React from 'react';
 import { Shield, Users, FileDown } from 'lucide-react';
+import statutoryPdf from '../../assets/New Utkal Finance Limited _ Certified by Govt. of India.pdf';
 
 export function HighlightStats() {
   return (
@@ -47,19 +48,24 @@ export function HighlightStats() {
           </div>
         </div>
 
-        <div className="bg-white rounded-xl p-3.5 sm:p-4 border border-blue-100 bg-gradient-to-r from-blue-50/50 to-indigo-50/50 shadow-md flex items-center justify-between gap-3 hover:shadow-lg transition-all">
+        <a
+          href={statutoryPdf}
+          download="New Utkal Finance Limited _ Certified by Govt. of India.pdf"
+          className="bg-white rounded-xl p-3.5 sm:p-4 border border-blue-100 bg-gradient-to-r from-blue-50/50 to-indigo-50/50 shadow-md flex items-center justify-between gap-3 hover:shadow-lg hover:border-blue-300 transition-all group cursor-pointer"
+          title="Click to download official Statutory Form PDF"
+        >
           <div>
             <span className="text-[10px] font-bold uppercase tracking-wider text-blue-600 block">
               Statutory PDF
             </span>
-            <span className="text-sm font-extrabold text-blue-900 block mt-0.5 cursor-pointer hover:underline">
+            <span className="text-sm font-extrabold text-blue-900 block mt-0.5 group-hover:underline">
               Download Form
             </span>
           </div>
-          <div className="w-9 h-9 rounded-lg bg-blue-600 text-white flex items-center justify-center shrink-0 shadow-sm">
+          <div className="w-9 h-9 rounded-lg bg-blue-600 group-hover:bg-blue-700 text-white flex items-center justify-center shrink-0 shadow-sm transition-colors">
             <FileDown className="w-4 h-4" />
           </div>
-        </div>
+        </a>
       </div>
     </section>
   );
