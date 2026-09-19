@@ -6,6 +6,9 @@ import { Home } from '../pages/Home';
 import { About } from '../pages/About';
 import { Services } from '../pages/Services';
 import { LoanProducts } from '../pages/LoanProducts';
+import { Finance } from '../pages/Finance';
+import { RealEstate } from '../pages/RealEstate';
+import { Insurance } from '../pages/Insurance';
 import { Contact } from '../pages/Contact';
 import { Brochure } from '../pages/Brochure';
 import { Gallery } from '../pages/Gallery';
@@ -50,6 +53,9 @@ export function AppRoutes() {
         <Route path="about" element={<About />} />
         <Route path="services" element={<Services />} />
         <Route path="loans" element={<LoanProducts />} />
+        <Route path="finance" element={<Finance />} />
+        <Route path="real-estate" element={<RealEstate />} />
+        <Route path="insurance" element={<Insurance />} />
         <Route path="gallery" element={<Gallery />} />
         <Route path="contact" element={<Contact />} />
         <Route path="my-application" element={<MyApplication />} />

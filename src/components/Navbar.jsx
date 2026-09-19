@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import {
   Menu,
@@ -8,22 +8,24 @@ import {
   UserPlus,
   LogOut,
   ChevronRight,
+  ChevronDown,
 } from 'lucide-react';
 import { useAuth } from '../hooks/useAuth';
 import brandLogo from '../assets/image copy 7.png';
 
 export function Navbar({ onOpenApplyModal }) {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const [mobileProductsOpen, setMobileProductsOpen] = useState(false);
+  const [desktopProductsOpen, setDesktopProductsOpen] = useState(false);
+  const desktopDropdownRef = useRef(null);
+
   const location = useLocation();
   const { user, isAuthenticated, logout } = useAuth();
 
-  const navLinks = [
-    { name: 'About Us', path: '/about' },
-    // { name: 'My Application', path: '/my-application' },
-    { name: 'Become a Member', path: '/register' },
-    { name: 'Brochure', path: '/brochure' },
-    { name: 'Gallery', path: '/gallery' },
-    { name: 'Help & Support', path: '/contact' },
+  const productItems = [
+    { name: 'Finance', path: '/finance' },
+    { name: 'Real Estate', path: '/real-estate' },
+    { name: 'Insurance', path: '/insurance' },
   ];
 
   const isActive = (path) => {
@@ -31,8 +33,21 @@ export function Navbar({ onOpenApplyModal }) {
     return location.pathname.startsWith(path);
   };
 
+  const isProductsActive = productItems.some((item) => isActive(item.path));
+
+  // Close desktop dropdown when clicking outside
+  useEffect(() => {
+    const handleClickOutside = (event) => {
+      if (desktopDropdownRef.current && !desktopDropdownRef.current.contains(event.target)) {
+        setDesktopProductsOpen(false);
+      }
+    };
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, []);
+
   return (
-    <header className="sticky top-0 z-40 bg-white/98 backdrop-blur-md border-b border-slate-200/90 shadow-xs font-sans">
+    <header className="sticky top-0 z-40 bg-white/98 backdrop-blur-md border-b border-slate-200/90 shadow-xs font-sans select-none">
       {/* Main Navbar */}
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-3 flex items-center justify-between gap-4">
         
@@ -67,19 +82,94 @@ export function Navbar({ onOpenApplyModal }) {
 
         {/* Center: Desktop Navigation Links */}
         <nav className="hidden lg:flex items-center gap-6 xl:gap-8">
-          {navLinks.map((link) => (
-            <Link
-              key={link.name}
-              to={link.path}
-              className={`text-xs sm:text-sm font-bold transition-colors ${
-                isActive(link.path)
-                  ? 'text-blue-700 font-extrabold'
-                  : 'text-slate-700 hover:text-blue-700'
+          <Link
+            to="/about"
+            className={`text-xs sm:text-sm font-bold transition-colors ${
+              isActive('/about') ? 'text-blue-700 font-extrabold' : 'text-slate-700 hover:text-blue-700'
+            }`}
+          >
+            About Us
+          </Link>
+
+          {/* DESKTOP PRODUCTS DROPDOWN */}
+          <div 
+            className="relative" 
+            ref={desktopDropdownRef}
+            onMouseEnter={() => setDesktopProductsOpen(true)}
+            onMouseLeave={() => setDesktopProductsOpen(false)}
+          >
+            <button
+              type="button"
+              onClick={() => setDesktopProductsOpen(!desktopProductsOpen)}
+              className={`text-xs sm:text-sm font-bold transition-colors flex items-center gap-1 cursor-pointer py-1 ${
+                isProductsActive ? 'text-blue-700 font-extrabold' : 'text-slate-700 hover:text-blue-700'
               }`}
             >
-              {link.name}
-            </Link>
-          ))}
+              <span>Products</span>
+              <ChevronDown className={`w-3.5 h-3.5 transition-transform duration-200 ${desktopProductsOpen ? 'rotate-180 text-blue-700' : 'text-slate-400'}`} />
+            </button>
+
+            {desktopProductsOpen && (
+              <div className="absolute top-full left-0 mt-1 w-52 bg-white rounded-2xl border border-slate-200/90 shadow-xl py-2 z-50 text-left animate-fade-in">
+                <div className="px-3 pb-1.5 mb-1 border-b border-slate-100">
+                  <span className="text-[10px] font-extrabold tracking-widest text-slate-400 uppercase block">
+                    OUR PRODUCTS
+                  </span>
+                </div>
+                {productItems.map((prod) => (
+                  <Link
+                    key={prod.name}
+                    to={prod.path}
+                    onClick={() => setDesktopProductsOpen(false)}
+                    className={`flex items-center justify-between px-3.5 py-2.5 rounded-xl text-xs font-bold transition-colors mx-1 ${
+                      isActive(prod.path)
+                        ? 'bg-blue-50 text-blue-700 font-extrabold'
+                        : 'text-slate-700 hover:bg-slate-50 hover:text-blue-700'
+                    }`}
+                  >
+                    <span>{prod.name}</span>
+                    <ChevronRight className="w-3.5 h-3.5 text-slate-400" />
+                  </Link>
+                ))}
+              </div>
+            )}
+          </div>
+
+          <Link
+            to="/register"
+            className={`text-xs sm:text-sm font-bold transition-colors ${
+              isActive('/register') ? 'text-blue-700 font-extrabold' : 'text-slate-700 hover:text-blue-700'
+            }`}
+          >
+            Become a Member
+          </Link>
+
+          <Link
+            to="/brochure"
+            className={`text-xs sm:text-sm font-bold transition-colors ${
+              isActive('/brochure') ? 'text-blue-700 font-extrabold' : 'text-slate-700 hover:text-blue-700'
+            }`}
+          >
+            Brochure
+          </Link>
+
+          <Link
+            to="/gallery"
+            className={`text-xs sm:text-sm font-bold transition-colors ${
+              isActive('/gallery') ? 'text-blue-700 font-extrabold' : 'text-slate-700 hover:text-blue-700'
+            }`}
+          >
+            Gallery
+          </Link>
+
+          <Link
+            to="/contact"
+            className={`text-xs sm:text-sm font-bold transition-colors ${
+              isActive('/contact') ? 'text-blue-700 font-extrabold' : 'text-slate-700 hover:text-blue-700'
+            }`}
+          >
+            Help &amp; Support
+          </Link>
         </nav>
 
         {/* Right: Notification Bell & Action Buttons */}
@@ -117,7 +207,7 @@ export function Navbar({ onOpenApplyModal }) {
           {isAuthenticated ? (
             <button
               onClick={logout}
-              className="text-xs sm:text-sm font-semibold text-slate-500 hover:text-red-600 transition-colors ml-1"
+              className="text-xs sm:text-sm font-semibold text-slate-500 hover:text-red-600 transition-colors ml-1 cursor-pointer"
             >
               Sign Out
             </button>
@@ -135,7 +225,7 @@ export function Navbar({ onOpenApplyModal }) {
         <button
           type="button"
           onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
-          className="lg:hidden p-2 rounded-xl text-slate-700 hover:bg-slate-100 focus:outline-none"
+          className="lg:hidden p-2 rounded-xl text-slate-700 hover:bg-slate-100 focus:outline-none cursor-pointer"
           aria-label="Toggle menu"
         >
           {mobileMenuOpen ? <X className="w-6 h-6" /> : <Menu className="w-6 h-6" />}
@@ -144,23 +234,106 @@ export function Navbar({ onOpenApplyModal }) {
 
       {/* Mobile Navigation Drawer */}
       {mobileMenuOpen && (
-        <div className="lg:hidden bg-white border-t border-slate-200 px-4 pt-3 pb-6 space-y-3 shadow-xl animate-fade-in">
+        <div className="lg:hidden bg-white border-t border-slate-200 px-4 pt-3 pb-6 space-y-3 shadow-xl animate-fade-in text-left">
           <nav className="flex flex-col gap-1">
-            {navLinks.map((link) => (
-              <Link
-                key={link.name}
-                to={link.path}
-                onClick={() => setMobileMenuOpen(false)}
-                className={`flex items-center justify-between px-4 py-3 rounded-xl text-sm font-bold ${
-                  isActive(link.path)
-                    ? 'bg-blue-50 text-blue-700'
+            <Link
+              to="/about"
+              onClick={() => setMobileMenuOpen(false)}
+              className={`flex items-center justify-between px-4 py-3 rounded-xl text-sm font-bold ${
+                isActive('/about') ? 'bg-blue-50 text-blue-700' : 'text-slate-700 hover:bg-slate-50'
+              }`}
+            >
+              <span>About Us</span>
+              <ChevronRight className="w-4 h-4 text-slate-400" />
+            </Link>
+
+            {/* MOBILE PRODUCTS ACCORDION */}
+            <div>
+              <button
+                type="button"
+                onClick={() => setMobileProductsOpen(!mobileProductsOpen)}
+                className={`flex items-center justify-between w-full px-4 py-3 rounded-xl text-sm font-bold transition-colors cursor-pointer ${
+                  isProductsActive || mobileProductsOpen
+                    ? 'bg-blue-50/80 text-blue-700'
                     : 'text-slate-700 hover:bg-slate-50'
                 }`}
               >
-                <span>{link.name}</span>
-                <ChevronRight className="w-4 h-4 text-slate-400" />
-              </Link>
-            ))}
+                <span>Products</span>
+                <ChevronDown
+                  className={`w-4 h-4 text-slate-500 transition-transform duration-200 ${
+                    mobileProductsOpen ? 'rotate-180 text-blue-700' : ''
+                  }`}
+                />
+              </button>
+
+              {/* Accordion Submenu Items */}
+              {mobileProductsOpen && (
+                <div className="ml-3 mt-1 pl-3 border-l-2 border-blue-200 space-y-1 py-1">
+                  {productItems.map((item) => (
+                    <Link
+                      key={item.name}
+                      to={item.path}
+                      onClick={() => {
+                        setMobileMenuOpen(false);
+                        setMobileProductsOpen(false);
+                      }}
+                      className={`flex items-center gap-2 px-3.5 py-2.5 rounded-xl text-xs font-bold transition-colors ${
+                        isActive(item.path)
+                          ? 'bg-blue-600 text-white shadow-xs'
+                          : 'text-slate-700 hover:bg-blue-50 hover:text-blue-700'
+                      }`}
+                    >
+                      <span className="text-blue-500 font-extrabold text-sm">›</span>
+                      <span>{item.name}</span>
+                    </Link>
+                  ))}
+                </div>
+              )}
+            </div>
+
+            <Link
+              to="/register"
+              onClick={() => setMobileMenuOpen(false)}
+              className={`flex items-center justify-between px-4 py-3 rounded-xl text-sm font-bold ${
+                isActive('/register') ? 'bg-blue-50 text-blue-700' : 'text-slate-700 hover:bg-slate-50'
+              }`}
+            >
+              <span>Become a Member</span>
+              <ChevronRight className="w-4 h-4 text-slate-400" />
+            </Link>
+
+            <Link
+              to="/brochure"
+              onClick={() => setMobileMenuOpen(false)}
+              className={`flex items-center justify-between px-4 py-3 rounded-xl text-sm font-bold ${
+                isActive('/brochure') ? 'bg-blue-50 text-blue-700' : 'text-slate-700 hover:bg-slate-50'
+              }`}
+            >
+              <span>Brochure</span>
+              <ChevronRight className="w-4 h-4 text-slate-400" />
+            </Link>
+
+            <Link
+              to="/gallery"
+              onClick={() => setMobileMenuOpen(false)}
+              className={`flex items-center justify-between px-4 py-3 rounded-xl text-sm font-bold ${
+                isActive('/gallery') ? 'bg-blue-50 text-blue-700' : 'text-slate-700 hover:bg-slate-50'
+              }`}
+            >
+              <span>Gallery</span>
+              <ChevronRight className="w-4 h-4 text-slate-400" />
+            </Link>
+
+            <Link
+              to="/contact"
+              onClick={() => setMobileMenuOpen(false)}
+              className={`flex items-center justify-between px-4 py-3 rounded-xl text-sm font-bold ${
+                isActive('/contact') ? 'bg-blue-50 text-blue-700' : 'text-slate-700 hover:bg-slate-50'
+              }`}
+            >
+              <span>Help &amp; Support</span>
+              <ChevronRight className="w-4 h-4 text-slate-400" />
+            </Link>
           </nav>
 
           <div className="pt-3 border-t border-slate-100 flex flex-col gap-2.5">
@@ -188,7 +361,7 @@ export function Navbar({ onOpenApplyModal }) {
                   logout();
                   setMobileMenuOpen(false);
                 }}
-                className="w-full text-center text-xs font-semibold text-slate-500 py-2 hover:text-red-600"
+                className="w-full text-center text-xs font-semibold text-slate-500 py-2 hover:text-red-600 cursor-pointer"
               >
                 Sign Out
               </button>
@@ -207,4 +380,6 @@ export function Navbar({ onOpenApplyModal }) {
     </header>
   );
 }
+
+export default Navbar;
 
