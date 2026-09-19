@@ -273,9 +273,6 @@ export function Footer({ onOpenApplyModal }) {
                 Briskode Technology Pvt. Ltd.
               </a>
             </p>
-            <p className="text-[11px] text-slate-600">
-              Site best viewed in modern browsers (Chrome 58+, Edge, Firefox 53+, Safari 10.1+).
-            </p>
           </div>
 
           {/* Social Links & Netlify indicator */}
