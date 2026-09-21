@@ -47,7 +47,7 @@ export function AdminLogin() {
               <img src={brandLogo} alt="Logo" className="w-full h-full object-contain" />
             </div>
             <div>
-              <h1 className="text-base font-black text-white tracking-tight">NEW UTKAL <span className="text-blue-400">FINANCE</span></h1>
+              <h1 className="text-base font-black text-white tracking-tight">NEW UTKAL <span className="text-blue-400">FINANCE LTD.</span></h1>
               <p className="text-[10px] text-slate-400 font-extrabold uppercase tracking-widest">Nidhi Limited Portal</p>
             </div>
           </div>

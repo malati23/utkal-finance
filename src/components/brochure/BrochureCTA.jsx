@@ -27,7 +27,7 @@ export function BrochureCTA() {
         <div className="relative z-10 max-w-3xl mx-auto space-y-4 sm:space-y-6">
           <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-blue-500/10 border border-blue-400/30 text-blue-300 text-xs font-bold uppercase tracking-wider">
             <ShieldCheck className="w-4 h-4 text-emerald-400" />
-            <span>JOIN NEW UTKAL FINANCE</span>
+            <span>JOIN NEW UTKAL FINANCE LTD.</span>
           </div>
 
           <h2 className="text-3xl sm:text-4xl md:text-5xl font-extrabold tracking-tight leading-tight text-white">

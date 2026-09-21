@@ -3,9 +3,10 @@ import { UserCheck } from 'lucide-react';
 import mdPhoto from '../../assets/image copy 9.png';
 import sureshPhoto from '../../assets/WhatsApp Image 2026-09-19 at 12.41.27.jpeg';
 import hemantaPhoto from '../../assets/WhatsApp Image 2026-09-19 at 13.58.06.jpeg';
-import ajitBhuriaPhoto from '../../assets/image copy 18.png';
+import antarjamiPhoto from '../../assets/image copy 25.png';
 import govindaPhoto from '../../assets/image copy 19.png';
 import ajitBhueiaPhoto from '../../assets/WhatsApp Image 2026-09-19 at 13.55.28.jpeg';
+import mornalPhoto from '../../assets/image copy 26.png';
 
 export function LeadershipTeam() {
   const leaders = [
@@ -26,8 +27,8 @@ export function LeadershipTeam() {
     },
     {
       id: 4,
-      image: ajitBhuriaPhoto,
-      name: "Ajit Bhuria",
+      image: antarjamiPhoto,
+      name: "Antarjami Behera",
     },
     {
       id: 5,
@@ -38,6 +39,11 @@ export function LeadershipTeam() {
       id: 6,
       image: ajitBhueiaPhoto,
       name: "Ajit Kumar Bhueia",
+    },
+    {
+      id: 7,
+      image: mornalPhoto,
+      name: "Mornal Kumar Mohapatra",
     },
   ];
 

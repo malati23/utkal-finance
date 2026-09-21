@@ -35,7 +35,7 @@ export function AboutIntroduction() {
 
           <div className="space-y-4 text-slate-600 text-sm leading-relaxed font-normal">
             <p>
-              At New Utkal Finance, we believe financial services should empower individuals and small business owners rather than burden them with opaque terms. Founded on principles of ethical credit distribution and community participation, we serve as a dependable partner for families across Eastern India.
+              At New Utkal Finance Ltd., we believe financial services should empower individuals and small business owners rather than burden them with opaque terms. Founded on principles of ethical credit distribution and community participation, we serve as a dependable partner for families across Eastern India.
             </p>
             <p>
               Whether assisting members with personal emergency credit, business expansion loans, or competitive term deposit returns, our approach combines modern digital convenience with deep-rooted institutional integrity.

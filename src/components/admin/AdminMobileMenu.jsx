@@ -6,13 +6,15 @@ import {
   Users,
   FolderCheck,
   CreditCard,
+  PiggyBank,
   Bell,
   Image as ImageIcon,
   UserCheck,
   User,
   LogOut,
   BookOpen,
-  X
+  X,
+  FileSpreadsheet
 } from 'lucide-react';
 import { useAdmin } from '../../context/AdminContext';
 import brandLogo from '../../assets/image copy 7.png';
@@ -34,7 +36,9 @@ export function AdminMobileMenu({ isOpen, onClose }) {
     { label: 'Applications Desk', path: '/admin-dashboard/applications', icon: FileText },
     { label: 'Member Management', path: '/admin-dashboard/members', icon: Users },
     { label: 'Documents & Audit', path: '/admin-dashboard/documents', icon: FolderCheck },
-    { label: 'Payments & Transactions', path: '/admin-dashboard/payments', icon: CreditCard },
+    { label: 'Deposit Management', path: '/admin-dashboard/deposits', icon: PiggyBank },
+    { label: 'Payments', path: '/admin-dashboard/payments', icon: CreditCard },
+    { label: 'Transactions', path: '/admin-dashboard/transactions', icon: FileSpreadsheet },
     { label: 'Notices & Circulars', path: '/admin-dashboard/notices', icon: Bell },
     { label: 'Gallery Management', path: '/admin-dashboard/gallery', icon: ImageIcon },
     { label: 'Company Brochure', path: '/brochure', icon: BookOpen },
@@ -62,7 +66,7 @@ export function AdminMobileMenu({ isOpen, onClose }) {
               <img src={brandLogo} alt="New Utkal Finance Emblem" className="w-full h-full object-contain" />
             </div>
             <div>
-              <span className="font-black text-xs text-white block tracking-tight">NEW UTKAL FINANCE</span>
+              <span className="font-black text-xs text-white block tracking-tight">NEW UTKAL FINANCE LTD.</span>
               <span className="text-[9px] text-slate-400 font-extrabold uppercase tracking-widest block">ADMIN PORTAL</span>
             </div>
           </div>

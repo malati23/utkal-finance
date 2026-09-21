@@ -1,4 +1,4 @@
-// Frontend-only demo authentication. Production authentication must use a secure backend.
+import { INITIAL_APPLICATIONS } from '../data/adminMockData';
 
 const USERS_KEY = 'users';
 const CURRENT_USER_KEY = 'currentUser';
@@ -105,7 +105,12 @@ export function getCurrentUser() {
 // ==========================================
 
 export function getApplications() {
-  return getItem(APPLICATIONS_KEY, []);
+  const apps = getItem(APPLICATIONS_KEY, null);
+  if (!apps) {
+    setItem(APPLICATIONS_KEY, INITIAL_APPLICATIONS);
+    return INITIAL_APPLICATIONS;
+  }
+  return apps;
 }
 
 export function generateApplicationId() {

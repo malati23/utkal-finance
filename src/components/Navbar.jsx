@@ -91,7 +91,7 @@ export function Navbar({ onOpenApplyModal }) {
                 NEW UTKAL
               </span>
               <span className="text-sm sm:text-base xl:text-lg font-black text-blue-800 tracking-tight whitespace-nowrap">
-                FINANCE
+                FINANCE LTD.
               </span>
             </div>
             <span className="text-[8px] sm:text-[9px] xl:text-[10px] font-extrabold text-slate-500 tracking-widest uppercase mt-0.5 block whitespace-nowrap">

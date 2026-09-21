@@ -23,9 +23,11 @@ import { Applications } from '../pages/admin/Applications';
 import { ApplicationDetails } from '../pages/admin/ApplicationDetails';
 import { Members } from '../pages/admin/Members';
 import { MemberDetails } from '../pages/admin/MemberDetails';
+import { DepositManagement } from '../pages/admin/DepositManagement';
 import { Payments } from '../pages/admin/Payments';
+import { TransactionsManagement } from '../pages/admin/TransactionsManagement';
 import { Documents } from '../pages/admin/Documents';
-import { Notices } from '../pages/admin/Notices';
+import { NoticesManagement } from '../pages/admin/NoticesManagement';
 import { GalleryManagement } from '../pages/admin/GalleryManagement';
 import { Team } from '../pages/admin/Team';
 import { AdminProfile } from '../pages/admin/AdminProfile';
@@ -75,6 +77,9 @@ export function AppRoutes() {
       {/* Admin Portal Routes */}
       <Route path="admin-login" element={<AdminLogin />} />
       <Route path="admin" element={<Navigate to="/admin-dashboard" replace />} />
+      <Route path="admin/deposits" element={<Navigate to="/admin-dashboard/deposits" replace />} />
+      <Route path="admin/transactions" element={<Navigate to="/admin-dashboard/transactions" replace />} />
+      <Route path="admin/notices" element={<Navigate to="/admin-dashboard/notices" replace />} />
 
       <Route path="admin-dashboard" element={<AdminDashboardLayout />}>
         <Route index element={<AdminDashboard />} />
@@ -82,9 +87,11 @@ export function AppRoutes() {
         <Route path="applications/:id" element={<ApplicationDetails />} />
         <Route path="members" element={<Members />} />
         <Route path="members/:memberId" element={<MemberDetails />} />
+        <Route path="deposits" element={<DepositManagement />} />
         <Route path="payments" element={<Payments />} />
+        <Route path="transactions" element={<TransactionsManagement />} />
         <Route path="documents" element={<Documents />} />
-        <Route path="notices" element={<Notices />} />
+        <Route path="notices" element={<NoticesManagement />} />
         <Route path="gallery" element={<GalleryManagement />} />
         <Route path="team" element={<Team />} />
         <Route path="profile" element={<AdminProfile />} />

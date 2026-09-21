@@ -6,12 +6,14 @@ import {
   Users,
   FolderCheck,
   CreditCard,
+  PiggyBank,
   Bell,
   Image as ImageIcon,
   UserCheck,
   User,
   LogOut,
-  BookOpen
+  BookOpen,
+  FileSpreadsheet
 } from 'lucide-react';
 import { useAdmin } from '../../context/AdminContext';
 import brandLogo from '../../assets/image copy 7.png';
@@ -43,13 +45,20 @@ export function AdminSidebar() {
     {
       title: 'FINANCE',
       items: [
+        { label: 'Deposit Management', path: '/admin-dashboard/deposits', icon: PiggyBank },
         { label: 'Payments', path: '/admin-dashboard/payments', icon: CreditCard },
+        { label: 'Transactions', path: '/admin-dashboard/transactions', icon: FileSpreadsheet },
+      ],
+    },
+    {
+      title: 'COMMUNICATION',
+      items: [
+        { label: 'Notices', path: '/admin-dashboard/notices', icon: Bell },
       ],
     },
     {
       title: 'CONTENT & RESOURCES',
       items: [
-        { label: 'Notices', path: '/admin-dashboard/notices', icon: Bell },
         { label: 'Gallery', path: '/admin-dashboard/gallery', icon: ImageIcon },
         { label: 'Company Brochure', path: '/brochure', icon: BookOpen },
       ],
@@ -79,7 +88,7 @@ export function AdminSidebar() {
             onClick={() => navigate('/')}
             className="text-sm font-black tracking-tight text-white cursor-pointer leading-none flex items-center gap-1"
           >
-            NEW UTKAL <span className="text-blue-400">FINANCE</span>
+            NEW UTKAL <span className="text-blue-400">FINANCE LTD.</span>
           </h1>
           <div className="flex items-center gap-1 pt-0.5">
             <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />

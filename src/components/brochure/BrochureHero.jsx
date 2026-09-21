@@ -243,7 +243,7 @@ export function BrochureHero() {
             <div>
               <div className="flex items-center gap-1 text-sm sm:text-base font-black tracking-tight leading-none">
                 <span className="text-white">NEW UTKAL</span>
-                <span className="text-blue-400">FINANCE</span>
+                <span className="text-blue-400">FINANCE LTD.</span>
               </div>
               <span className="text-[9px] font-extrabold text-slate-400 tracking-widest uppercase mt-0.5 block">
                 TRUST • GROWTH • PROSPERITY

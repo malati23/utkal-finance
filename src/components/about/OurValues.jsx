@@ -52,7 +52,7 @@ export function OurValues() {
             </h2>
 
             <p className="text-slate-600 text-sm leading-relaxed font-normal">
-              Choosing the right financial partner means selecting clarity over complexity. Here is why thousands of associate members trust New Utkal Finance:
+              Choosing the right financial partner means selecting clarity over complexity. Here is why thousands of associate members trust New Utkal Finance Ltd.:
             </p>
           </div>
 

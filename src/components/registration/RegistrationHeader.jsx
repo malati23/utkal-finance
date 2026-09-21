@@ -37,7 +37,7 @@ export function RegistrationHeader() {
                     onClick={() => navigate('/')}
                     className="font-black text-sm sm:text-base text-slate-900 tracking-tight leading-none cursor-pointer"
                   >
-                    NEW UTKAL <span className="text-blue-700">FINANCE</span>
+                    NEW UTKAL <span className="text-blue-700">FINANCE LTD.</span>
                   </span>
                   <span className="hidden sm:inline-flex items-center gap-1 px-2 py-0.5 rounded-md bg-emerald-50 border border-emerald-200 text-emerald-800 text-[10px] font-bold">
                     <CheckCircle2 className="w-3 h-3 text-emerald-600" />

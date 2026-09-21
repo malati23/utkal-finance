@@ -2,7 +2,6 @@ import React, { createContext, useContext, useState, useEffect, useCallback } fr
 import {
   getApplications,
   getMembers,
-  getPayments,
   getDocuments,
   updateApplicationStatus as storageUpdateApplicationStatus,
   updateMemberStatus as storageUpdateMemberStatus,
@@ -11,7 +10,32 @@ import {
   logoutAdminSession,
 } from '../utils/storage';
 import {
-  INITIAL_NOTICES,
+  getDeposits,
+  addDeposit as storageAddDeposit,
+  updateDeposit as storageUpdateDeposit,
+  updateDepositStatus as storageUpdateDepositStatus,
+} from '../utils/depositStorage';
+import {
+  getPayments,
+  addPayment as storageAddPayment,
+  updatePayment as storageUpdatePayment,
+  verifyPayment as storageVerifyPayment,
+  refundPayment as storageRefundPayment,
+} from '../utils/paymentStorage';
+import {
+  getTransactions,
+  addTransaction as storageAddTransaction,
+  updateTransaction as storageUpdateTransaction,
+} from '../utils/transactionStorage';
+import {
+  getNotices,
+  addNotice as storageAddNotice,
+  updateNotice as storageUpdateNotice,
+  publishNotice as storagePublishNotice,
+  archiveNotice as storageArchiveNotice,
+  deleteNotice as storageDeleteNotice,
+} from '../utils/noticeStorage';
+import {
   INITIAL_GALLERY,
   INITIAL_TEAM,
 } from '../data/adminMockData';
@@ -36,7 +60,9 @@ export const AdminProvider = ({ children }) => {
   const [members, setMembers] = useState([]);
   const [payments, setPayments] = useState([]);
   const [documents, setDocuments] = useState([]);
-  const [notices, setNotices] = useState(INITIAL_NOTICES);
+  const [deposits, setDeposits] = useState([]);
+  const [transactions, setTransactions] = useState([]);
+  const [notices, setNotices] = useState([]);
   const [galleryItems, setGalleryItems] = useState(INITIAL_GALLERY);
   const [teamMembers, setTeamMembers] = useState(INITIAL_TEAM);
 
@@ -45,6 +71,9 @@ export const AdminProvider = ({ children }) => {
     setMembers(getMembers());
     setPayments(getPayments());
     setDocuments(getDocuments());
+    setDeposits(getDeposits());
+    setTransactions(getTransactions());
+    setNotices(getNotices());
   }, []);
 
   useEffect(() => {
@@ -90,6 +119,59 @@ export const AdminProvider = ({ children }) => {
     refreshData();
   };
 
+  const createNewDeposit = (depositData) => {
+    const created = storageAddDeposit(depositData);
+    refreshData();
+    return created;
+  };
+
+  const updateDepositRecord = (id, updatedFields) => {
+    const updated = storageUpdateDeposit(id, updatedFields);
+    refreshData();
+    return updated;
+  };
+
+  const updateDepositStatus = (id, newStatus) => {
+    storageUpdateDepositStatus(id, newStatus);
+    refreshData();
+  };
+
+  const createNewPayment = (paymentData) => {
+    const created = storageAddPayment(paymentData);
+    refreshData();
+    return created;
+  };
+
+  const updatePaymentRecord = (id, updatedFields) => {
+    const updated = storageUpdatePayment(id, updatedFields);
+    refreshData();
+    return updated;
+  };
+
+  const verifyPaymentRecord = (id) => {
+    const updated = storageVerifyPayment(id);
+    refreshData();
+    return updated;
+  };
+
+  const refundPaymentRecord = (id) => {
+    const updated = storageRefundPayment(id);
+    refreshData();
+    return updated;
+  };
+
+  const createNewTransaction = (transactionData) => {
+    const created = storageAddTransaction(transactionData);
+    refreshData();
+    return created;
+  };
+
+  const updateTransactionRecord = (id, updatedFields) => {
+    const updated = storageUpdateTransaction(id, updatedFields);
+    refreshData();
+    return updated;
+  };
+
   const verifyDocument = (id, newStatus) => {
     setDocuments((prev) =>
       prev.map((doc) => (doc.id === id ? { ...doc, status: newStatus } : doc))
@@ -97,22 +179,39 @@ export const AdminProvider = ({ children }) => {
   };
 
   // Notices CRUD
-  const addNotice = (notice) => {
-    const newNotice = {
-      ...notice,
-      id: `NOT-${Date.now()}`,
-      date: new Date().toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' }),
-    };
-    setNotices((prev) => [newNotice, ...prev]);
+  const createNewNotice = (noticeData) => {
+    const created = storageAddNotice(noticeData);
+    refreshData();
+    return created;
   };
 
-  const updateNotice = (id, updated) => {
-    setNotices((prev) => prev.map((n) => (n.id === id ? { ...n, ...updated } : n)));
+  const updateNoticeRecord = (id, updatedFields) => {
+    const updated = storageUpdateNotice(id, updatedFields);
+    refreshData();
+    return updated;
   };
 
-  const deleteNotice = (id) => {
-    setNotices((prev) => prev.filter((n) => n.id !== id));
+  const publishNoticeRecord = (id) => {
+    const updated = storagePublishNotice(id);
+    refreshData();
+    return updated;
   };
+
+  const archiveNoticeRecord = (id) => {
+    const updated = storageArchiveNotice(id);
+    refreshData();
+    return updated;
+  };
+
+  const deleteNoticeRecord = (id) => {
+    const res = storageDeleteNotice(id);
+    refreshData();
+    return res;
+  };
+
+  const addNotice = (notice) => createNewNotice(notice);
+  const updateNotice = (id, updated) => updateNoticeRecord(id, updated);
+  const deleteNotice = (id) => deleteNoticeRecord(id);
 
   // Gallery CRUD
   const addGalleryItem = (item) => {
@@ -161,12 +260,29 @@ export const AdminProvider = ({ children }) => {
         members,
         payments,
         documents,
+        deposits,
+        transactions,
         notices,
         galleryItems,
         teamMembers,
         updateApplicationStatus,
         updateMemberStatus,
+        createNewDeposit,
+        updateDepositRecord,
+        updateDepositStatus,
+        createNewPayment,
+        updatePaymentRecord,
+        verifyPaymentRecord,
+        refundPaymentRecord,
+        createNewTransaction,
+        updateTransactionRecord,
+        refreshData,
         verifyDocument,
+        createNewNotice,
+        updateNoticeRecord,
+        publishNoticeRecord,
+        archiveNoticeRecord,
+        deleteNoticeRecord,
         addNotice,
         updateNotice,
         deleteNotice,
