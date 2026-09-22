@@ -18,6 +18,7 @@ import { Register } from '../pages/Register';
 // Admin Imports
 import { AdminLogin } from '../pages/admin/AdminLogin';
 import { AdminDashboardLayout } from '../pages/admin/AdminDashboardLayout';
+import { ProtectedRoute } from '../components/auth/ProtectedRoute';
 import { AdminDashboard } from '../pages/admin/AdminDashboard';
 import { Applications } from '../pages/admin/Applications';
 import { ApplicationDetails } from '../pages/admin/ApplicationDetails';
@@ -81,7 +82,14 @@ export function AppRoutes() {
       <Route path="admin/transactions" element={<Navigate to="/admin-dashboard/transactions" replace />} />
       <Route path="admin/notices" element={<Navigate to="/admin-dashboard/notices" replace />} />
 
-      <Route path="admin-dashboard" element={<AdminDashboardLayout />}>
+      <Route
+        path="admin-dashboard"
+        element={
+          <ProtectedRoute>
+            <AdminDashboardLayout />
+          </ProtectedRoute>
+        }
+      >
         <Route index element={<AdminDashboard />} />
         <Route path="applications" element={<Applications />} />
         <Route path="applications/:id" element={<ApplicationDetails />} />

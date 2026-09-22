@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Outlet, Navigate } from 'react-router-dom';
+import { Outlet, Navigate, useLocation } from 'react-router-dom';
 import { useAdmin } from '../../context/AdminContext';
 import { AdminSidebar } from '../../components/admin/AdminSidebar';
 import { AdminHeader } from '../../components/admin/AdminHeader';
@@ -7,10 +7,11 @@ import { AdminMobileMenu } from '../../components/admin/AdminMobileMenu';
 
 export function AdminDashboardLayout() {
   const { isAuthenticated } = useAdmin();
+  const location = useLocation();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
   if (!isAuthenticated) {
-    return <Navigate to="/admin-login" replace />;
+    return <Navigate to="/admin-login" state={{ from: location }} replace />;
   }
 
   return (

@@ -5,10 +5,12 @@ import {
   getDocuments,
   updateApplicationStatus as storageUpdateApplicationStatus,
   updateMemberStatus as storageUpdateMemberStatus,
-  getAdminSession,
-  loginAdminSession,
-  logoutAdminSession,
 } from '../utils/storage';
+import {
+  isAdminAuthenticated,
+  adminLogin as authAdminLogin,
+  adminLogout as authAdminLogout,
+} from '../auth/adminAuth';
 import {
   getDeposits,
   addDeposit as storageAddDeposit,
@@ -44,7 +46,7 @@ const AdminContext = createContext();
 
 export const AdminProvider = ({ children }) => {
   const [isAuthenticated, setIsAuthenticated] = useState(() => {
-    return !!getAdminSession() || localStorage.getItem('nuf_admin_auth') === 'true';
+    return isAdminAuthenticated();
   });
 
   const [adminUser, setAdminUser] = useState({
@@ -81,7 +83,7 @@ export const AdminProvider = ({ children }) => {
 
     const handleStorageChange = () => {
       refreshData();
-      setIsAuthenticated(!!getAdminSession() || localStorage.getItem('nuf_admin_auth') === 'true');
+      setIsAuthenticated(isAdminAuthenticated());
     };
 
     window.addEventListener('storage', handleStorageChange);
@@ -94,18 +96,15 @@ export const AdminProvider = ({ children }) => {
   }, [refreshData]);
 
   const loginAdmin = (email, password) => {
-    if (email === 'admin@newutkalfinance.com' && password === 'Admin@123') {
-      loginAdminSession();
-      localStorage.setItem('nuf_admin_auth', 'true');
+    const res = authAdminLogin(email, password);
+    if (res.success) {
       setIsAuthenticated(true);
-      return { success: true };
     }
-    return { success: false, message: 'Invalid Admin Credentials' };
+    return res;
   };
 
   const logoutAdmin = () => {
-    logoutAdminSession();
-    localStorage.removeItem('nuf_admin_auth');
+    authAdminLogout();
     setIsAuthenticated(false);
   };
 
