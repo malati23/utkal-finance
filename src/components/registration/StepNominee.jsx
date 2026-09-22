@@ -1,14 +1,13 @@
-import React from 'react';
 import { FormSection } from './FormSection';
 import { FormInput } from './FormInput';
 import { FormSelect } from './FormSelect';
+import { DatePicker } from './DatePicker';
 import { TITLE_OPTIONS, NOMINEE_RELATIONSHIP_OPTIONS } from '../../data/registrationOptions';
 import { Users, Calendar, ShieldAlert } from 'lucide-react';
 
 export function StepNominee({ data = {}, errors = {}, onChange }) {
   // Helper to handle DOB change & calculate age
-  const handleDobChange = (e) => {
-    const dobValue = e.target.value;
+  const handleDobChange = (dobValue) => {
     let calculatedAge = '';
     let isMinor = false;
 
@@ -99,13 +98,13 @@ export function StepNominee({ data = {}, errors = {}, onChange }) {
         {/* ROW 2: 3 COLUMNS ON DESKTOP */}
         <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
           {/* Nominee Date of Birth */}
-          <FormInput
+          <DatePicker
             label="Nominee Date of Birth"
             name="dob"
-            type="date"
             value={data.dob}
             onChange={handleDobChange}
-            icon={Calendar}
+            minYear={1940}
+            maxYear={2026}
             error={errors.dob}
           />
 

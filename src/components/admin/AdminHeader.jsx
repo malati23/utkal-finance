@@ -56,9 +56,14 @@ export function AdminHeader({ onToggleMobileMenu }) {
             <div className="w-7 h-7 rounded-lg bg-slate-900 p-0.5 border border-slate-700 shrink-0">
               <img src={brandLogo} alt="New Utkal Finance Emblem" className="w-full h-full object-contain" />
             </div>
-            <span className="text-xs font-black text-slate-900 tracking-tight truncate hidden xs:block sm:block">
-              NEW UTKAL FINANCE
-            </span>
+            <div className="hidden xs:block sm:block">
+              <span className="text-xs font-black text-slate-900 tracking-tight block leading-tight">
+                NEW UTKAL <span className="text-blue-700">FINANCE LTD.</span>
+              </span>
+              <span className="text-[8.5px] font-extrabold text-slate-400 tracking-wider uppercase block leading-none">
+                TRUST • GROWTH • PROSPERITY
+              </span>
+            </div>
           </div>
 
           {/* DESKTOP SEARCH BAR */}

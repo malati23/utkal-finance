@@ -3,7 +3,6 @@ import { Link, useLocation } from 'react-router-dom';
 import {
   Menu,
   X,
-  Shield,
   Bell,
   UserPlus,
   ChevronRight,
@@ -227,32 +226,6 @@ export function Navbar({ onOpenApplyModal }) {
             <UserPlus className="w-3.5 h-3.5 xl:w-4 xl:h-4" />
             <span>Join</span>
           </Link>
-
-          {/* Console Button */}
-          <Link
-            to="/admin"
-            className="bg-[#0B1528] hover:bg-slate-900 text-white font-bold text-xs xl:text-sm px-3.5 py-2 xl:px-4.5 xl:py-2.5 rounded-xl shadow-md transition-all flex items-center gap-1.5 border border-slate-800 whitespace-nowrap"
-          >
-            <Shield className="w-3.5 h-3.5 xl:w-4 xl:h-4 text-amber-400" />
-            <span>Console</span>
-          </Link>
-
-          {/* Sign Out / Sign In Link */}
-          {isAuthenticated ? (
-            <button
-              onClick={logout}
-              className="text-xs xl:text-sm font-semibold text-slate-500 hover:text-red-600 transition-colors ml-1 cursor-pointer whitespace-nowrap"
-            >
-              Sign Out
-            </button>
-          ) : (
-            <Link
-              to="/login"
-              className="text-xs xl:text-sm font-semibold text-slate-500 hover:text-slate-800 transition-colors ml-1 whitespace-nowrap"
-            >
-              Sign In
-            </Link>
-          )}
         </div>
 
         {/* Mobile / Tablet menu toggle (visible below XL breakpoint) */}
@@ -387,35 +360,6 @@ export function Navbar({ onOpenApplyModal }) {
               <UserPlus className="w-4 h-4" />
               <span>Join Utkal Finance</span>
             </Link>
-
-            <Link
-              to="/admin"
-              onClick={() => setMobileMenuOpen(false)}
-              className="w-full bg-[#0B1528] text-white font-bold py-3 px-4 rounded-xl shadow-md flex items-center justify-center gap-2"
-            >
-              <Shield className="w-4 h-4 text-amber-400" />
-              <span>Admin Console</span>
-            </Link>
-
-            {isAuthenticated ? (
-              <button
-                onClick={() => {
-                  logout();
-                  setMobileMenuOpen(false);
-                }}
-                className="w-full text-center text-xs font-semibold text-slate-500 py-2 hover:text-red-600 cursor-pointer"
-              >
-                Sign Out
-              </button>
-            ) : (
-              <Link
-                to="/login"
-                onClick={() => setMobileMenuOpen(false)}
-                className="w-full text-center text-xs font-semibold text-slate-500 py-2 hover:text-slate-900"
-              >
-                Sign In
-              </Link>
-            )}
           </div>
         </div>
       )}

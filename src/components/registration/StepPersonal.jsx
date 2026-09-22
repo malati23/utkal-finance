@@ -2,6 +2,7 @@ import React from 'react';
 import { FormSection } from './FormSection';
 import { FormInput } from './FormInput';
 import { FormSelect } from './FormSelect';
+import { DatePicker } from './DatePicker';
 import {
   TITLE_OPTIONS,
   RELATIONSHIP_PREFIX_OPTIONS,
@@ -16,8 +17,7 @@ import { User, Calendar, Briefcase, GraduationCap } from 'lucide-react';
 
 export function StepPersonal({ data = {}, errors = {}, onChange }) {
   // Helper to handle DOB change & auto calculate age
-  const handleDobChange = (e) => {
-    const dobValue = e.target.value;
+  const handleDobChange = (dobValue) => {
     let calculatedAge = '';
 
     if (dobValue) {
@@ -108,13 +108,13 @@ export function StepPersonal({ data = {}, errors = {}, onChange }) {
         />
 
         {/* Date of Birth */}
-        <FormInput
+        <DatePicker
           label="Date of Birth"
           name="dob"
-          type="date"
           value={data.dob}
           onChange={handleDobChange}
-          icon={Calendar}
+          minYear={1940}
+          maxYear={2026}
           required
           error={errors.dob}
         />

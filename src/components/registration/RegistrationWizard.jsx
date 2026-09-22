@@ -55,10 +55,12 @@ export function RegistrationWizard({ activeStep = 1, onQuickFillTrigger }) {
       commState: 'Odisha',
       commPincode: '',
       commCountry: 'India',
+      mobile: '9861374251',
+      email: 'applicant@utkalfinance.com',
     },
     account: {
-      mobile: '',
-      email: '',
+      mobile: '9861374251',
+      email: 'applicant@utkalfinance.com',
       password: '',
       confirmPassword: '',
       membershipType: 'Associate Member',
@@ -213,6 +215,12 @@ export function RegistrationWizard({ activeStep = 1, onQuickFillTrigger }) {
 
     if (step === 2) {
       const a = formData.address;
+      if (!a.mobile || !validatePhone(a.mobile)) {
+        newErrors.mobile = 'Valid 10-digit Indian mobile number required';
+      }
+      if (!a.email || !validateEmail(a.email)) {
+        newErrors.email = 'Valid email address required';
+      }
       if (!a.address1 || a.address1.trim().length < 3) newErrors.address1 = 'Address Line 1 is required';
       if (!a.district || a.district.trim().length < 2) newErrors.district = 'District is required';
       if (!a.state) newErrors.state = 'State is required';
@@ -227,12 +235,6 @@ export function RegistrationWizard({ activeStep = 1, onQuickFillTrigger }) {
 
     if (step === 3) {
       const acc = formData.account;
-      if (!acc.mobile || !validatePhone(acc.mobile)) {
-        newErrors.mobile = 'Valid 10-digit mobile number required';
-      }
-      if (!acc.email || !validateEmail(acc.email)) {
-        newErrors.email = 'Valid email address required';
-      }
       if (acc.password && acc.password.length > 0 && acc.password.length < 6) {
         newErrors.password = 'Password must be at least 6 characters';
       }
@@ -262,6 +264,17 @@ export function RegistrationWizard({ activeStep = 1, onQuickFillTrigger }) {
       const d = formData.documents;
       if (!d.idProofType) newErrors.idProofType = 'Please select ID Proof Type';
       if (!d.docRefNo || d.docRefNo.trim().length < 3) newErrors.docRefNo = 'Document Reference Number is required';
+
+      if (!d.doc1_photo) newErrors.doc1_photo = '3 Colour Photographs upload is required';
+      if (!d.doc2_govId) newErrors.doc2_govId = 'Government ID proof document is required';
+      if (!d.doc3_eduCert) newErrors.doc3_eduCert = 'Educational Certificate document is required';
+      if (!d.doc4_birthCert) newErrors.doc4_birthCert = 'Birth Certificate document is required';
+      if (!d.doc5_utility) newErrors.doc5_utility = 'Address / Utility proof document is required';
+
+      const missingCount = [!d.doc1_photo, !d.doc2_govId, !d.doc3_eduCert, !d.doc4_birthCert, !d.doc5_utility].filter(Boolean).length;
+      if (missingCount > 0) {
+        newErrors.allDocs = `All 5 mandatory attachments are required to proceed. (${missingCount} of 5 missing)`;
+      }
     }
 
     if (step === 7) {

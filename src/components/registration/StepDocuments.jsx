@@ -3,9 +3,9 @@ import { FormSection } from './FormSection';
 import { FormInput } from './FormInput';
 import { FormSelect } from './FormSelect';
 import { ID_PROOF_TYPES } from '../../data/registrationOptions';
-import { FileText, Upload, Sparkles, CheckCircle2, Trash2 } from 'lucide-react';
+import { FileText, Upload, Sparkles, CheckCircle2, Trash2, AlertCircle } from 'lucide-react';
 
-export function StepDocuments({ data = {}, errors = {}, onChange }) {
+export function StepDocuments({ data = {}, errors = {}, onFileSelect, onFileRemove, onChange }) {
   const fileInputRefs = {
     doc1_photo: useRef(null),
     doc2_govId: useRef(null),
@@ -35,20 +35,38 @@ export function StepDocuments({ data = {}, errors = {}, onChange }) {
       previewUrl: selected.type.startsWith('image/') ? URL.createObjectURL(selected) : null,
     };
 
-    onChange(itemKey, mockFileObj);
+    if (onFileSelect) {
+      onFileSelect(itemKey, mockFileObj);
+    } else if (onChange) {
+      onChange(itemKey, mockFileObj);
+    }
   };
 
   const handleRemoveFile = (itemKey) => {
-    onChange(itemKey, null);
+    if (onFileRemove) {
+      onFileRemove(itemKey);
+    } else if (onChange) {
+      onChange(itemKey, null);
+    }
   };
 
   const handleAutoAttachSampleDocs = () => {
     onChange('docRefNo', '9874 5612 3041');
-    onChange('doc1_photo', { name: '3_Colour_Photographs_Specimen.jpg', size: '450 KB' });
-    onChange('doc2_govId', { name: 'Aadhaar_Card_Priyabrata_Mohapatra.pdf', size: '1.2 MB' });
-    onChange('doc3_eduCert', { name: 'Graduate_Degree_Certificate_Utkal.pdf', size: '980 KB' });
-    onChange('doc4_birthCert', { name: 'Birth_Certificate_Bhubaneswar_MC.pdf', size: '650 KB' });
-    onChange('doc5_utility', { name: 'Electricity_Bill_Bhubaneswar_Nayapalli.pdf', size: '820 KB' });
+    const samples = {
+      doc1_photo: { name: '3_Colour_Photographs_Specimen.jpg', size: '450 KB' },
+      doc2_govId: { name: 'Aadhaar_Card_Priyabrata_Mohapatra.pdf', size: '1.2 MB' },
+      doc3_eduCert: { name: 'Graduate_Degree_Certificate_Utkal.pdf', size: '980 KB' },
+      doc4_birthCert: { name: 'Birth_Certificate_Bhubaneswar_MC.pdf', size: '650 KB' },
+      doc5_utility: { name: 'Electricity_Bill_Bhubaneswar_Nayapalli.pdf', size: '820 KB' },
+    };
+
+    Object.entries(samples).forEach(([key, val]) => {
+      if (onFileSelect) {
+        onFileSelect(key, val);
+      } else if (onChange) {
+        onChange(key, val);
+      }
+    });
   };
 
   return (
@@ -59,7 +77,7 @@ export function StepDocuments({ data = {}, errors = {}, onChange }) {
           STATUTORY IDENTIFICATION DOCUMENTS &amp; UPLOAD STATUS
         </span>
       }
-      subtitle="Upload supporting KYC documents listed in the official statutory application form."
+      subtitle="Upload supporting KYC documents listed in the official statutory application form. All 5 attachment checklist items are required."
       rightAction={
         <button
           type="button"
@@ -97,24 +115,36 @@ export function StepDocuments({ data = {}, errors = {}, onChange }) {
 
         {/* CHECKLIST HEADER ROW */}
         <div className="flex items-center justify-between border-b border-slate-200/80 pb-2.5">
-          <h4 className="text-xs font-extrabold text-slate-800 uppercase tracking-wider">
-            MANDATORY ATTACHMENTS CHECKLIST (AS PER APPLICATION FORM PAGE 1)
+          <h4 className="text-xs font-extrabold text-slate-800 uppercase tracking-wider flex items-center gap-1">
+            <span>MANDATORY ATTACHMENTS CHECKLIST (ALL 5 REQUIRED)</span>
+            <span className="text-rose-500 font-bold">*</span>
           </h4>
-          <span className="text-xs font-bold text-slate-500">
+          <span className={`text-xs font-bold ${uploadedCount === 5 ? 'text-emerald-700' : 'text-slate-500'}`}>
             {uploadedCount} of 5 Uploaded
           </span>
         </div>
+
+        {/* ERROR BANNER FOR ALL DOCUMENTS */}
+        {errors.allDocs && (
+          <div className="bg-rose-50 border border-rose-200 text-rose-700 text-xs font-bold p-3.5 rounded-xl flex items-center gap-2 shadow-2xs">
+            <AlertCircle className="w-4.5 h-4.5 text-rose-600 shrink-0" />
+            <span>{errors.allDocs}</span>
+          </div>
+        )}
 
         {/* 5 MANDATORY ATTACHMENT CARDS */}
         <div className="space-y-3">
           {CHECKLIST_ITEMS.map((item) => {
             const fileData = data[item.key];
             const isUploaded = !!fileData;
+            const itemError = errors[item.key];
 
             return (
               <div
                 key={item.key}
-                className="bg-white rounded-2xl border border-slate-200/90 p-4 px-5 flex flex-col sm:flex-row sm:items-center justify-between gap-3 shadow-2xs hover:border-slate-300 transition-all"
+                className={`bg-white rounded-2xl border p-4 px-5 flex flex-col sm:flex-row sm:items-center justify-between gap-3 shadow-2xs transition-all ${
+                  itemError ? 'border-rose-300 bg-rose-50/20' : 'border-slate-200/90 hover:border-slate-300'
+                }`}
               >
                 {/* Hidden File Input */}
                 <input
@@ -127,28 +157,38 @@ export function StepDocuments({ data = {}, errors = {}, onChange }) {
 
                 {/* Left Number & Details */}
                 <div className="flex items-center gap-3.5">
-                  <div className="w-8 h-8 rounded-full bg-slate-100 text-slate-700 font-black text-xs flex items-center justify-center shrink-0">
+                  <div className={`w-8 h-8 rounded-full font-black text-xs flex items-center justify-center shrink-0 ${
+                    isUploaded ? 'bg-emerald-100 text-emerald-800' : itemError ? 'bg-rose-100 text-rose-700' : 'bg-slate-100 text-slate-700'
+                  }`}>
                     {item.id}
                   </div>
 
                   <div className="space-y-1">
-                    <h5 className="font-bold text-xs sm:text-sm text-slate-900 leading-snug">
-                      {item.title}
+                    <h5 className="font-bold text-xs sm:text-sm text-slate-900 leading-snug flex items-center gap-1.5">
+                      <span>{item.title}</span>
+                      <span className="text-rose-500 font-extrabold" title="Required Document">*</span>
                     </h5>
 
                     {/* Status Pill Badge */}
-                    {isUploaded ? (
-                      <div className="flex items-center gap-2">
+                    <div className="flex flex-wrap items-center gap-2">
+                      {isUploaded ? (
                         <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full bg-emerald-100 text-emerald-800 text-[11px] font-bold">
                           <CheckCircle2 className="w-3 h-3 text-emerald-600" />
                           <span>Attached ({fileData.name})</span>
                         </span>
-                      </div>
-                    ) : (
-                      <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full bg-slate-100 text-slate-500 text-[11px] font-bold">
-                        <span className="w-1.5 h-1.5 rounded-full bg-slate-400" />
-                        <span>Pending</span>
-                      </span>
+                      ) : (
+                        <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full bg-amber-50 text-amber-700 border border-amber-200 text-[11px] font-bold">
+                          <span className="w-1.5 h-1.5 rounded-full bg-amber-500" />
+                          <span>Required (Pending)</span>
+                        </span>
+                      )}
+                    </div>
+
+                    {itemError && (
+                      <p className="text-[11px] font-bold text-rose-600 mt-1 flex items-center gap-1">
+                        <AlertCircle className="w-3.5 h-3.5 text-rose-500 shrink-0" />
+                        <span>{itemError}</span>
+                      </p>
                     )}
                   </div>
                 </div>
@@ -177,10 +217,14 @@ export function StepDocuments({ data = {}, errors = {}, onChange }) {
                     <button
                       type="button"
                       onClick={() => fileInputRefs[item.key].current?.click()}
-                      className="bg-slate-100 hover:bg-slate-200 text-slate-800 text-xs font-bold px-4 py-2 rounded-xl border border-slate-200 inline-flex items-center gap-1.5 transition-colors"
+                      className={`text-xs font-bold px-4 py-2 rounded-xl border inline-flex items-center gap-1.5 transition-colors ${
+                        itemError
+                          ? 'bg-rose-600 hover:bg-rose-700 text-white border-rose-600 shadow-xs'
+                          : 'bg-slate-100 hover:bg-slate-200 text-slate-800 border-slate-200'
+                      }`}
                     >
-                      <Upload className="w-3.5 h-3.5 text-slate-500" />
-                      <span>Upload File</span>
+                      <Upload className="w-3.5 h-3.5" />
+                      <span>Upload File *</span>
                     </button>
                   )}
                 </div>
@@ -192,3 +236,4 @@ export function StepDocuments({ data = {}, errors = {}, onChange }) {
     </FormSection>
   );
 }
+

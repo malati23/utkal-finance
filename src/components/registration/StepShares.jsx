@@ -7,7 +7,7 @@ import { CreditCard, ArrowRight } from 'lucide-react';
 export function StepShares({ data = {}, errors = {}, onChange, onGoToStep }) {
   const repaymentPreference = data.repaymentPreference || 'First depositor';
   const numberOfShares = Math.max(1, parseInt(data.numberOfShares || 10, 10) || 10);
-  const allocatedShareValue = numberOfShares * 50; // ₹ 50 per share allocation multiplier (e.g. 10 * 50 = 500)
+  const allocatedShareValue = numberOfShares * 20; // ₹ 20 per share allocation multiplier (10 shares = ₹ 200.00)
   const tdsOption = data.tdsOption || 'No (Form 15G/15H Enclosed)';
   const isTaxExempt = data.noTdsTaxExempt !== false;
 

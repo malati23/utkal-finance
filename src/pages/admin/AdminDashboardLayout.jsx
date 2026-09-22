@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import { Outlet, Navigate, useLocation } from 'react-router-dom';
 import { useAdmin } from '../../context/AdminContext';
 import { AdminSidebar } from '../../components/admin/AdminSidebar';
@@ -9,28 +9,36 @@ export function AdminDashboardLayout() {
   const { isAuthenticated } = useAdmin();
   const location = useLocation();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const mainContentRef = useRef(null);
+
+  // Reset main container scroll to top when changing admin routes
+  useEffect(() => {
+    if (mainContentRef.current) {
+      mainContentRef.current.scrollTo({ top: 0, behavior: 'instant' });
+    }
+  }, [location.pathname]);
 
   if (!isAuthenticated) {
     return <Navigate to="/admin-login" state={{ from: location }} replace />;
   }
 
   return (
-    <div className="min-h-screen bg-slate-100 flex text-slate-900 font-sans select-none antialiased max-w-full overflow-x-hidden">
+    <div className="h-screen w-screen overflow-hidden bg-slate-100 flex text-slate-900 font-sans select-none antialiased">
       {/* DESKTOP SIDEBAR */}
-      <div className="hidden lg:block w-64 xl:w-72 shrink-0 h-screen sticky top-0 z-40">
+      <aside className="hidden lg:block w-64 xl:w-72 shrink-0 h-full bg-[#0B1528] z-20 overflow-hidden">
         <AdminSidebar />
-      </div>
+      </aside>
 
       {/* MOBILE DRAWER */}
       <AdminMobileMenu isOpen={mobileMenuOpen} onClose={() => setMobileMenuOpen(false)} />
 
-      {/* MAIN CONTAINER */}
-      <div className="flex-1 flex flex-col min-w-0 min-h-screen max-w-full overflow-x-hidden">
+      {/* MAIN CONTAINER (HEADER + SCROLLABLE RIGHT PANE) */}
+      <div className="flex-1 flex flex-col h-full min-w-0 overflow-hidden">
         {/* TOP HEADER */}
         <AdminHeader onToggleMobileMenu={() => setMobileMenuOpen(true)} />
 
-        {/* PAGE CONTENT CONTAINER */}
-        <main className="flex-1 p-3 sm:p-6 lg:p-8 max-w-7xl w-full mx-auto">
+        {/* SCROLLABLE MAIN PAGE CONTENT */}
+        <main ref={mainContentRef} className="flex-1 overflow-y-auto p-3 sm:p-6 lg:p-8 max-w-7xl w-full mx-auto">
           <Outlet />
         </main>
       </div>

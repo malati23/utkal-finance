@@ -233,7 +233,7 @@ export const DEMO_QUICKFILL_DATA = {
   shares: {
     repaymentPreference: 'First depositor',
     numberOfShares: 10,
-    allocatedShareValue: 500,
+    allocatedShareValue: 200,
     tdsOption: 'No (Form 15G/15H Enclosed)',
     noTdsTaxExempt: true,
     shareValue: 10,

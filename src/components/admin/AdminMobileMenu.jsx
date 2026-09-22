@@ -67,7 +67,7 @@ export function AdminMobileMenu({ isOpen, onClose }) {
             </div>
             <div>
               <span className="font-black text-xs text-white block tracking-tight">NEW UTKAL FINANCE LTD.</span>
-              <span className="text-[9px] text-slate-400 font-extrabold uppercase tracking-widest block">ADMIN PORTAL</span>
+              <span className="text-[9px] text-slate-400 font-extrabold uppercase tracking-widest block">TRUST • GROWTH • PROSPERITY</span>
             </div>
           </div>
           <button
