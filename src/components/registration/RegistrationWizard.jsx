@@ -21,6 +21,9 @@ export function RegistrationWizard({ activeStep = 1, onQuickFillTrigger }) {
   const [completedSteps, setCompletedSteps] = useState([]);
   const [isSubmitted, setIsSubmitted] = useState(false);
   const [referenceNo, setReferenceNo] = useState('');
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [submitError, setSubmitError] = useState('');
+
 
   const [formData, setFormData] = useState({
     personal: {
@@ -261,19 +264,10 @@ export function RegistrationWizard({ activeStep = 1, onQuickFillTrigger }) {
     }
 
     if (step === 6) {
-      const d = formData.documents;
-      if (!d.idProofType) newErrors.idProofType = 'Please select ID Proof Type';
-      if (!d.docRefNo || d.docRefNo.trim().length < 3) newErrors.docRefNo = 'Document Reference Number is required';
-
-      if (!d.doc1_photo) newErrors.doc1_photo = '3 Colour Photographs upload is required';
-      if (!d.doc2_govId) newErrors.doc2_govId = 'Government ID proof document is required';
-      if (!d.doc3_eduCert) newErrors.doc3_eduCert = 'Educational Certificate document is required';
-      if (!d.doc4_birthCert) newErrors.doc4_birthCert = 'Birth Certificate document is required';
-      if (!d.doc5_utility) newErrors.doc5_utility = 'Address / Utility proof document is required';
-
-      const missingCount = [!d.doc1_photo, !d.doc2_govId, !d.doc3_eduCert, !d.doc4_birthCert, !d.doc5_utility].filter(Boolean).length;
-      if (missingCount > 0) {
-        newErrors.allDocs = `All 5 mandatory attachments are required to proceed. (${missingCount} of 5 missing)`;
+      const d = formData.documents || {};
+      // Document uploads and ID reference numbers are optional - applicant can move to next step without uploading files
+      if (d.docRefNo && d.docRefNo.trim().length > 0 && d.docRefNo.trim().length < 3) {
+        newErrors.docRefNo = 'Document Reference Number must be at least 3 characters if provided';
       }
     }
 
@@ -352,13 +346,47 @@ export function RegistrationWizard({ activeStep = 1, onQuickFillTrigger }) {
     }
   };
 
-  const handleSubmitApplication = () => {
-    // Save application to localStorage using storage.js
-    const createdApp = saveApplication(formData);
-    setReferenceNo(createdApp.refId || `APP-2026-${Math.floor(1000 + Math.random() * 9000)}`);
-    setIsSubmitted(true);
-    window.scrollTo({ top: 0, behavior: 'smooth' });
+  const handleSubmitApplication = async () => {
+    if (isSubmitting) return;
+
+    setIsSubmitting(true);
+    setSubmitError('');
+
+    console.log("Submitting application to backend...", formData);
+
+    try {
+      const response = await fetch('http://localhost:5000/api/applications', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(formData),
+      });
+
+      const data = await response.json();
+      console.log("Application API response:", data);
+
+      if (response.ok && data.success && data.application?.applicationId) {
+        const generatedAppId = data.application.applicationId;
+        saveApplication({
+          ...formData,
+          applicationId: generatedAppId,
+        });
+
+        setReferenceNo(generatedAppId);
+        setIsSubmitted(true);
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+      } else {
+        setSubmitError(data.message || 'Validation or server error occurred. Please check details and try again.');
+      }
+    } catch (err) {
+      console.error('Submission error:', err);
+      setSubmitError('Unable to submit application. Please check your server connection and try again.');
+    } finally {
+      setIsSubmitting(false);
+    }
   };
+
 
   if (isSubmitted) {
     return (
@@ -388,6 +416,12 @@ export function RegistrationWizard({ activeStep = 1, onQuickFillTrigger }) {
 
       {/* STEP CONTENT BODY */}
       <div className="p-4 sm:p-6 md:p-8 min-h-[360px]">
+        {submitError && (
+          <div className="mb-4 p-4 bg-rose-50 border border-rose-200 text-rose-700 rounded-xl text-xs font-bold flex items-center gap-2">
+            <span>{submitError}</span>
+          </div>
+        )}
+
         {currentStep === 1 && (
           <StepPersonal
             data={formData.personal}
@@ -470,11 +504,11 @@ export function RegistrationWizard({ activeStep = 1, onQuickFillTrigger }) {
         {/* Previous Button */}
         <button
           type="button"
-          disabled={currentStep === 1}
+          disabled={currentStep === 1 || isSubmitting}
           onClick={handlePrevious}
           className={`inline-flex items-center gap-2 px-5 py-2.5 rounded-xl text-xs font-bold transition-all border
             ${
-              currentStep === 1
+              currentStep === 1 || isSubmitting
                 ? 'bg-slate-100 text-slate-400 border-slate-200 cursor-not-allowed opacity-60'
                 : 'bg-white hover:bg-slate-100 text-slate-700 border-slate-300 shadow-xs'
             }
@@ -498,11 +532,14 @@ export function RegistrationWizard({ activeStep = 1, onQuickFillTrigger }) {
           ) : (
             <button
               type="button"
+              disabled={isSubmitting}
               onClick={handleSubmitApplication}
-              className="inline-flex items-center gap-2 px-7 py-3 rounded-xl bg-[#00C853] hover:bg-emerald-500 text-slate-950 font-black text-xs uppercase tracking-wider shadow-lg shadow-emerald-500/20 transition-all"
+              className={`inline-flex items-center gap-2 px-7 py-3 rounded-xl bg-[#00C853] hover:bg-emerald-500 text-slate-950 font-black text-xs uppercase tracking-wider shadow-lg shadow-emerald-500/20 transition-all ${
+                isSubmitting ? 'opacity-70 cursor-not-allowed' : 'cursor-pointer'
+              }`}
             >
               <CheckCircle2 className="w-4 h-4 text-slate-950" />
-              <span>SUBMIT MEMBERSHIP APPLICATION</span>
+              <span>{isSubmitting ? 'SUBMITTING...' : 'SUBMIT MEMBERSHIP APPLICATION'}</span>
             </button>
           )}
         </div>
@@ -510,3 +547,4 @@ export function RegistrationWizard({ activeStep = 1, onQuickFillTrigger }) {
     </div>
   );
 }
+

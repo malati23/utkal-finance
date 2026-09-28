@@ -1,8 +1,12 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { jsPDF } from 'jspdf';
+import html2canvas from 'html2canvas';
 import { 
   CheckCircle2, 
   Printer, 
+  Download,
+  Loader2,
   Copy, 
   Check, 
   Users, 
@@ -18,10 +22,12 @@ import {
   ShieldCheck
 } from 'lucide-react';
 import brandLogo from '../../assets/image copy 7.png';
+import boardStamp from '../../assets/board-stamp.png';
 
 export function SubmissionSuccess({ referenceNo, formData = {}, onReset }) {
   const navigate = useNavigate();
   const [copiedId, setCopiedId] = useState(false);
+  const [isGeneratingPdf, setIsGeneratingPdf] = useState(false);
 
   const personal = formData.personal || {};
   const address = formData.address || {};
@@ -117,6 +123,164 @@ export function SubmissionSuccess({ referenceNo, formData = {}, onReset }) {
     window.print();
   };
 
+  const handleDownloadApplicationPdf = async () => {
+    if (isGeneratingPdf) return;
+    setIsGeneratingPdf(true);
+
+    try {
+      const page1 = document.getElementById('statutory-page-1');
+      const page2 = document.getElementById('statutory-page-2');
+
+      if (!page1 || !page2) {
+        alert('Could not locate printable application elements. Please refresh and try again.');
+        setIsGeneratingPdf(false);
+        return;
+      }
+
+      const capturePage = async (pageElement) => {
+        const clone = pageElement.cloneNode(true);
+        clone.id = 'temp-pdf-render-' + Math.random().toString(36).substring(7);
+        clone.style.display = 'block';
+        clone.style.position = 'fixed';
+        clone.style.left = '0';
+        clone.style.top = '0';
+        clone.style.width = '794px';
+        clone.style.minHeight = '1123px';
+        clone.style.boxSizing = 'border-box';
+        clone.style.background = '#ffffff';
+        clone.style.color = '#000000';
+        clone.style.margin = '0';
+        clone.style.padding = '24px';
+        clone.style.zIndex = '-9999';
+        clone.style.visibility = 'visible';
+        document.body.appendChild(clone);
+
+        // Ensure all images (logo, board stamp) inside the clone are loaded
+        const images = Array.from(clone.querySelectorAll('img'));
+        await Promise.all(
+          images.map((img) => {
+            if (img.complete) return Promise.resolve();
+            return new Promise((resolve) => {
+              img.onload = resolve;
+              img.onerror = resolve;
+            });
+          })
+        );
+
+        // Sanitize any modern Tailwind v4 oklch colors into standard RGB/Hex
+        const convertOklchToRgb = (rootEl) => {
+          const testCanvas = document.createElement('canvas');
+          testCanvas.width = 1;
+          testCanvas.height = 1;
+          const ctx = testCanvas.getContext('2d');
+
+          const safeColor = (str, fallback) => {
+            if (!str || typeof str !== 'string') return str;
+            if (str.includes('oklch')) {
+              try {
+                ctx.fillStyle = '#000000';
+                ctx.fillStyle = str;
+                if (ctx.fillStyle && !ctx.fillStyle.includes('oklch')) {
+                  return ctx.fillStyle;
+                }
+              } catch (_) {}
+              return fallback || '#0f172a';
+            }
+            return str;
+          };
+
+          const allNodes = [rootEl, ...rootEl.querySelectorAll('*')];
+          allNodes.forEach((node) => {
+            const cs = window.getComputedStyle(node);
+            if (cs.color && cs.color.includes('oklch')) {
+              node.style.color = safeColor(cs.color, '#0f172a');
+            }
+            if (cs.backgroundColor && cs.backgroundColor.includes('oklch')) {
+              node.style.backgroundColor = safeColor(cs.backgroundColor, '#ffffff');
+            }
+            if (cs.borderColor && cs.borderColor.includes('oklch')) {
+              node.style.borderColor = safeColor(cs.borderColor, '#0f172a');
+            }
+          });
+        };
+
+        convertOklchToRgb(clone);
+
+        // Short pause for CSS layout settling
+        await new Promise((resolve) => setTimeout(resolve, 150));
+
+        const canvas = await html2canvas(clone, {
+          scale: 2,
+          useCORS: true,
+          allowTaint: true,
+          logging: false,
+          backgroundColor: '#ffffff',
+          width: 794,
+          windowWidth: 794,
+          scrollX: 0,
+          scrollY: 0,
+          x: 0,
+          y: 0,
+          onclone: (clonedDoc) => {
+            const allNodes = clonedDoc.querySelectorAll('*');
+            allNodes.forEach((node) => {
+              const cs = window.getComputedStyle(node);
+              if (cs.color && cs.color.includes('oklch')) {
+                node.style.color = '#0f172a';
+              }
+              if (cs.backgroundColor && cs.backgroundColor.includes('oklch')) {
+                node.style.backgroundColor = node.classList.contains('bg-slate-900')
+                  ? '#0f172a'
+                  : node.classList.contains('bg-slate-200')
+                  ? '#e2e8f0'
+                  : node.classList.contains('bg-slate-100')
+                  ? '#f1f5f9'
+                  : '#ffffff';
+              }
+              if (cs.borderColor && cs.borderColor.includes('oklch')) {
+                node.style.borderColor = '#0f172a';
+              }
+            });
+          }
+        });
+
+        document.body.removeChild(clone);
+        return canvas;
+      };
+
+      const canvas1 = await capturePage(page1);
+      const canvas2 = await capturePage(page2);
+
+      const DocConstructor = typeof jsPDF === 'function' ? jsPDF : (jsPDF.jsPDF || jsPDF);
+      const pdf = new DocConstructor({
+        orientation: 'portrait',
+        unit: 'mm',
+        format: 'a4',
+        compress: true
+      });
+
+      const imgData1 = canvas1.toDataURL('image/jpeg', 0.96);
+      const imgHeight1 = (canvas1.height * 210) / canvas1.width;
+      pdf.addImage(imgData1, 'JPEG', 0, 0, 210, Math.min(imgHeight1, 297));
+
+      pdf.addPage('a4', 'portrait');
+      const imgData2 = canvas2.toDataURL('image/jpeg', 0.96);
+      const imgHeight2 = (canvas2.height * 210) / canvas2.width;
+      pdf.addImage(imgData2, 'JPEG', 0, 0, 210, Math.min(imgHeight2, 297));
+
+      const safeName = (fullName || 'Applicant').replace(/[^a-zA-Z0-9]/g, '_');
+      const cleanRef = (refId || 'Record').replace(/[^a-zA-Z0-9]/g, '_');
+      const filename = `New_Utkal_Finance_Application_${cleanRef}_${safeName}.pdf`;
+
+      pdf.save(filename);
+    } catch (error) {
+      console.error('Error generating PDF dossier directly:', error);
+      alert('Could not download PDF directly: ' + (error.message || 'Please try again.'));
+    } finally {
+      setIsGeneratingPdf(false);
+    }
+  };
+
   return (
     <div>
       {/* SCREEN INTERFACE (HIDDEN DURING PRINT) */}
@@ -140,14 +304,37 @@ export function SubmissionSuccess({ referenceNo, formData = {}, onReset }) {
               </div>
             </div>
 
-            <button
-              type="button"
-              onClick={handlePrint}
-              className="bg-amber-400 hover:bg-amber-300 text-slate-950 font-black text-xs px-5 py-2.5 rounded-xl uppercase tracking-wider shadow-md transition-all flex items-center gap-2 cursor-pointer ml-auto"
-            >
-              <Printer className="w-4 h-4 text-slate-950" />
-              <span>PRINT OFFICIAL FORM</span>
-            </button>
+            <div className="flex flex-wrap items-center gap-2.5 ml-auto">
+              <button
+                type="button"
+                onClick={handleDownloadApplicationPdf}
+                disabled={isGeneratingPdf}
+                className="bg-[#00C853] hover:bg-emerald-500 disabled:opacity-60 text-slate-950 font-black text-xs px-4 sm:px-5 py-2.5 rounded-xl uppercase tracking-wider shadow-md transition-all flex items-center gap-2 cursor-pointer"
+                title="Download your filled 2-page application dossier as a PDF file"
+              >
+                {isGeneratingPdf ? (
+                  <>
+                    <Loader2 className="w-4 h-4 text-slate-950 animate-spin" />
+                    <span>GENERATING PDF...</span>
+                  </>
+                ) : (
+                  <>
+                    <Download className="w-4 h-4 text-slate-950" />
+                    <span>DOWNLOAD APPLICATION (PDF)</span>
+                  </>
+                )}
+              </button>
+
+              <button
+                type="button"
+                onClick={handlePrint}
+                className="bg-amber-400 hover:bg-amber-300 text-slate-950 font-black text-xs px-4 sm:px-5 py-2.5 rounded-xl uppercase tracking-wider shadow-md transition-all flex items-center gap-2 cursor-pointer"
+                title="Print or Save as PDF with filled details"
+              >
+                <Printer className="w-4 h-4 text-slate-950" />
+                <span>PRINT FORM</span>
+              </button>
+            </div>
           </div>
 
           {/* Headline */}
@@ -221,11 +408,32 @@ export function SubmissionSuccess({ referenceNo, formData = {}, onReset }) {
           <div className="flex flex-wrap items-center gap-2.5 w-full sm:w-auto justify-end">
             <button
               type="button"
+              onClick={handleDownloadApplicationPdf}
+              disabled={isGeneratingPdf}
+              className="bg-emerald-600 hover:bg-emerald-700 disabled:opacity-60 text-white font-bold text-xs px-4 py-2.5 rounded-xl transition-colors flex items-center gap-1.5 shadow-xs cursor-pointer"
+              title="Download your filled 2-page statutory application as a PDF file"
+            >
+              {isGeneratingPdf ? (
+                <>
+                  <Loader2 className="w-4 h-4 text-white animate-spin" />
+                  <span>Generating PDF...</span>
+                </>
+              ) : (
+                <>
+                  <Download className="w-4 h-4 text-white" />
+                  <span>Download Application (PDF)</span>
+                </>
+              )}
+            </button>
+
+            <button
+              type="button"
               onClick={handlePrint}
               className="bg-white hover:bg-slate-50 text-blue-700 font-bold text-xs px-4 py-2.5 rounded-xl border border-slate-300 transition-colors flex items-center gap-1.5 shadow-2xs cursor-pointer"
+              title="Print filled 2-page statutory form"
             >
               <Printer className="w-4 h-4 text-blue-700" />
-              <span>View &amp; Print 2-Page Form</span>
+              <span>Print 2-Page Form</span>
             </button>
 
             <button
@@ -316,24 +524,24 @@ export function SubmissionSuccess({ referenceNo, formData = {}, onReset }) {
 
             <div className="p-5 space-y-5 text-xs">
               <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-                <div className="space-y-1">
+                <div className="space-y-1 min-w-0">
                   <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider block">PRIMARY MOBILE</span>
-                  <span className="font-extrabold text-slate-900 font-mono text-sm block">{mobile}</span>
+                  <span className="font-extrabold text-slate-900 font-mono text-sm block truncate">{mobile}</span>
                 </div>
 
-                <div className="space-y-1">
+                <div className="space-y-1 min-w-0">
                   <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider block">ALTERNATE CONTACT</span>
-                  <span className="font-bold text-slate-800 font-mono block">{altMobile}</span>
+                  <span className="font-bold text-slate-800 font-mono block truncate">{altMobile}</span>
                 </div>
 
-                <div className="space-y-1 sm:col-span-2">
+                <div className="space-y-1 sm:col-span-2 lg:col-span-1 min-w-0">
                   <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider block">REGISTERED EMAIL</span>
-                  <span className="font-extrabold text-slate-900 font-mono block truncate">{email}</span>
+                  <span className="font-extrabold text-slate-900 font-mono block truncate" title={email}>{email}</span>
                 </div>
 
-                <div className="space-y-1">
+                <div className="space-y-1 min-w-0">
                   <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider block">INCOME TAX PAN</span>
-                  <span className="font-extrabold text-amber-600 font-mono block">{pan}</span>
+                  <span className="font-extrabold text-amber-600 font-mono block truncate">{pan}</span>
                 </div>
               </div>
 
@@ -634,11 +842,32 @@ export function SubmissionSuccess({ referenceNo, formData = {}, onReset }) {
             <div className="flex flex-wrap items-center gap-3 w-full md:w-auto justify-start md:justify-end">
               <button
                 type="button"
+                onClick={handleDownloadApplicationPdf}
+                disabled={isGeneratingPdf}
+                className="bg-[#00C853] hover:bg-emerald-500 disabled:opacity-60 text-slate-950 font-black text-xs px-6 py-3 rounded-xl transition-all flex items-center justify-center gap-2 shadow-md uppercase tracking-wider w-full sm:w-auto cursor-pointer"
+                title="Download your filled 2-page statutory application as a PDF file"
+              >
+                {isGeneratingPdf ? (
+                  <>
+                    <Loader2 className="w-4 h-4 text-slate-950 animate-spin" />
+                    <span>GENERATING PDF...</span>
+                  </>
+                ) : (
+                  <>
+                    <Download className="w-4 h-4 text-slate-950" />
+                    <span>DOWNLOAD APPLICATION (PDF)</span>
+                  </>
+                )}
+              </button>
+
+              <button
+                type="button"
                 onClick={handlePrint}
                 className="bg-[#004085] hover:bg-blue-900 text-white font-black text-xs px-5 py-3 rounded-xl transition-all flex items-center justify-center gap-2 shadow-md uppercase tracking-wider w-full sm:w-auto cursor-pointer"
+                title="Print or Save as PDF with filled applicant details"
               >
                 <Printer className="w-4 h-4 text-white" />
-                <span>PRINT FORM (PDF)</span>
+                <span>PRINT FORM</span>
               </button>
 
               <button
@@ -678,7 +907,7 @@ export function SubmissionSuccess({ referenceNo, formData = {}, onReset }) {
       {/* ==================================================== */}
       <div className="hidden print:block text-slate-900 font-sans p-2 space-y-4">
         {/* PAGE 1 OF 2: FORM NO. 1 */}
-        <div className="print-page-break border-2 border-slate-900 p-6 space-y-4 min-h-[95vh] text-left">
+        <div id="statutory-page-1" className="print-page-break border-2 border-slate-900 p-6 space-y-4 min-h-[95vh] text-left bg-white">
           {/* Official Header */}
           <div className="flex items-center justify-between border-b-2 border-slate-900 pb-4">
             <div className="flex items-center gap-3">
@@ -722,21 +951,33 @@ export function SubmissionSuccess({ referenceNo, formData = {}, onReset }) {
               SECTION 2: CONTACT, IDENTITY &amp; STATUTORY ADDRESSES
             </div>
             <div className="p-3 space-y-2 text-[11px]">
-              <div className="grid grid-cols-4 gap-2 border-b border-slate-300 pb-2">
-                <div><strong className="block text-[9px] uppercase text-slate-600">PRIMARY MOBILE</strong><span className="font-mono font-bold">{mobile}</span></div>
-                <div><strong className="block text-[9px] uppercase text-slate-600">ALTERNATE CONTACT</strong><span className="font-mono">{altMobile}</span></div>
-                <div><strong className="block text-[9px] uppercase text-slate-600">REGISTERED EMAIL</strong><span className="font-mono">{email}</span></div>
-                <div><strong className="block text-[9px] uppercase text-slate-600">INCOME TAX PAN</strong><span className="font-mono font-bold">{pan}</span></div>
+              <div className="grid grid-cols-2 gap-x-6 gap-y-2 border-b border-slate-300 pb-2">
+                <div className="min-w-0">
+                  <strong className="block text-[9px] uppercase text-slate-600">PRIMARY MOBILE</strong>
+                  <span className="font-mono font-bold block">{mobile}</span>
+                </div>
+                <div className="min-w-0">
+                  <strong className="block text-[9px] uppercase text-slate-600">ALTERNATE CONTACT</strong>
+                  <span className="font-mono block">{altMobile}</span>
+                </div>
+                <div className="min-w-0">
+                  <strong className="block text-[9px] uppercase text-slate-600">REGISTERED EMAIL</strong>
+                  <span className="font-mono font-bold block break-all text-[10.5px]">{email}</span>
+                </div>
+                <div className="min-w-0">
+                  <strong className="block text-[9px] uppercase text-slate-600">INCOME TAX PAN</strong>
+                  <span className="font-mono font-bold block text-slate-900">{pan}</span>
+                </div>
               </div>
               <div className="grid grid-cols-2 gap-3 pt-1">
-                <div>
+                <div className="min-w-0">
                   <strong className="block text-[9px] uppercase text-slate-600">PERMANENT RESIDENTIAL ADDRESS</strong>
-                  <p className="font-bold">{resAddr1}</p>
+                  <p className="font-bold break-words">{resAddr1}</p>
                   <p className="text-[10px]">Taluka: {resTaluka} | Dist: {resDistrict} | State: {resState} | PIN: {resPincode}</p>
                 </div>
-                <div>
+                <div className="min-w-0">
                   <strong className="block text-[9px] uppercase text-slate-600">CORRESPONDENCE / MAILING ADDRESS</strong>
-                  <p className="font-bold">{commAddr1}</p>
+                  <p className="font-bold break-words">{commAddr1}</p>
                   <p className="text-[10px]">Dist: {commDistrict} | State: {commState} | PIN: {commPincode}</p>
                 </div>
               </div>
@@ -776,7 +1017,7 @@ export function SubmissionSuccess({ referenceNo, formData = {}, onReset }) {
         </div>
 
         {/* PAGE 2 OF 2: FORM NO. 2 */}
-        <div className="border-2 border-slate-900 p-6 space-y-4 min-h-[95vh] text-left">
+        <div id="statutory-page-2" className="border-2 border-slate-900 p-6 space-y-4 min-h-[95vh] text-left bg-white">
           {/* Header */}
           <div className="flex items-center justify-between border-b-2 border-slate-900 pb-3">
             <div>
@@ -870,14 +1111,26 @@ export function SubmissionSuccess({ referenceNo, formData = {}, onReset }) {
           </div>
 
           {/* Official Seal & Signature Authorization */}
-          <div className="grid grid-cols-2 gap-6 pt-6 border-t-2 border-slate-900">
-            <div className="text-left space-y-8">
+          <div className="grid grid-cols-2 gap-6 pt-4 border-t-2 border-slate-900 items-end">
+            <div className="text-left space-y-3">
               <span className="text-[10px] font-bold text-slate-600 uppercase block">APPLICANT SIGNATURE</span>
-              <div className="border-b border-slate-900 w-48 font-serif italic text-xs pt-2">{sigName}</div>
+              <div className="border-b border-slate-900 w-48 font-serif italic text-xs pb-1">{sigName}</div>
+              <span className="text-[9px] text-slate-400 font-mono block">Digitally Verified &amp; Signed</span>
             </div>
-            <div className="text-right space-y-8">
-              <span className="text-[10px] font-bold text-slate-600 uppercase block">AUTHORIZED SIGNATORY &amp; BOARD STAMP</span>
-              <div className="border-b border-slate-900 w-48 ml-auto text-[9px] text-slate-400 font-mono">[ Official Seal ]</div>
+            <div className="text-right flex flex-col items-end">
+              <span className="text-[10px] font-bold text-slate-600 uppercase block mb-1">
+                AUTHORIZED SIGNATORY &amp; BOARD STAMP
+              </span>
+              <div className="relative flex flex-col items-center">
+                <img 
+                  src={boardStamp} 
+                  alt="New Utkal Finance Limited Official Board Stamp" 
+                  className="w-24 h-24 object-contain -mb-2.5 z-10 select-none pointer-events-none"
+                />
+                <div className="border-b border-slate-900 w-48 text-[9px] text-slate-600 font-mono pt-1 text-center font-bold">
+                  [ Official Seal &amp; Authority ]
+                </div>
+              </div>
             </div>
           </div>
 

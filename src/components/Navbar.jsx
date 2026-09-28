@@ -218,6 +218,14 @@ export function Navbar({ onOpenApplyModal }) {
             <span className="w-2 h-2 rounded-full bg-rose-500 border-2 border-white absolute top-2 right-2" />
           </button>
 
+          {/* Member Login Button */}
+          <Link
+            to="/member-login"
+            className="text-xs xl:text-sm font-bold text-slate-700 hover:text-blue-700 bg-slate-50 hover:bg-slate-100 px-3 py-2 rounded-xl transition-all border border-slate-200 shadow-xs whitespace-nowrap"
+          >
+            Member Login
+          </Link>
+
           {/* Join Button */}
           <Link
             to="/register"
@@ -352,6 +360,14 @@ export function Navbar({ onOpenApplyModal }) {
           </nav>
 
           <div className="pt-3 border-t border-slate-100 flex flex-col gap-2.5">
+            <Link
+              to="/member-login"
+              onClick={() => setMobileMenuOpen(false)}
+              className="w-full bg-slate-100 hover:bg-slate-200 text-slate-800 font-bold py-2.5 px-4 rounded-xl flex items-center justify-center gap-2 text-sm transition-colors border border-slate-200"
+            >
+              <span>Member Portal Login</span>
+            </Link>
+
             <Link
               to="/register"
               onClick={() => setMobileMenuOpen(false)}

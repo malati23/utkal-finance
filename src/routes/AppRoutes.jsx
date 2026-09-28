@@ -35,6 +35,18 @@ import { AdminProfile } from '../pages/admin/AdminProfile';
 
 import { MyApplication } from '../pages/MyApplication';
 
+// Member Imports
+import { MemberLogin } from '../pages/member/MemberLogin';
+import { MemberDashboardLayout } from '../pages/member/MemberDashboardLayout';
+import { MemberDashboard } from '../pages/member/MemberDashboard';
+import { MemberProfile } from '../pages/member/MemberProfile';
+import { MemberMembership } from '../pages/member/MemberMembership';
+import { MemberDeposits } from '../pages/member/MemberDeposits';
+import { MemberPayments } from '../pages/member/MemberPayments';
+import { MemberTransactions } from '../pages/member/MemberTransactions';
+import { MemberDocuments } from '../pages/member/MemberDocuments';
+import { MemberNotifications } from '../pages/member/MemberNotifications';
+
 function ScrollToTop() {
   const { pathname } = useLocation();
 
@@ -74,6 +86,20 @@ export function AppRoutes() {
 
       {/* Statutory Membership Application Portal */}
       <Route path="register" element={<Register />} />
+
+      {/* Member Portal Routes */}
+      <Route path="member-login" element={<MemberLogin />} />
+      <Route path="member" element={<Navigate to="/member-dashboard" replace />} />
+      <Route path="member-dashboard" element={<MemberDashboardLayout />}>
+        <Route index element={<MemberDashboard />} />
+        <Route path="profile" element={<MemberProfile />} />
+        <Route path="membership" element={<MemberMembership />} />
+        <Route path="deposits" element={<MemberDeposits />} />
+        <Route path="payments" element={<MemberPayments />} />
+        <Route path="transactions" element={<MemberTransactions />} />
+        <Route path="documents" element={<MemberDocuments />} />
+        <Route path="notifications" element={<MemberNotifications />} />
+      </Route>
 
       {/* Admin Portal Routes */}
       <Route path="admin-login" element={<AdminLogin />} />

@@ -155,6 +155,11 @@ export function Footer({ onOpenApplyModal }) {
               <li><button type="button" onClick={() => setPdfModalOpen(true)} className="hover:text-blue-400 transition-colors cursor-pointer text-left">Download Statutory Forms</button></li>
               <li><Link to="/contact" className="hover:text-blue-400 transition-colors">Grievance Redressal Officer</Link></li>
               <li>
+                <Link to="/member-login" className="text-blue-400 hover:text-blue-300 font-bold transition-colors">
+                  Member Portal Login
+                </Link>
+              </li>
+              <li>
                 <Link to="/admin" className="text-amber-400 hover:text-amber-300 font-bold transition-colors">
                   Admin Governance Portal
                 </Link>

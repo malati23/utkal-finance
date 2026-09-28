@@ -19,25 +19,56 @@ import {
 } from 'lucide-react';
 import { useAdmin } from '../../context/AdminContext';
 import { StatusBadge } from '../../components/admin/StatusBadge';
+import { EditApplicationModal } from '../../components/admin/EditApplicationModal';
 
 export function ApplicationDetails() {
   const { id } = useParams();
   const navigate = useNavigate();
-  const { applications, updateApplicationStatus } = useAdmin();
+  const { applications, updateApplicationStatus, updateApplication } = useAdmin();
 
   const [message, setMessage] = useState('');
+  const [errorMessage, setErrorMessage] = useState('');
+  const [isProcessing, setIsProcessing] = useState(false);
+  const [isEditModalOpen, setIsEditModalOpen] = useState(false);
 
-  const app = applications.find((a) => a.id === id || a.applicationId === id);
+  const app = applications.find((a) => a._id === id || a.id === id || a.applicationId === id);
 
-  const handleStatusChange = (newStatus) => {
+  const handleStatusChange = async (newStatus) => {
     if (!app) return;
-    updateApplicationStatus(app.id, newStatus);
-    setMessage(`Application status updated to "${newStatus}"`);
-    setTimeout(() => setMessage(''), 3000);
+    try {
+      setIsProcessing(true);
+      setErrorMessage('');
+      const mongoId = app._id || app.id;
+      const targetStatus = newStatus.toLowerCase();
+      await updateApplicationStatus(mongoId, targetStatus);
+      if (targetStatus === 'approved') {
+        setMessage('Application approved successfully.');
+      } else {
+        setMessage(`Application status updated to "${newStatus}"`);
+      }
+      setTimeout(() => setMessage(''), 5000);
+    } catch (err) {
+      console.error('Error updating status:', err);
+      setErrorMessage(err.message || 'Failed to update application status.');
+    } finally {
+      setIsProcessing(false);
+    }
   };
 
   const handlePrint = () => {
     window.print();
+  };
+
+  const handleSaveEdit = async (appId, payload) => {
+    try {
+      await updateApplication(appId, payload);
+      setMessage('Application details updated successfully.');
+      setTimeout(() => setMessage(''), 5000);
+    } catch (err) {
+      console.error('Error saving application edit:', err);
+      setErrorMessage(err.message || 'Failed to update application');
+      setTimeout(() => setErrorMessage(''), 5000);
+    }
   };
 
   if (!app) {
@@ -81,6 +112,15 @@ export function ApplicationDetails() {
 
         {/* TOP ACTIONS TOOLBAR */}
         <div className="flex flex-wrap items-center gap-2">
+          <button
+            type="button"
+            onClick={() => setIsEditModalOpen(true)}
+            className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl bg-amber-50 hover:bg-amber-100 text-amber-900 text-xs font-bold transition-colors border border-amber-300 cursor-pointer shadow-xs"
+          >
+            <Edit className="w-4 h-4 text-amber-700" />
+            <span>Edit Application</span>
+          </button>
+
           <button
             type="button"
             onClick={handlePrint}
@@ -314,6 +354,14 @@ export function ApplicationDetails() {
           </div>
         </div>
       </div>
+
+      {/* EDIT APPLICATION MODAL */}
+      <EditApplicationModal
+        isOpen={isEditModalOpen}
+        application={app}
+        onClose={() => setIsEditModalOpen(false)}
+        onSave={handleSaveEdit}
+      />
     </div>
   );
 }

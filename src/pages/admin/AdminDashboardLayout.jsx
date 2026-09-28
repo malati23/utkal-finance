@@ -37,9 +37,11 @@ export function AdminDashboardLayout() {
         {/* TOP HEADER */}
         <AdminHeader onToggleMobileMenu={() => setMobileMenuOpen(true)} />
 
-        {/* SCROLLABLE MAIN PAGE CONTENT */}
-        <main ref={mainContentRef} className="flex-1 overflow-y-auto p-3 sm:p-6 lg:p-8 max-w-7xl w-full mx-auto">
-          <Outlet />
+        {/* SCROLLABLE MAIN PAGE CONTENT WITH RIGHT-SIDE SCROLLBAR */}
+        <main ref={mainContentRef} className="flex-1 overflow-y-auto w-full custom-scrollbar">
+          <div className="max-w-7xl w-full mx-auto p-3 sm:p-6 lg:p-8">
+            <Outlet />
+          </div>
         </main>
       </div>
     </div>

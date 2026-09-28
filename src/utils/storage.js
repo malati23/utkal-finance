@@ -287,6 +287,94 @@ export function updateApplicationStatus(id, newStatus) {
   return updatedApps;
 }
 
+export function updateApplicationRecord(id, updatedFields = {}) {
+  const apps = getApplications();
+  let updatedItem = null;
+
+  const updatedApps = apps.map((app) => {
+    if (app.id === id || app.applicationId === id || app._id === id) {
+      const mergedPersonal = {
+        ...(app.personal || {}),
+        ...(app.personalDetails || {}),
+        ...(updatedFields.personalDetails || {}),
+      };
+      const mergedContact = {
+        ...(app.contactDetails || {}),
+        ...(updatedFields.contactDetails || {}),
+      };
+      const mergedAddress = {
+        ...(app.address || {}),
+        ...(app.addressDetails || {}),
+        ...(updatedFields.addressDetails || {}),
+      };
+      const mergedNominee = {
+        ...(app.nominee || {}),
+        ...(app.nomineeDetails || {}),
+        ...(updatedFields.nomineeDetails || {}),
+      };
+      const mergedMembership = {
+        ...(app.membershipDetails || {}),
+        ...(updatedFields.membershipDetails || {}),
+      };
+
+      const title = mergedPersonal.title || app.title || 'Mr.';
+      const firstName = mergedPersonal.firstName !== undefined ? mergedPersonal.firstName : app.firstName;
+      const middleName = mergedPersonal.middleName !== undefined ? mergedPersonal.middleName : app.middleName;
+      const lastName = mergedPersonal.lastName !== undefined ? mergedPersonal.lastName : app.lastName;
+      const nameParts = [title, firstName, middleName, lastName].filter(Boolean);
+      const applicantName = nameParts.length > 0 ? nameParts.join(' ') : (updatedFields.applicantName || app.applicantName);
+
+      updatedItem = {
+        ...app,
+        ...updatedFields,
+        personalDetails: mergedPersonal,
+        contactDetails: mergedContact,
+        addressDetails: mergedAddress,
+        nomineeDetails: mergedNominee,
+        membershipDetails: mergedMembership,
+        applicantName,
+        title,
+        firstName,
+        middleName,
+        lastName,
+        fatherLegalName: mergedPersonal.fatherLegalName || updatedFields.fatherLegalName || app.fatherLegalName,
+        relationshipPrefix: mergedPersonal.relationshipPrefix || updatedFields.relationshipPrefix || app.relationshipPrefix,
+        dob: mergedPersonal.dob || updatedFields.dob || app.dob,
+        age: mergedPersonal.age || updatedFields.age || app.age,
+        gender: mergedPersonal.gender || updatedFields.gender || app.gender,
+        maritalStatus: mergedPersonal.maritalStatus || updatedFields.maritalStatus || app.maritalStatus,
+        religion: mergedPersonal.religion || updatedFields.religion || app.religion,
+        category: mergedPersonal.category || updatedFields.category || app.category,
+        education: mergedPersonal.education || updatedFields.education || app.education,
+        occupation: mergedPersonal.occupation || updatedFields.occupation || app.occupation,
+        email: mergedContact.email || updatedFields.email || app.email,
+        mobile: mergedContact.mobile || updatedFields.mobile || app.mobile,
+        altMobile: mergedContact.altMobile || updatedFields.altMobile || app.altMobile,
+        pan: mergedPersonal.pan || updatedFields.pan || app.pan,
+        address1: mergedAddress.address1 || updatedFields.address1 || app.address1,
+        villageTown: mergedAddress.villageTown || updatedFields.villageTown || app.villageTown,
+        district: mergedAddress.district || updatedFields.district || app.district,
+        state: mergedAddress.state || updatedFields.state || app.state,
+        pincode: mergedAddress.pincode || updatedFields.pincode || app.pincode,
+        branch: mergedMembership.branch || updatedFields.branch || app.branch,
+        introducer: mergedMembership.introducer || updatedFields.introducer || app.introducer,
+        empId: mergedMembership.empId || updatedFields.empId || app.empId,
+        nomineeName: mergedNominee.fullName || updatedFields.nomineeName || app.nomineeName,
+        nomineeRel: mergedNominee.relationship || updatedFields.nomineeRel || app.nomineeRel,
+        nomineeDob: mergedNominee.dob || updatedFields.nomineeDob || app.nomineeDob,
+        nomineeAddr: mergedNominee.address || updatedFields.nomineeAddr || app.nomineeAddr,
+        status: updatedFields.status || app.status,
+      };
+
+      return updatedItem;
+    }
+    return app;
+  });
+
+  setItem(APPLICATIONS_KEY, updatedApps);
+  return updatedItem || updatedApps.find((a) => a.id === id || a.applicationId === id);
+}
+
 export function updateMemberStatus(memberId, newStatus) {
   const apps = getApplications();
   const updatedApps = apps.map((app) => {

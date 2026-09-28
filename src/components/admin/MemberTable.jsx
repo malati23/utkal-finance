@@ -1,9 +1,9 @@
 import React from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Eye, UserX, UserCheck } from 'lucide-react';
+import { Eye, UserX, UserCheck, Edit } from 'lucide-react';
 import { MemberStatusBadge } from './MemberStatusBadge';
 
-export function MemberTable({ members = [], onToggleStatus }) {
+export function MemberTable({ members = [], onToggleStatus, onEdit }) {
   const navigate = useNavigate();
 
   return (
@@ -39,14 +39,25 @@ export function MemberTable({ members = [], onToggleStatus }) {
               </div>
 
               <div className="pt-2 flex flex-col sm:flex-row items-stretch gap-2">
-                <button
-                  type="button"
-                  onClick={() => navigate(`/admin-dashboard/members/${memberId}`)}
-                  className="w-full inline-flex items-center justify-center gap-1.5 py-2 px-3 rounded-xl bg-blue-50 hover:bg-blue-100 text-blue-800 font-bold text-xs transition-colors cursor-pointer"
-                >
-                  <Eye className="w-4 h-4" />
-                  <span>View Member Profile</span>
-                </button>
+                <div className="grid grid-cols-2 gap-2 w-full">
+                  <button
+                    type="button"
+                    onClick={() => navigate(`/admin-dashboard/members/${memberId}`)}
+                    className="inline-flex items-center justify-center gap-1.5 py-2 px-3 rounded-xl bg-blue-50 hover:bg-blue-100 text-blue-800 font-bold text-xs transition-colors cursor-pointer"
+                  >
+                    <Eye className="w-4 h-4" />
+                    <span>View Profile</span>
+                  </button>
+
+                  <button
+                    type="button"
+                    onClick={() => onEdit && onEdit(m)}
+                    className="inline-flex items-center justify-center gap-1.5 py-2 px-3 rounded-xl bg-amber-50 hover:bg-amber-100 text-amber-900 border border-amber-200/80 font-bold text-xs transition-colors cursor-pointer"
+                  >
+                    <Edit className="w-4 h-4 text-amber-700" />
+                    <span>Edit Profile</span>
+                  </button>
+                </div>
 
                 {onToggleStatus && (
                   <button
@@ -133,6 +144,16 @@ export function MemberTable({ members = [], onToggleStatus }) {
                     >
                       <Eye className="w-3.5 h-3.5" />
                       <span>View</span>
+                    </button>
+
+                    <button
+                      type="button"
+                      onClick={() => onEdit && onEdit(m)}
+                      className="inline-flex items-center gap-1 px-2.5 py-1.5 rounded-lg bg-amber-50 hover:bg-amber-100 text-amber-900 border border-amber-200/80 font-bold text-[11px] transition-colors cursor-pointer"
+                      title="Edit Member Details"
+                    >
+                      <Edit className="w-3.5 h-3.5 text-amber-700" />
+                      <span>Edit</span>
                     </button>
 
                     {onToggleStatus && (

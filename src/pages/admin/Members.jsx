@@ -1,13 +1,16 @@
 import React, { useState } from 'react';
-import { Search } from 'lucide-react';
+import { Search, CheckCircle2 } from 'lucide-react';
 import { useAdmin } from '../../context/AdminContext';
 import { MemberStats } from '../../components/admin/MemberStats';
 import { MemberTable } from '../../components/admin/MemberTable';
+import { EditApplicationModal } from '../../components/admin/EditApplicationModal';
 
 export function Members() {
-  const { members, updateMemberStatus } = useAdmin();
+  const { members, applications, updateMemberStatus, updateApplication } = useAdmin();
   const [search, setSearch] = useState('');
   const [filterStatus, setFilterStatus] = useState('All');
+  const [editingApp, setEditingApp] = useState(null);
+  const [successMessage, setSuccessMessage] = useState('');
 
   // Filter members by search query and active/inactive status filter
   const filtered = members.filter((m) => {
@@ -33,6 +36,23 @@ export function Members() {
 
     return matchesSearch && matchesStatus;
   });
+
+  const handleEditMember = (member) => {
+    const targetApp = applications.find(
+      (a) => a.memberId === member.memberId || a.id === member.applicationId || a._id === member.applicationId
+    );
+    setEditingApp(targetApp || member.app || member);
+  };
+
+  const handleSaveEdit = async (appId, payload) => {
+    try {
+      await updateApplication(appId, payload);
+      setSuccessMessage(`Member ${payload.applicantName || appId} updated successfully.`);
+      setTimeout(() => setSuccessMessage(''), 5000);
+    } catch (err) {
+      console.error('Error saving member edit:', err);
+    }
+  };
 
   return (
     <div className="space-y-6 text-left animate-fade-in">
@@ -81,9 +101,29 @@ export function Members() {
           </div>
         </div>
 
+        {/* NOTIFICATION */}
+        {successMessage && (
+          <div className="p-3 rounded-xl bg-emerald-50 border border-emerald-300 text-emerald-800 text-xs font-bold flex items-center gap-2">
+            <CheckCircle2 className="w-4 h-4 text-emerald-600" />
+            <span>{successMessage}</span>
+          </div>
+        )}
+
         {/* MEMBER TABLE */}
-        <MemberTable members={filtered} onToggleStatus={updateMemberStatus} />
+        <MemberTable
+          members={filtered}
+          onToggleStatus={updateMemberStatus}
+          onEdit={handleEditMember}
+        />
       </div>
+
+      {/* EDIT MODAL */}
+      <EditApplicationModal
+        isOpen={!!editingApp}
+        application={editingApp}
+        onClose={() => setEditingApp(null)}
+        onSave={handleSaveEdit}
+      />
     </div>
   );
 }

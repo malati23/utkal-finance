@@ -4,8 +4,14 @@ import {
   getMembers,
   getDocuments,
   updateApplicationStatus as storageUpdateApplicationStatus,
+  updateApplicationRecord as storageUpdateApplicationRecord,
   updateMemberStatus as storageUpdateMemberStatus,
 } from '../utils/storage';
+import {
+  getApplicationsApi,
+  updateApplicationStatusApi,
+  updateApplicationApi,
+} from '../services/applicationService';
 import {
   isAdminAuthenticated,
   adminLogin as authAdminLogin,
@@ -44,6 +50,82 @@ import {
 
 const AdminContext = createContext();
 
+function normalizeApplication(app) {
+  const p = app.personalDetails || {};
+  const c = app.contactDetails || {};
+  const a = app.addressDetails || {};
+  const n = app.nomineeDetails || {};
+  const m = app.membershipDetails || {};
+  const doc = app.documentDetails || {};
+  const w = app.witnessDetails || {};
+  const d = app.declarationDetails || {};
+
+  const nameParts = [p.title, p.firstName, p.middleName, p.lastName].filter(Boolean);
+  const applicantName = nameParts.length > 0
+    ? nameParts.join(' ')
+    : app.applicantName || 'Applicant';
+
+  return {
+    ...app,
+    _id: app._id || app.id,
+    id: app.applicationId || app.id || app._id,
+    applicationId: app.applicationId || app.id,
+    refId: app.refId || `APP-2026-${app._id ? app._id.slice(-4) : '1001'}`,
+    memberId: app.memberId || (app.status === 'approved' || app.status === 'Approved' ? `UF-2026-${app._id ? app._id.slice(-4) : '6001'}` : ''),
+    empId: app.empId || `EMP-2026-${app._id ? app._id.slice(-4) : '6001'}`,
+    applicantName,
+    email: c.email || app.email || '',
+    mobile: c.mobile || app.mobile || '',
+    altMobile: app.altMobile || '9437112233',
+    title: p.title || 'Mr.',
+    firstName: p.firstName || '',
+    middleName: p.middleName || '',
+    lastName: p.lastName || '',
+    relationshipPrefix: p.relationshipPrefix || 'S/o.',
+    fatherLegalName: p.fatherLegalName || 'Legal Guardian',
+    dob: p.dob || '1996-06-20',
+    age: p.age || '30',
+    gender: p.gender || 'Male',
+    maritalStatus: p.maritalStatus || 'Married',
+    religion: p.religion || 'Hindu',
+    category: p.category || 'General',
+    education: p.education || 'Graduate / P.G.',
+    occupation: p.occupation || 'Business',
+    address1: a.address1 || 'Plot 214, Saheed Nagar',
+    villageTown: a.villageTown || 'Bhubaneswar',
+    district: a.district || 'Khurda',
+    state: a.state || 'Odisha',
+    pincode: a.pincode || '751007',
+    sameAsResidential: a.sameAsResidential !== false,
+    branch: a.district ? `${a.district} Branch` : app.branch || 'Bhubaneswar HQ (Nayapalli, IRC Village)',
+    introducer: app.introducer || 'Pradeep Kumar Jena',
+    nomineeName: n.fullName || 'Nominee Beneficiary',
+    nomineeRel: n.relationship || 'Spouse',
+    nomineeDob: n.dob || '1998-04-15',
+    nomineeAddr: n.address || 'Same as Applicant Address',
+    numberOfShares: m.numberOfShares || 10,
+    shareValue: m.shareValue || 10,
+    processingFee: m.processingFee || 100,
+    totalPaid: m.totalContribution || 200,
+    idProofType: doc.idProofType || 'Aadhaar Card',
+    addressProofType: doc.addressProofType || 'Aadhaar Card',
+    witness1Name: w.witness1Name || 'Rajesh Kumar Swain',
+    witness1Mobile: w.witness1Mobile || '9861001122',
+    witness1Address: w.witness1Address || 'Bhubaneswar, Odisha',
+    witness2Name: w.witness2Name || 'Manas Ranjan Rout',
+    witness2Mobile: w.witness2Mobile || '9437889900',
+    witness2Address: w.witness2Address || 'Cuttack, Odisha',
+    sigName: d.signatureName || applicantName,
+    declarationDate: d.declarationDate || new Date().toISOString().split('T')[0],
+    paymentMethod: 'UPI (Google Pay)',
+    utrNo: app.utrNo || 'UTR346393622063',
+    receiptNo: app.receiptNo || 'REC-2026-1001',
+    date: app.submittedAt ? new Date(app.submittedAt).toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' }) : app.date || 'Today',
+    status: app.status || 'pending',
+    createdAt: app.createdAt || new Date().toISOString(),
+  };
+}
+
 export const AdminProvider = ({ children }) => {
   const [isAuthenticated, setIsAuthenticated] = useState(() => {
     return isAdminAuthenticated();
@@ -68,8 +150,18 @@ export const AdminProvider = ({ children }) => {
   const [galleryItems, setGalleryItems] = useState(INITIAL_GALLERY);
   const [teamMembers, setTeamMembers] = useState(INITIAL_TEAM);
 
-  const refreshData = useCallback(() => {
-    setApplications(getApplications());
+  const refreshData = useCallback(async () => {
+    try {
+      const apiApps = await getApplicationsApi();
+      if (Array.isArray(apiApps) && apiApps.length > 0) {
+        setApplications(apiApps.map(normalizeApplication));
+      } else {
+        setApplications(getApplications().map(normalizeApplication));
+      }
+    } catch (err) {
+      console.warn('API fetch failed, falling back to local storage:', err.message);
+      setApplications(getApplications().map(normalizeApplication));
+    }
     setMembers(getMembers());
     setPayments(getPayments());
     setDocuments(getDocuments());
@@ -108,9 +200,69 @@ export const AdminProvider = ({ children }) => {
     setIsAuthenticated(false);
   };
 
-  const updateApplicationStatus = (id, newStatus) => {
-    storageUpdateApplicationStatus(id, newStatus);
-    refreshData();
+  const updateApplicationStatus = async (idOrMongoId, newStatus) => {
+    const target = applications.find(
+      (a) => a._id === idOrMongoId || a.id === idOrMongoId || a.applicationId === idOrMongoId
+    );
+
+    const mongoId = target?._id || idOrMongoId;
+    const targetStatus = newStatus.toLowerCase();
+
+    // Call API: PATCH http://localhost:5000/api/applications/${mongoId}/status
+    const apiResult = await updateApplicationStatusApi(mongoId, targetStatus);
+
+    // Update local state without full page reload
+    setApplications((prev) =>
+      prev.map((app) => {
+        if (app._id === mongoId || app.id === idOrMongoId || app.applicationId === idOrMongoId) {
+          const updatedDoc = apiResult.application || {};
+          return normalizeApplication({
+            ...app,
+            ...updatedDoc,
+            status: updatedDoc.status || targetStatus,
+          });
+        }
+        return app;
+      })
+    );
+
+    storageUpdateApplicationStatus(target?.id || idOrMongoId, newStatus);
+    return apiResult;
+  };
+
+  const updateApplication = async (idOrMongoId, updatedData) => {
+    const target = applications.find(
+      (a) => a._id === idOrMongoId || a.id === idOrMongoId || a.applicationId === idOrMongoId
+    );
+
+    const mongoId = target?._id || idOrMongoId;
+
+    let apiResult = null;
+    try {
+      apiResult = await updateApplicationApi(mongoId, updatedData);
+    } catch (err) {
+      console.warn('API update failed, applying storage fallback:', err.message);
+    }
+
+    const updatedDoc = apiResult?.application || {};
+
+    // Update local state without full page reload
+    setApplications((prev) =>
+      prev.map((app) => {
+        if (app._id === mongoId || app.id === idOrMongoId || app.applicationId === idOrMongoId) {
+          return normalizeApplication({
+            ...app,
+            ...updatedData,
+            ...updatedDoc,
+          });
+        }
+        return app;
+      })
+    );
+
+    const storageResult = storageUpdateApplicationRecord(target?.id || idOrMongoId, updatedData);
+    setMembers(getMembers());
+    return apiResult || { success: true, application: storageResult };
   };
 
   const updateMemberStatus = (id, newStatus) => {
@@ -264,6 +416,7 @@ export const AdminProvider = ({ children }) => {
         notices,
         galleryItems,
         teamMembers,
+        updateApplication,
         updateApplicationStatus,
         updateMemberStatus,
         createNewDeposit,

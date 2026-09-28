@@ -1,0 +1,70 @@
+import { apiConfig } from './api';
+
+/**
+ * Fetch all applications from backend MongoDB database
+ * GET /api/applications
+ */
+export async function getApplicationsApi() {
+  const response = await fetch(`${apiConfig.baseURL}/applications`, {
+    method: 'GET',
+    headers: {
+      'Content-Type': 'application/json',
+    },
+  });
+
+  const data = await response.json();
+  if (!response.ok || !data.success) {
+    throw new Error(data.message || 'Failed to fetch applications from server');
+  }
+
+  return data.applications || [];
+}
+
+/**
+ * Update application status via Admin Approval API
+ * PATCH /api/applications/:id/status
+ * @param {string} id - MongoDB document _id
+ * @param {string} status - 'approved', 'rejected', or 'pending'
+ */
+export async function updateApplicationStatusApi(id, status = 'approved') {
+  const response = await fetch(`${apiConfig.baseURL}/applications/${id}/status`, {
+    method: 'PATCH',
+    headers: {
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify({ status }),
+  });
+
+  const data = await response.json();
+
+  if (!response.ok || !data.success) {
+    throw new Error(data.message || 'Failed to update application status');
+  }
+
+  return data;
+}
+
+/**
+ * Update application details via Admin Edit API
+ * PUT /api/applications/:id
+ * @param {string} id - MongoDB document _id or applicationId
+ * @param {Object} updateData - updated application fields
+ */
+export async function updateApplicationApi(id, updateData) {
+  const response = await fetch(`${apiConfig.baseURL}/applications/${id}`, {
+    method: 'PUT',
+    headers: {
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify(updateData),
+  });
+
+  const data = await response.json();
+
+  if (!response.ok || !data.success) {
+    throw new Error(data.message || 'Failed to update application');
+  }
+
+  return data;
+}
+

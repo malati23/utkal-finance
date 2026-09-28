@@ -77,7 +77,7 @@ export function StepDocuments({ data = {}, errors = {}, onFileSelect, onFileRemo
           STATUTORY IDENTIFICATION DOCUMENTS &amp; UPLOAD STATUS
         </span>
       }
-      subtitle="Upload supporting KYC documents listed in the official statutory application form. All 5 attachment checklist items are required."
+      subtitle="Upload supporting KYC documents listed in the official statutory application form. Document uploads are optional during online registration and can also be submitted later at the branch."
       rightAction={
         <button
           type="button"
@@ -90,41 +90,41 @@ export function StepDocuments({ data = {}, errors = {}, onFileSelect, onFileRemo
       }
     >
       <div className="space-y-6">
-        {/* TOP GRID BOX: PRIMARY GOVT ID & REFERENCE NUMBER */}
+        {/* TOP GRID BOX: PRIMARY GOVT ID & REFERENCE NUMBER (OPTIONAL) */}
         <div className="bg-slate-50/70 border border-slate-200/90 rounded-2xl p-5 grid grid-cols-1 sm:grid-cols-2 gap-4">
           <FormSelect
-            label="Primary Government ID Proof"
+            label="Primary Government ID Proof (Optional)"
             name="idProofType"
             value={data.idProofType || 'Aadhaar Card'}
             onChange={(e) => onChange('idProofType', e.target.value)}
             options={ID_PROOF_TYPES}
-            required
             error={errors.idProofType}
           />
 
           <FormInput
-            label="Document Reference Number"
+            label="Document Reference Number (Optional)"
             name="docRefNo"
             value={data.docRefNo || ''}
             onChange={(e) => onChange('docRefNo', e.target.value)}
-            placeholder="Enter ID / Card Number (e.g. 9874 5612 3041)"
-            required
+            placeholder="Enter ID / Card Number (e.g. 9874 5612 3041) - Optional"
             error={errors.docRefNo}
           />
         </div>
 
         {/* CHECKLIST HEADER ROW */}
         <div className="flex items-center justify-between border-b border-slate-200/80 pb-2.5">
-          <h4 className="text-xs font-extrabold text-slate-800 uppercase tracking-wider flex items-center gap-1">
-            <span>MANDATORY ATTACHMENTS CHECKLIST (ALL 5 REQUIRED)</span>
-            <span className="text-rose-500 font-bold">*</span>
+          <h4 className="text-xs font-extrabold text-slate-800 uppercase tracking-wider flex items-center gap-2">
+            <span>SUPPORTING ATTACHMENTS (OPTIONAL - CAN SUBMIT LATER)</span>
+            <span className="text-[10px] font-bold text-slate-500 bg-slate-200/80 px-2 py-0.5 rounded-full lowercase">
+              optional
+            </span>
           </h4>
-          <span className={`text-xs font-bold ${uploadedCount === 5 ? 'text-emerald-700' : 'text-slate-500'}`}>
+          <span className={`text-xs font-bold ${uploadedCount > 0 ? 'text-emerald-700' : 'text-slate-500'}`}>
             {uploadedCount} of 5 Uploaded
           </span>
         </div>
 
-        {/* ERROR BANNER FOR ALL DOCUMENTS */}
+        {/* ERROR BANNER IF ANY SPECIFIC ERROR */}
         {errors.allDocs && (
           <div className="bg-rose-50 border border-rose-200 text-rose-700 text-xs font-bold p-3.5 rounded-xl flex items-center gap-2 shadow-2xs">
             <AlertCircle className="w-4.5 h-4.5 text-rose-600 shrink-0" />
@@ -132,7 +132,7 @@ export function StepDocuments({ data = {}, errors = {}, onFileSelect, onFileRemo
           </div>
         )}
 
-        {/* 5 MANDATORY ATTACHMENT CARDS */}
+        {/* 5 ATTACHMENT CARDS (OPTIONAL) */}
         <div className="space-y-3">
           {CHECKLIST_ITEMS.map((item) => {
             const fileData = data[item.key];
@@ -158,7 +158,7 @@ export function StepDocuments({ data = {}, errors = {}, onFileSelect, onFileRemo
                 {/* Left Number & Details */}
                 <div className="flex items-center gap-3.5">
                   <div className={`w-8 h-8 rounded-full font-black text-xs flex items-center justify-center shrink-0 ${
-                    isUploaded ? 'bg-emerald-100 text-emerald-800' : itemError ? 'bg-rose-100 text-rose-700' : 'bg-slate-100 text-slate-700'
+                    isUploaded ? 'bg-emerald-100 text-emerald-800' : 'bg-slate-100 text-slate-700'
                   }`}>
                     {item.id}
                   </div>
@@ -166,7 +166,7 @@ export function StepDocuments({ data = {}, errors = {}, onFileSelect, onFileRemo
                   <div className="space-y-1">
                     <h5 className="font-bold text-xs sm:text-sm text-slate-900 leading-snug flex items-center gap-1.5">
                       <span>{item.title}</span>
-                      <span className="text-rose-500 font-extrabold" title="Required Document">*</span>
+                      <span className="text-slate-400 text-xs font-normal">(Optional)</span>
                     </h5>
 
                     {/* Status Pill Badge */}
@@ -177,9 +177,9 @@ export function StepDocuments({ data = {}, errors = {}, onFileSelect, onFileRemo
                           <span>Attached ({fileData.name})</span>
                         </span>
                       ) : (
-                        <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full bg-amber-50 text-amber-700 border border-amber-200 text-[11px] font-bold">
-                          <span className="w-1.5 h-1.5 rounded-full bg-amber-500" />
-                          <span>Required (Pending)</span>
+                        <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full bg-slate-100 text-slate-600 border border-slate-200 text-[11px] font-bold">
+                          <span className="w-1.5 h-1.5 rounded-full bg-slate-400" />
+                          <span>Not Uploaded (Optional)</span>
                         </span>
                       )}
                     </div>
@@ -217,14 +217,10 @@ export function StepDocuments({ data = {}, errors = {}, onFileSelect, onFileRemo
                     <button
                       type="button"
                       onClick={() => fileInputRefs[item.key].current?.click()}
-                      className={`text-xs font-bold px-4 py-2 rounded-xl border inline-flex items-center gap-1.5 transition-colors ${
-                        itemError
-                          ? 'bg-rose-600 hover:bg-rose-700 text-white border-rose-600 shadow-xs'
-                          : 'bg-slate-100 hover:bg-slate-200 text-slate-800 border-slate-200'
-                      }`}
+                      className="text-xs font-bold px-4 py-2 rounded-xl border inline-flex items-center gap-1.5 transition-colors bg-slate-100 hover:bg-slate-200 text-slate-800 border-slate-200"
                     >
                       <Upload className="w-3.5 h-3.5" />
-                      <span>Upload File *</span>
+                      <span>Upload File</span>
                     </button>
                   )}
                 </div>

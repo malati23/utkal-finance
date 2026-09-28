@@ -1,9 +1,23 @@
 import React, { useState } from 'react';
 import { Shield, Users, FileDown } from 'lucide-react';
 import { StatutoryPdfModal } from '../common/StatutoryPdfModal';
+import memberFormPdf from '../../assets/NEWUTKAL MEMBER FORM.pdf';
 
 export function HighlightStats() {
   const [pdfModalOpen, setPdfModalOpen] = useState(false);
+
+  const handleCardClick = () => {
+    // Trigger direct download of the official member form
+    const link = document.createElement('a');
+    link.href = memberFormPdf;
+    link.download = 'NEWUTKAL MEMBER FORM.pdf';
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+
+    // Also open the preview modal
+    setPdfModalOpen(true);
+  };
 
   return (
     <>
@@ -51,11 +65,10 @@ export function HighlightStats() {
             </div>
           </div>
 
-          <button
-            type="button"
-            onClick={() => setPdfModalOpen(true)}
+          <div
+            onClick={handleCardClick}
             className="bg-white rounded-xl p-3.5 sm:p-4 border border-blue-100 bg-gradient-to-r from-blue-50/50 to-indigo-50/50 shadow-md flex items-center justify-between gap-3 hover:shadow-lg hover:border-blue-300 transition-all group cursor-pointer text-left"
-            title="Click to view and download official Statutory Form PDF"
+            title="Click to download and view official Statutory Member Form PDF"
           >
             <div>
               <span className="text-[10px] font-bold uppercase tracking-wider text-blue-600 block">
@@ -65,10 +78,19 @@ export function HighlightStats() {
                 Download Form
               </span>
             </div>
-            <div className="w-9 h-9 rounded-lg bg-blue-600 group-hover:bg-blue-700 text-white flex items-center justify-center shrink-0 shadow-sm transition-colors">
+            <a
+              href={memberFormPdf}
+              download="NEWUTKAL MEMBER FORM.pdf"
+              onClick={(e) => {
+                e.stopPropagation();
+              }}
+              className="w-9 h-9 rounded-lg bg-blue-600 hover:bg-blue-700 active:scale-95 text-white flex items-center justify-center shrink-0 shadow-sm transition-colors cursor-pointer"
+              title="Download NEWUTKAL MEMBER FORM.pdf"
+              aria-label="Download Member Form PDF"
+            >
               <FileDown className="w-4 h-4" />
-            </div>
-          </button>
+            </a>
+          </div>
         </div>
       </section>
 

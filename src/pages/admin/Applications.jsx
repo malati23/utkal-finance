@@ -1,16 +1,22 @@
 import React, { useState } from 'react';
+import { createPortal } from 'react-dom';
 import { Search, Download, CheckCircle2, XCircle, FileText, UserPlus, Filter } from 'lucide-react';
 import { useAdmin } from '../../context/AdminContext';
 import { ApplicationTable } from '../../components/admin/ApplicationTable';
+import { EditApplicationModal } from '../../components/admin/EditApplicationModal';
 
 export function Applications() {
-  const { applications, updateApplicationStatus } = useAdmin();
+  const { applications, updateApplicationStatus, updateApplication } = useAdmin();
 
   const [search, setSearch] = useState('');
   const [filterStatus, setFilterStatus] = useState('All');
   const [selectedBranch, setSelectedBranch] = useState('All Branches');
   const [selectedApp, setSelectedApp] = useState(null);
+  const [editingApp, setEditingApp] = useState(null);
   const [actionType, setActionType] = useState(null); // 'Approve' or 'Reject'
+  const [isProcessing, setIsProcessing] = useState(false);
+  const [successMessage, setSuccessMessage] = useState('');
+  const [errorMessage, setErrorMessage] = useState('');
 
   // Quick Add Member Bar toggle
   const [showQuickAdd, setShowQuickAdd] = useState(false);
@@ -22,33 +28,32 @@ export function Applications() {
     deposit: '25000',
   });
 
-  // Calculate Stat Counts
+  // Calculate Stat Counts (case-insensitive)
   const totalCount = applications.length;
-  const pendingCount = applications.filter((a) => a.status === 'Pending').length;
-  const approvedCount = applications.filter((a) => a.status === 'Approved').length;
-  const rejectedCount = applications.filter((a) => a.status === 'Rejected').length;
+  const pendingCount = applications.filter((a) => (a.status || '').toLowerCase() === 'pending').length;
+  const approvedCount = applications.filter((a) => (a.status || '').toLowerCase() === 'approved').length;
+  const rejectedCount = applications.filter((a) => (a.status || '').toLowerCase() === 'rejected').length;
   const pendingKycCount = applications.filter(
-    (a) => a.status === 'Pending' || a.status === 'Correction Required'
+    (a) => (a.status || '').toLowerCase() === 'pending' || (a.status || '').toLowerCase() === 'correction required'
   ).length;
 
   const filtered = applications.filter((app) => {
     const matchesSearch =
-      app.applicantName.toLowerCase().includes(search.toLowerCase()) ||
-      app.id.toLowerCase().includes(search.toLowerCase()) ||
-      app.mobile.includes(search) ||
-      app.email.toLowerCase().includes(search.toLowerCase());
+      (app.applicantName || '').toLowerCase().includes(search.toLowerCase()) ||
+      (app.id || '').toLowerCase().includes(search.toLowerCase()) ||
+      (app.mobile || '').includes(search) ||
+      (app.email || '').toLowerCase().includes(search.toLowerCase());
 
     let matchesStatus = true;
-    if (filterStatus === 'Submitted') {
-      matchesStatus = app.status === 'Pending';
-    } else if (filterStatus === 'Payment') {
-      matchesStatus = app.status === 'Pending';
+    const currentStatusLower = (app.status || '').toLowerCase();
+    if (filterStatus === 'Submitted' || filterStatus === 'Payment') {
+      matchesStatus = currentStatusLower === 'pending';
     } else if (filterStatus === 'PendingDocs') {
-      matchesStatus = app.status === 'Correction Required' || app.status === 'Pending';
+      matchesStatus = currentStatusLower === 'correction required' || currentStatusLower === 'pending';
     } else if (filterStatus === 'Approved') {
-      matchesStatus = app.status === 'Approved';
+      matchesStatus = currentStatusLower === 'approved';
     } else if (filterStatus !== 'All') {
-      matchesStatus = app.status.toLowerCase() === filterStatus.toLowerCase();
+      matchesStatus = currentStatusLower === filterStatus.toLowerCase();
     }
 
     let matchesBranch = true;
@@ -62,14 +67,55 @@ export function Applications() {
   const handleOpenModal = (app, type) => {
     setSelectedApp(app);
     setActionType(type);
+    setErrorMessage('');
   };
 
-  const handleConfirmAction = () => {
-    if (selectedApp && actionType) {
-      const newStatus = actionType === 'Approve' ? 'Approved' : 'Rejected';
-      updateApplicationStatus(selectedApp.id, newStatus);
+  const handleConfirmAction = async () => {
+    if (!selectedApp || !actionType) return;
+
+    try {
+      setIsProcessing(true);
+      setErrorMessage('');
+
+      // Use MongoDB document _id
+      const mongoId = selectedApp._id || selectedApp.id;
+      const targetStatus = actionType === 'Approve' ? 'approved' : 'rejected';
+
+      await updateApplicationStatus(mongoId, targetStatus);
+
+      if (actionType === 'Approve') {
+        setSuccessMessage('Application approved successfully.');
+      } else {
+        setSuccessMessage(`Application ${actionType.toLowerCase()}d successfully.`);
+      }
+
       setSelectedApp(null);
       setActionType(null);
+
+      setTimeout(() => {
+        setSuccessMessage('');
+      }, 5000);
+    } catch (err) {
+      console.error('Failed to update status:', err);
+      setErrorMessage(err.message || 'Failed to update application status.');
+    } finally {
+      setIsProcessing(false);
+    }
+  };
+
+  const handleSaveEdit = async (appId, payload) => {
+    try {
+      await updateApplication(appId, payload);
+      setSuccessMessage(`Application ${payload.applicantName || appId} updated successfully.`);
+      setTimeout(() => {
+        setSuccessMessage('');
+      }, 5000);
+    } catch (err) {
+      console.error('Failed to save application edit:', err);
+      setErrorMessage(err.message || 'Failed to update application');
+      setTimeout(() => {
+        setErrorMessage('');
+      }, 5000);
     }
   };
 
@@ -402,12 +448,28 @@ export function Applications() {
           applications={filtered}
           onApprove={(app) => handleOpenModal(app, 'Approve')}
           onReject={(app) => handleOpenModal(app, 'Reject')}
+          onEdit={(app) => setEditingApp(app)}
         />
       </div>
 
+      {/* NOTIFICATION BANNERS */}
+      {successMessage && (
+        <div className="bg-emerald-50 border border-emerald-300 text-emerald-900 p-4 rounded-2xl text-xs font-bold flex items-center gap-3 shadow-xs">
+          <CheckCircle2 className="w-5 h-5 text-emerald-600 shrink-0" />
+          <span>{successMessage}</span>
+        </div>
+      )}
+
+      {errorMessage && (
+        <div className="bg-rose-50 border border-rose-300 text-rose-900 p-4 rounded-2xl text-xs font-bold flex items-center gap-3 shadow-xs">
+          <XCircle className="w-5 h-5 text-rose-600 shrink-0" />
+          <span>{errorMessage}</span>
+        </div>
+      )}
+
       {/* CONFIRMATION MODAL */}
-      {selectedApp && actionType && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-xs select-none">
+      {selectedApp && actionType && typeof document !== 'undefined' && createPortal(
+        <div className="fixed inset-0 z-[9999] flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-xs select-none">
           <div className="bg-white rounded-3xl border border-slate-200 shadow-2xl p-6 sm:p-8 max-w-md w-full space-y-5 animate-fade-in text-left">
             <div className="flex items-center gap-3">
               <div
@@ -437,33 +499,58 @@ export function Applications() {
               Are you sure you want to <strong>{actionType.toLowerCase()}</strong> this statutory application? This will update member enrollment status immediately.
             </p>
 
+            {errorMessage && (
+              <div className="p-3 bg-rose-50 border border-rose-200 rounded-xl text-xs text-rose-700 font-medium">
+                {errorMessage}
+              </div>
+            )}
+
             <div className="flex items-center justify-end gap-3 pt-2">
               <button
                 type="button"
+                disabled={isProcessing}
                 onClick={() => {
                   setSelectedApp(null);
                   setActionType(null);
+                  setErrorMessage('');
                 }}
-                className="px-4 py-2.5 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold text-xs cursor-pointer"
+                className="px-4 py-2.5 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold text-xs cursor-pointer disabled:opacity-50"
               >
                 Cancel
               </button>
 
               <button
                 type="button"
+                disabled={isProcessing}
                 onClick={handleConfirmAction}
-                className={`px-5 py-2.5 rounded-xl text-white font-black text-xs uppercase tracking-wider shadow-md cursor-pointer ${
+                className={`px-5 py-2.5 rounded-xl text-white font-black text-xs uppercase tracking-wider shadow-md cursor-pointer disabled:opacity-50 inline-flex items-center gap-2 ${
                   actionType === 'Approve'
                     ? 'bg-[#00C853] hover:bg-emerald-600'
                     : 'bg-rose-600 hover:bg-rose-700'
                 }`}
               >
-                Confirm {actionType}
+                {isProcessing ? (
+                  <>
+                    <span className="w-3.5 h-3.5 border-2 border-white border-t-transparent rounded-full animate-spin"></span>
+                    <span>Processing...</span>
+                  </>
+                ) : (
+                  <span>Confirm {actionType}</span>
+                )}
               </button>
             </div>
           </div>
-        </div>
+        </div>,
+        document.body
       )}
+
+      {/* EDIT APPLICATION MODAL */}
+      <EditApplicationModal
+        isOpen={!!editingApp}
+        application={editingApp}
+        onClose={() => setEditingApp(null)}
+        onSave={handleSaveEdit}
+      />
     </div>
   );
 }
