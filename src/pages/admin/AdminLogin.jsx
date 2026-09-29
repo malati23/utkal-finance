@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { ShieldCheck, Mail, Lock, Eye, EyeOff, AlertCircle, CheckCircle2, ArrowRight } from 'lucide-react';
 import { useAdmin } from '../../context/AdminContext';
+import { ADMIN_EMAIL, ADMIN_PASSWORD } from '../../config/env';
 import brandLogo from '../../assets/image copy 7.png';
 
 /**
@@ -16,8 +17,8 @@ export function AdminLogin() {
 
   // DEMO ONLY: credentials are pre-filled for client presentation.
   // Replace/remove these values before production deployment.
-  const [email, setEmail] = useState(import.meta.env.VITE_ADMIN_EMAIL || 'admin@newutkalfinance.com');
-  const [password, setPassword] = useState(import.meta.env.VITE_ADMIN_PASSWORD || 'Admin@123');
+  const [email, setEmail] = useState(ADMIN_EMAIL);
+  const [password, setPassword] = useState(ADMIN_PASSWORD);
   const [showPassword, setShowPassword] = useState(false);
   const [error, setError] = useState('');
   const [successMsg, setSuccessMsg] = useState('');

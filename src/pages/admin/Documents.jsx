@@ -25,6 +25,7 @@ import {
 } from 'lucide-react';
 import { getDocumentsApi } from '../../services/applicationService';
 import { StatusBadge } from '../../components/admin/StatusBadge';
+import { getBackendAssetUrl as getFileUrl } from '../../config/env';
 
 export function Documents() {
   const [applicationsWithDocs, setApplicationsWithDocs] = useState([]);
@@ -36,16 +37,6 @@ export function Documents() {
   const [viewMode, setViewMode] = useState('grouped'); // 'grouped' (default) or 'table'
 
   const [selectedPreviewDoc, setSelectedPreviewDoc] = useState(null);
-
-  // Convert relative file path to full accessible backend URL
-  const getFileUrl = (pathStr) => {
-    if (!pathStr) return '';
-    if (pathStr.startsWith('http://') || pathStr.startsWith('https://') || pathStr.startsWith('data:')) {
-      return pathStr;
-    }
-    const cleanPath = pathStr.startsWith('/') ? pathStr : `/${pathStr}`;
-    return `http://localhost:5000${cleanPath}`;
-  };
 
   // Fetch real applications and complete documentDetails from backend API
   const fetchDocuments = useCallback(async () => {

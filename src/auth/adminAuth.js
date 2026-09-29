@@ -6,6 +6,8 @@
  * Frontend-only authentication. Production authentication must be handled by a secure backend.
  */
 
+import { ADMIN_EMAIL, ADMIN_PASSWORD } from '../config/env';
+
 const ADMIN_AUTH_KEY = 'utkal_finance_admin_auth';
 const LEGACY_AUTH_KEY = 'nuf_admin_auth';
 const LEGACY_SESSION_KEY = 'adminSession';
@@ -65,16 +67,11 @@ export function adminLogin(email, password) {
     return { success: false, message: 'Invalid admin email or password.' };
   }
 
-  // Environment variables with fallback support
-  const envEmail = (import.meta.env.VITE_ADMIN_EMAIL || 'admin@example.com').trim().toLowerCase();
-  const envPassword = import.meta.env.VITE_ADMIN_PASSWORD || 'your-admin-password';
-
-  // Support environment credentials and legacy default credentials
-  const isEnvMatch = cleanEmail === envEmail && password === envPassword;
+  // Environment credentials from centralized config
+  const isEnvMatch = cleanEmail === ADMIN_EMAIL && password === ADMIN_PASSWORD;
   const isLegacyMatch = cleanEmail === 'admin@newutkalfinance.com' && password === 'Admin@123';
-  const isDefaultMatch = cleanEmail === 'admin@example.com' && password === 'your-admin-password';
 
-  if (isEnvMatch || isLegacyMatch || isDefaultMatch) {
+  if (isEnvMatch || isLegacyMatch) {
     const sessionPayload = {
       isAuthenticated: true,
       role: 'admin',

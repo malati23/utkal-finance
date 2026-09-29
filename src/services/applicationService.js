@@ -1,6 +1,28 @@
 import { apiConfig } from './api';
 
 /**
+ * Submit a new member registration application
+ * POST /api/applications
+ * @param {Object} applicationData
+ */
+export async function createApplicationApi(applicationData) {
+  const response = await fetch(`${apiConfig.baseURL}/applications`, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify(applicationData),
+  });
+
+  const data = await response.json();
+  if (!response.ok || !data.success) {
+    throw new Error(data.message || 'Failed to submit application');
+  }
+
+  return data;
+}
+
+/**
  * Fetch all applications from backend MongoDB database
  * GET /api/applications
  */

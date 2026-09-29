@@ -20,6 +20,7 @@ import {
 import { useAdmin } from '../../context/AdminContext';
 import { MemberDetailsCard } from '../../components/admin/MemberDetailsCard';
 import { MemberStatusBadge } from '../../components/admin/MemberStatusBadge';
+import { getBackendAssetUrl as getFileUrl } from '../../config/env';
 
 export function MemberDetails() {
   const { memberId } = useParams();
@@ -27,16 +28,6 @@ export function MemberDetails() {
   const { members, applications, updateMemberStatus } = useAdmin();
   const [noticeMessage, setNoticeMessage] = useState('');
   const [selectedPreviewDoc, setSelectedPreviewDoc] = useState(null);
-
-  // Helper to convert relative file path to full accessible backend URL
-  const getFileUrl = (pathStr) => {
-    if (!pathStr) return '';
-    if (pathStr.startsWith('http://') || pathStr.startsWith('https://') || pathStr.startsWith('data:')) {
-      return pathStr;
-    }
-    const cleanPath = pathStr.startsWith('/') ? pathStr : `/${pathStr}`;
-    return `http://localhost:5000${cleanPath}`;
-  };
 
   // 1. Find member from real members array
   const member = members.find(

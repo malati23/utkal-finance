@@ -14,6 +14,7 @@ import { SubmissionSuccess } from './SubmissionSuccess';
 import { DEMO_QUICKFILL_DATA } from '../../data/registrationOptions';
 import { validateEmail, validatePhone } from '../../utils/validators';
 import { saveApplication } from '../../utils/storage';
+import { uploadDocumentsApi, createApplicationApi } from '../../services/applicationService';
 import { ArrowLeft, ArrowRight, Save, CheckCircle2, ShieldCheck } from 'lucide-react';
 
 export function RegistrationWizard({ activeStep = 1, onQuickFillTrigger }) {
@@ -389,14 +390,7 @@ export function RegistrationWizard({ activeStep = 1, onQuickFillTrigger }) {
       let uploadedFileUrls = {};
       if (hasFiles) {
         try {
-          const uploadRes = await fetch('http://localhost:5000/api/applications/upload-documents', {
-            method: 'POST',
-            body: fileFormData,
-          });
-          const uploadData = await uploadRes.json();
-          if (uploadRes.ok && uploadData.success && uploadData.files) {
-            uploadedFileUrls = uploadData.files;
-          }
+          uploadedFileUrls = await uploadDocumentsApi(fileFormData);
         } catch (uploadErr) {
           console.warn('File upload warning:', uploadErr.message);
         }
@@ -443,18 +437,10 @@ export function RegistrationWizard({ activeStep = 1, onQuickFillTrigger }) {
 
       console.log("Submitting application payload to backend:", payload);
 
-      const response = await fetch('http://localhost:5000/api/applications', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify(payload),
-      });
-
-      const data = await response.json();
+      const data = await createApplicationApi(payload);
       console.log("Application API response:", data);
 
-      if (response.ok && data.success && data.application?.applicationId) {
+      if (data?.success && data?.application?.applicationId) {
         const generatedAppId = data.application.applicationId;
         saveApplication({
           ...payload,
