@@ -1,7 +1,8 @@
-import React, { useState } from 'react';
-import { X, Lock, Eye, EyeOff, ShieldCheck, CheckCircle2 } from 'lucide-react';
+import { useMemberAuth } from '../../hooks/useMemberAuth';
 
 export function ChangePasswordModal({ isOpen, onClose }) {
+  const { updatePassword } = useMemberAuth();
+
   const [currentPassword, setCurrentPassword] = useState('');
   const [newPassword, setNewPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
@@ -13,7 +14,7 @@ export function ChangePasswordModal({ isOpen, onClose }) {
 
   if (!isOpen) return null;
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
     if (!currentPassword) {
       setStatusMessage({ type: 'error', text: 'Please enter your current password.' });
@@ -29,12 +30,12 @@ export function ChangePasswordModal({ isOpen, onClose }) {
     }
 
     setIsSubmitting(true);
-    // Frontend demo submission
-    setTimeout(() => {
-      setIsSubmitting(false);
+    setStatusMessage(null);
+    try {
+      await updatePassword(currentPassword, newPassword);
       setStatusMessage({
         type: 'success',
-        text: 'Password updated successfully. Please use your new password next time you sign in.',
+        text: 'Password updated successfully. Your temporary password has been changed.',
       });
       setTimeout(() => {
         setStatusMessage(null);
@@ -43,7 +44,15 @@ export function ChangePasswordModal({ isOpen, onClose }) {
         setConfirmPassword('');
         onClose();
       }, 1500);
-    }, 600);
+    } catch (err) {
+      console.error('Password update error:', err);
+      setStatusMessage({
+        type: 'error',
+        text: err.message || 'Failed to update password. Please check your current password.',
+      });
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   return (

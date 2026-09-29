@@ -1,44 +1,84 @@
 import React, { useRef } from 'react';
 import { FormSection } from './FormSection';
-import { FormInput } from './FormInput';
 import { FormSelect } from './FormSelect';
 import { ID_PROOF_TYPES } from '../../data/registrationOptions';
-import { FileText, Upload, Sparkles, CheckCircle2, Trash2, AlertCircle } from 'lucide-react';
+import { FileText, Upload, CheckCircle2, Trash2, AlertCircle } from 'lucide-react';
 
 export function StepDocuments({ data = {}, errors = {}, onFileSelect, onFileRemove, onChange }) {
   const fileInputRefs = {
-    doc1_photo: useRef(null),
-    doc2_govId: useRef(null),
+    idProofFile: useRef(null),
+    addressProofFile: useRef(null),
+    photoFile: useRef(null),
+    signatureFile: useRef(null),
     doc3_eduCert: useRef(null),
     doc4_birthCert: useRef(null),
     doc5_utility: useRef(null),
   };
 
-  const CHECKLIST_ITEMS = [
-    { key: 'doc1_photo', id: 1, title: '3 Colour Photographs', accept: '.jpg,.jpeg,.png' },
-    { key: 'doc2_govId', id: 2, title: 'Aadhaar / Voter ID / PAN Card / Driving Licence', accept: '.pdf,.jpg,.jpeg,.png' },
-    { key: 'doc3_eduCert', id: 3, title: 'Educational Certificate', accept: '.pdf,.jpg,.jpeg,.png' },
-    { key: 'doc4_birthCert', id: 4, title: 'Birth Certificate', accept: '.pdf,.jpg,.jpeg,.png' },
-    { key: 'doc5_utility', id: 5, title: 'Ration Card / Account Statement / Electricity Bill', accept: '.pdf,.jpg,.jpeg,.png' },
+  const DOCUMENT_ITEMS = [
+    {
+      key: 'idProofFile',
+      id: 1,
+      title: 'Primary Government ID Proof',
+      accept: '.pdf,.jpg,.jpeg,.png',
+    },
+    {
+      key: 'addressProofFile',
+      id: 2,
+      title: 'Address Proof Document',
+      accept: '.pdf,.jpg,.jpeg,.png',
+    },
+    {
+      key: 'photoFile',
+      id: 3,
+      title: 'Applicant Passport Photograph',
+      accept: '.jpg,.jpeg,.png',
+    },
+    {
+      key: 'signatureFile',
+      id: 4,
+      title: 'Applicant Digital Signature Specimen',
+      accept: '.pdf,.jpg,.jpeg,.png',
+    },
+    {
+      key: 'doc3_eduCert',
+      id: 5,
+      title: 'Educational Degree / Certificate (Additional)',
+      accept: '.pdf,.jpg,.jpeg,.png',
+      optional: true,
+    },
+    {
+      key: 'doc4_birthCert',
+      id: 6,
+      title: 'Birth / PAN / Identity Certificate (Additional)',
+      accept: '.pdf,.jpg,.jpeg,.png',
+      optional: true,
+    },
+    {
+      key: 'doc5_utility',
+      id: 7,
+      title: 'Electricity Bill / Bank Passbook (Additional)',
+      accept: '.pdf,.jpg,.jpeg,.png',
+      optional: true,
+    },
   ];
 
-  // Calculate uploaded count
-  const uploadedCount = CHECKLIST_ITEMS.filter((item) => !!data[item.key]).length;
+  const uploadedCount = DOCUMENT_ITEMS.filter((item) => !!data[item.key]).length;
 
   const handleFileUpload = (itemKey, e) => {
     const selected = e.target.files?.[0];
     if (!selected) return;
 
-    const mockFileObj = {
-      name: selected.name,
-      size: `${(selected.size / (1024 * 1024)).toFixed(2)} MB`,
-      previewUrl: selected.type.startsWith('image/') ? URL.createObjectURL(selected) : null,
-    };
+    // Preserve real File instance and attach preview helper properties
+    selected.formattedSize = `${(selected.size / (1024 * 1024)).toFixed(2)} MB`;
+    if (selected.type.startsWith('image/')) {
+      selected.previewUrl = URL.createObjectURL(selected);
+    }
 
     if (onFileSelect) {
-      onFileSelect(itemKey, mockFileObj);
+      onFileSelect(itemKey, selected);
     } else if (onChange) {
-      onChange(itemKey, mockFileObj);
+      onChange(itemKey, selected);
     }
   };
 
@@ -50,25 +90,6 @@ export function StepDocuments({ data = {}, errors = {}, onFileSelect, onFileRemo
     }
   };
 
-  const handleAutoAttachSampleDocs = () => {
-    onChange('docRefNo', '9874 5612 3041');
-    const samples = {
-      doc1_photo: { name: '3_Colour_Photographs_Specimen.jpg', size: '450 KB' },
-      doc2_govId: { name: 'Aadhaar_Card_Priyabrata_Mohapatra.pdf', size: '1.2 MB' },
-      doc3_eduCert: { name: 'Graduate_Degree_Certificate_Utkal.pdf', size: '980 KB' },
-      doc4_birthCert: { name: 'Birth_Certificate_Bhubaneswar_MC.pdf', size: '650 KB' },
-      doc5_utility: { name: 'Electricity_Bill_Bhubaneswar_Nayapalli.pdf', size: '820 KB' },
-    };
-
-    Object.entries(samples).forEach(([key, val]) => {
-      if (onFileSelect) {
-        onFileSelect(key, val);
-      } else if (onChange) {
-        onChange(key, val);
-      }
-    });
-  };
-
   return (
     <FormSection
       title={
@@ -77,23 +98,13 @@ export function StepDocuments({ data = {}, errors = {}, onFileSelect, onFileRemo
           STATUTORY IDENTIFICATION DOCUMENTS &amp; UPLOAD STATUS
         </span>
       }
-      subtitle="Upload supporting KYC documents listed in the official statutory application form. Document uploads are optional during online registration and can also be submitted later at the branch."
-      rightAction={
-        <button
-          type="button"
-          onClick={handleAutoAttachSampleDocs}
-          className="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-full bg-slate-100 hover:bg-amber-100 text-slate-700 hover:text-amber-900 text-xs font-bold transition-all border border-slate-200 hover:border-amber-300 shadow-2xs"
-        >
-          <Sparkles className="w-3.5 h-3.5 text-amber-500" />
-          <span>Auto-attach Sample Docs</span>
-        </button>
-      }
+      subtitle="Upload primary KYC documents and any supporting statutory attachments. All uploaded files are stored safely in MongoDB."
     >
       <div className="space-y-6">
-        {/* TOP GRID BOX: PRIMARY GOVT ID & REFERENCE NUMBER (OPTIONAL) */}
+        {/* DOCUMENT TYPE SELECTORS */}
         <div className="bg-slate-50/70 border border-slate-200/90 rounded-2xl p-5 grid grid-cols-1 sm:grid-cols-2 gap-4">
           <FormSelect
-            label="Primary Government ID Proof (Optional)"
+            label="ID Proof Document Type"
             name="idProofType"
             value={data.idProofType || 'Aadhaar Card'}
             onChange={(e) => onChange('idProofType', e.target.value)}
@@ -101,26 +112,26 @@ export function StepDocuments({ data = {}, errors = {}, onFileSelect, onFileRemo
             error={errors.idProofType}
           />
 
-          <FormInput
-            label="Document Reference Number (Optional)"
-            name="docRefNo"
-            value={data.docRefNo || ''}
-            onChange={(e) => onChange('docRefNo', e.target.value)}
-            placeholder="Enter ID / Card Number (e.g. 9874 5612 3041) - Optional"
-            error={errors.docRefNo}
+          <FormSelect
+            label="Address Proof Document Type"
+            name="addressProofType"
+            value={data.addressProofType || 'Aadhaar Card'}
+            onChange={(e) => onChange('addressProofType', e.target.value)}
+            options={['Aadhaar Card', 'Voter ID Card', 'Electricity Bill', 'Ration Card', 'Bank Statement', 'Passport']}
+            error={errors.addressProofType}
           />
         </div>
 
-        {/* CHECKLIST HEADER ROW */}
+        {/* CHECKLIST HEADER */}
         <div className="flex items-center justify-between border-b border-slate-200/80 pb-2.5">
           <h4 className="text-xs font-extrabold text-slate-800 uppercase tracking-wider flex items-center gap-2">
-            <span>SUPPORTING ATTACHMENTS (OPTIONAL - CAN SUBMIT LATER)</span>
+            <span>DOCUMENT ATTACHMENT SLOTS</span>
             <span className="text-[10px] font-bold text-slate-500 bg-slate-200/80 px-2 py-0.5 rounded-full lowercase">
-              optional
+              multiple files supported
             </span>
           </h4>
           <span className={`text-xs font-bold ${uploadedCount > 0 ? 'text-emerald-700' : 'text-slate-500'}`}>
-            {uploadedCount} of 5 Uploaded
+            {uploadedCount} of {DOCUMENT_ITEMS.length} Uploaded
           </span>
         </div>
 
@@ -132,12 +143,13 @@ export function StepDocuments({ data = {}, errors = {}, onFileSelect, onFileRemo
           </div>
         )}
 
-        {/* 5 ATTACHMENT CARDS (OPTIONAL) */}
+        {/* ATTACHMENT CARDS */}
         <div className="space-y-3">
-          {CHECKLIST_ITEMS.map((item) => {
+          {DOCUMENT_ITEMS.map((item) => {
             const fileData = data[item.key];
             const isUploaded = !!fileData;
             const itemError = errors[item.key];
+            const fileName = fileData?.name || (typeof fileData === 'string' ? fileData.split('/').pop() : '');
 
             return (
               <div
@@ -155,7 +167,7 @@ export function StepDocuments({ data = {}, errors = {}, onFileSelect, onFileRemo
                   className="hidden"
                 />
 
-                {/* Left Number & Details */}
+                {/* Left Details */}
                 <div className="flex items-center gap-3.5">
                   <div className={`w-8 h-8 rounded-full font-black text-xs flex items-center justify-center shrink-0 ${
                     isUploaded ? 'bg-emerald-100 text-emerald-800' : 'bg-slate-100 text-slate-700'
@@ -166,7 +178,7 @@ export function StepDocuments({ data = {}, errors = {}, onFileSelect, onFileRemo
                   <div className="space-y-1">
                     <h5 className="font-bold text-xs sm:text-sm text-slate-900 leading-snug flex items-center gap-1.5">
                       <span>{item.title}</span>
-                      <span className="text-slate-400 text-xs font-normal">(Optional)</span>
+                      {item.optional && <span className="text-[11px] text-slate-400 font-normal">(Optional)</span>}
                     </h5>
 
                     {/* Status Pill Badge */}
@@ -174,12 +186,12 @@ export function StepDocuments({ data = {}, errors = {}, onFileSelect, onFileRemo
                       {isUploaded ? (
                         <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full bg-emerald-100 text-emerald-800 text-[11px] font-bold">
                           <CheckCircle2 className="w-3 h-3 text-emerald-600" />
-                          <span>Attached ({fileData.name})</span>
+                          <span>Attached ({fileName})</span>
                         </span>
                       ) : (
                         <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full bg-slate-100 text-slate-600 border border-slate-200 text-[11px] font-bold">
                           <span className="w-1.5 h-1.5 rounded-full bg-slate-400" />
-                          <span>Not Uploaded (Optional)</span>
+                          <span>Not Uploaded</span>
                         </span>
                       )}
                     </div>
@@ -217,7 +229,7 @@ export function StepDocuments({ data = {}, errors = {}, onFileSelect, onFileRemo
                     <button
                       type="button"
                       onClick={() => fileInputRefs[item.key].current?.click()}
-                      className="text-xs font-bold px-4 py-2 rounded-xl border inline-flex items-center gap-1.5 transition-colors bg-slate-100 hover:bg-slate-200 text-slate-800 border-slate-200"
+                      className="text-xs font-bold px-4 py-2 rounded-xl border inline-flex items-center gap-1.5 transition-colors bg-slate-100 hover:bg-slate-200 text-slate-800 border-slate-200 cursor-pointer"
                     >
                       <Upload className="w-3.5 h-3.5" />
                       <span>Upload File</span>
@@ -232,4 +244,3 @@ export function StepDocuments({ data = {}, errors = {}, onFileSelect, onFileRemo
     </FormSection>
   );
 }
-

@@ -11,20 +11,65 @@ import {
   Award,
   User,
   Plus,
+  KeyRound,
+  AlertTriangle,
+  Mail,
+  Phone,
 } from 'lucide-react';
 import { MemberStatCard } from '../../components/member/MemberStatCard';
 import { EmptyState } from '../../components/member/EmptyState';
 import { StatusBadge } from '../../components/member/StatusBadge';
+import { useMemberAuth } from '../../hooks/useMemberAuth';
 
 /**
  * MemberDashboard Page (/member-dashboard)
- * Main command center for the member.
+ * Main command center for the authenticated member.
  */
 export function MemberDashboard() {
-  const { openMakeDeposit } = useOutletContext() || {};
+  const { openMakeDeposit, openChangePassword } = useOutletContext() || {};
+  const { memberUser, application } = useMemberAuth();
+
+  const memberId = memberUser?.memberId || application?.memberId || '—';
+  const name = memberUser?.name || application?.applicantName || 'Valued Member';
+  const email = memberUser?.email || application?.contactDetails?.email || '—';
+  const mobile = memberUser?.mobile || application?.contactDetails?.mobile || '—';
+  const status = memberUser?.status === 'active' ? 'Active' : (memberUser?.status || 'Active');
+  const membershipType =
+    application?.membershipDetails?.membershipType ||
+    application?.membershipType ||
+    'Associate Member';
+
+  const mustChangePassword = memberUser?.mustChangePassword === true;
 
   return (
     <div className="space-y-6">
+      {/* 0. SECURITY BANNER FOR TEMPORARY PASSWORD */}
+      {mustChangePassword && (
+        <div className="bg-amber-500/10 border border-amber-500/30 rounded-2xl p-4 text-amber-900 flex flex-col sm:flex-row sm:items-center justify-between gap-3 shadow-xs animate-fade-in">
+          <div className="flex items-center gap-3">
+            <div className="w-9 h-9 rounded-xl bg-amber-500/20 flex items-center justify-center shrink-0 text-amber-700">
+              <AlertTriangle className="w-5 h-5" />
+            </div>
+            <div>
+              <p className="text-xs font-bold text-amber-950">
+                Security Notice: You are currently signed in with a temporary password.
+              </p>
+              <p className="text-[11px] text-amber-800 mt-0.5">
+                Please change your temporary password to secure your account credentials.
+              </p>
+            </div>
+          </div>
+          <button
+            type="button"
+            onClick={openChangePassword}
+            className="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl text-xs font-bold bg-amber-600 hover:bg-amber-700 text-white transition-colors cursor-pointer shrink-0 shadow-xs"
+          >
+            <KeyRound className="w-3.5 h-3.5" />
+            <span>Change Password</span>
+          </button>
+        </div>
+      )}
+
       {/* 1. WELCOME SECTION */}
       <div className="bg-gradient-to-r from-[#0B1528] via-[#0D2040] to-[#004085] rounded-3xl p-6 sm:p-8 text-white shadow-xl relative overflow-hidden">
         {/* Subtle decorative circles */}
@@ -39,7 +84,7 @@ export function MemberDashboard() {
             </div>
 
             <h1 className="text-2xl sm:text-3xl font-black tracking-tight text-white">
-              Welcome to your Member Portal
+              Welcome back, {name}
             </h1>
 
             <p className="text-xs sm:text-sm text-slate-300 leading-relaxed">
@@ -68,7 +113,7 @@ export function MemberDashboard() {
         </div>
       </div>
 
-      {/* 2. MEMBERSHIP CARD */}
+      {/* 2. MEMBERSHIP CREDENTIALS CARD */}
       <div className="bg-white rounded-2xl p-5 sm:p-6 border border-slate-200/80 shadow-2xs">
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-4 border-b border-slate-100">
           <div className="flex items-center gap-3">
@@ -94,17 +139,17 @@ export function MemberDashboard() {
           </Link>
         </div>
 
-        {/* Placeholders Grid */}
-        <div className="mt-4 grid grid-cols-1 sm:grid-cols-3 gap-4">
+        {/* Real Member Info Grid */}
+        <div className="mt-4 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
           <div className="bg-slate-50/80 rounded-xl p-3.5 border border-slate-200/70">
             <span className="text-[10px] font-extrabold uppercase tracking-wider text-slate-500 block">
               Member ID
             </span>
-            <span className="text-base font-mono font-black text-slate-900 mt-1 block">
-              —
+            <span className="text-base font-mono font-black text-blue-800 mt-1 block">
+              {memberId}
             </span>
             <span className="text-[10px] text-slate-400 mt-0.5 block">
-              Assigned on approval
+              Unique statutory ID
             </span>
           </div>
 
@@ -112,24 +157,38 @@ export function MemberDashboard() {
             <span className="text-[10px] font-extrabold uppercase tracking-wider text-slate-500 block">
               Membership Type
             </span>
-            <span className="text-base font-black text-slate-900 mt-1 block">
-              —
+            <span className="text-base font-black text-slate-900 mt-1 block truncate">
+              {membershipType}
             </span>
             <span className="text-[10px] text-slate-400 mt-0.5 block">
-              Ordinary / Associate
+              Equity Share Class
             </span>
           </div>
 
           <div className="bg-slate-50/80 rounded-xl p-3.5 border border-slate-200/70">
             <span className="text-[10px] font-extrabold uppercase tracking-wider text-slate-500 block mb-1">
-              Status
+              Membership Status
             </span>
             <div className="mt-1">
-              <StatusBadge status="—" />
+              <StatusBadge status={status} />
             </div>
             <span className="text-[10px] text-slate-400 mt-1 block">
-              Verification pending
+              Verified & Approved
             </span>
+          </div>
+
+          <div className="bg-slate-50/80 rounded-xl p-3.5 border border-slate-200/70 space-y-1">
+            <span className="text-[10px] font-extrabold uppercase tracking-wider text-slate-500 block">
+              Registered Contact
+            </span>
+            <div className="flex items-center gap-1.5 text-xs font-bold text-slate-800 truncate">
+              <Mail className="w-3.5 h-3.5 text-slate-400 shrink-0" />
+              <span className="truncate">{email}</span>
+            </div>
+            <div className="flex items-center gap-1.5 text-xs font-bold text-slate-800">
+              <Phone className="w-3.5 h-3.5 text-slate-400 shrink-0" />
+              <span>+91 {mobile}</span>
+            </div>
           </div>
         </div>
       </div>
@@ -141,7 +200,7 @@ export function MemberDashboard() {
             Financial Summary
           </h2>
           <span className="text-[10px] text-slate-400 font-medium">
-            Empty / Default States
+            Active Accounts & Deposits
           </span>
         </div>
 

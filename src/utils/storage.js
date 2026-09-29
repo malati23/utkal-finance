@@ -475,14 +475,51 @@ export function getPayments() {
 
 export function getDocuments() {
   const apps = getApplications();
-  return apps.map((app) => ({
-    id: `DOC-${app.id.replace('NUF-', '')}`,
-    applicant: app.applicantName,
-    appId: app.id,
-    documentType: app.idProofType || 'Aadhaar Card',
-    fileName: `Aadhaar_${app.applicantName.replace(/\s+/g, '_')}.pdf`,
-    fileSize: '1.2 MB',
-    uploadedDate: app.date,
-    status: app.status === 'Approved' ? 'Verified' : app.status === 'Rejected' ? 'Rejected' : 'Pending Verification',
-  }));
+  const documentRecords = [];
+
+  apps.forEach((app) => {
+    const doc = app.documentDetails || app.documents || {};
+    const p = app.personalDetails || app.personal || {};
+    const c = app.contactDetails || app.account || app.address || {};
+
+    const nameParts = [p.title || app.title, p.firstName || app.firstName, p.middleName || app.middleName, p.lastName || app.lastName].filter(Boolean);
+    const applicantName = nameParts.length > 0 ? nameParts.join(' ') : (app.applicantName || 'Applicant');
+
+    const record = {
+      _id: app._id || app.id,
+      applicationId: app.applicationId || app.id,
+      memberId: app.memberId && app.memberId.startsWith('NUF-M-') ? app.memberId : null,
+      applicantName,
+      email: c.email || app.email || '',
+      mobile: c.mobile || app.mobile || '',
+      status: (app.status || 'pending').toLowerCase(),
+      submittedAt: app.submittedAt || app.createdAt || app.date || new Date().toISOString(),
+
+      idProof: {
+        type: doc.idProofType || app.idProofType || '',
+        url: doc.idProofUrl || doc.idProofFile || app.idProofUrl || '',
+        status: (doc.idProofUrl || doc.idProofFile || app.idProofUrl) ? 'uploaded' : 'not_uploaded',
+      },
+
+      addressProof: {
+        type: doc.addressProofType || app.addressProofType || '',
+        url: doc.addressProofUrl || doc.addressProofFile || app.addressProofUrl || '',
+        status: (doc.addressProofUrl || doc.addressProofFile || app.addressProofUrl) ? 'uploaded' : 'not_uploaded',
+      },
+
+      photo: {
+        url: doc.photoUrl || doc.photoFile || app.photoUrl || '',
+        status: (doc.photoUrl || doc.photoFile || app.photoUrl) ? 'uploaded' : 'not_uploaded',
+      },
+
+      signature: {
+        url: doc.signatureUrl || doc.signatureFile || app.signatureUrl || '',
+        status: (doc.signatureUrl || doc.signatureFile || app.signatureUrl) ? 'uploaded' : 'not_uploaded',
+      },
+    };
+
+    documentRecords.push(record);
+  });
+
+  return documentRecords;
 }

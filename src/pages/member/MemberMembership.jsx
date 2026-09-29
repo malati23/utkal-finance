@@ -5,27 +5,48 @@ import {
   FileCheck,
   Download,
   Layers,
-  Clock,
+  CheckCircle2,
 } from 'lucide-react';
 import { MemberPageHeader } from '../../components/member/MemberPageHeader';
 import { StatusBadge } from '../../components/member/StatusBadge';
+import { useMemberAuth } from '../../hooks/useMemberAuth';
 
 /**
  * MemberMembership Page (/member-dashboard/membership)
- * Displays statutory membership credentials, share capital, and contribution ledger placeholders.
+ * Displays statutory membership credentials, share capital, and contribution ledger for the member.
  */
 export function MemberMembership() {
+  const { memberUser, application } = useMemberAuth();
+
+  const memberId = memberUser?.memberId || application?.memberId || '—';
+  const applicationId = application?.applicationId || application?._id || '—';
+  const status = memberUser?.status === 'active' ? 'Active' : (memberUser?.status || 'Active');
+
+  const m = application?.membershipDetails || {};
+  const membershipType = m.membershipType || application?.membershipType || 'Associate Member';
+  const membershipAmount = m.membershipAmount ? `₹${m.membershipAmount}` : '₹200';
+  const numberOfShares = m.numberOfShares ? String(m.numberOfShares) : '10';
+  const shareValue = m.shareValue ? `₹${m.shareValue}` : '₹10';
+  const processingFee = m.processingFee ? `₹${m.processingFee}` : '₹100';
+  const totalContribution = m.totalContribution ? `₹${m.totalContribution}` : '₹200';
+
+  const joiningDate = application?.reviewedAt
+    ? new Date(application.reviewedAt).toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' })
+    : (application?.submittedAt
+      ? new Date(application.submittedAt).toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' })
+      : '—');
+
   const membershipFields = [
-    { label: 'Member ID', value: '—', helper: 'Unique membership number' },
-    { label: 'Application ID', value: '—', helper: 'Statutory registration ref' },
-    { label: 'Membership Type', value: '—', helper: 'Ordinary / Associate class' },
-    { label: 'Membership Status', value: '—', isStatus: true, helper: 'Active upon approval' },
-    { label: 'Membership Amount', value: '₹0', helper: 'Qualifying contribution' },
-    { label: 'Number of Shares', value: '—', helper: 'Statutory equity units' },
-    { label: 'Share Value', value: '₹0', helper: 'Nominal face value per share' },
-    { label: 'Processing Fee', value: '₹0', helper: 'Statutory admission fee' },
-    { label: 'Total Contribution', value: '₹0', helper: 'Combined initial allotment' },
-    { label: 'Joining Date', value: '—', helper: 'Official enrollment date' },
+    { label: 'Member ID', value: memberId, helper: 'Unique membership number' },
+    { label: 'Application ID', value: applicationId, helper: 'Statutory registration ref' },
+    { label: 'Membership Type', value: membershipType, helper: 'Ordinary / Associate class' },
+    { label: 'Membership Status', value: status, isStatus: true, helper: 'Active & Verified' },
+    { label: 'Membership Amount', value: membershipAmount, helper: 'Qualifying contribution' },
+    { label: 'Number of Shares', value: numberOfShares, helper: 'Statutory equity units' },
+    { label: 'Share Value', value: shareValue, helper: 'Nominal face value per share' },
+    { label: 'Processing Fee', value: processingFee, helper: 'Statutory admission fee' },
+    { label: 'Total Contribution', value: totalContribution, helper: 'Combined initial allotment' },
+    { label: 'Joining Date', value: joiningDate, helper: 'Official enrollment date' },
   ];
 
   return (
@@ -38,12 +59,12 @@ export function MemberMembership() {
       >
         <button
           type="button"
-          disabled
-          className="inline-flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-bold text-slate-400 bg-slate-100 border border-slate-200 cursor-not-allowed"
-          title="Membership certificate will be generated once verified by branch"
+          className="inline-flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-bold text-blue-700 bg-blue-50 hover:bg-blue-100 border border-blue-200 cursor-pointer transition-colors shadow-xs"
+          onClick={() => window.print()}
+          title="Print official membership record"
         >
           <Download className="w-4 h-4" />
-          <span>Membership Certificate (Pending)</span>
+          <span>Print Member Record</span>
         </button>
       </MemberPageHeader>
 
@@ -67,18 +88,18 @@ export function MemberMembership() {
             <span className="text-[10px] font-extrabold uppercase tracking-wider text-slate-400 block">
               Enrollment Status
             </span>
-            <div className="flex items-center justify-center sm:justify-end gap-1.5 text-amber-300 font-bold text-sm">
-              <Clock className="w-4 h-4 text-amber-400" />
-              <span>Pending Verification</span>
+            <div className="flex items-center justify-center sm:justify-end gap-1.5 text-emerald-400 font-bold text-sm">
+              <CheckCircle2 className="w-4 h-4 text-emerald-400" />
+              <span>Active Member</span>
             </div>
             <span className="text-[10px] text-slate-400 block">
-              Awaiting admin approval
+              Member ID: {memberId}
             </span>
           </div>
         </div>
       </div>
 
-      {/* 10 STATUTORY PLACEHOLDER FIELDS */}
+      {/* 10 STATUTORY REAL FIELDS */}
       <div className="bg-white rounded-2xl p-5 sm:p-7 border border-slate-200/80 shadow-2xs space-y-4">
         <div className="flex items-center justify-between pb-3 border-b border-slate-100">
           <div className="flex items-center gap-2">
@@ -105,7 +126,7 @@ export function MemberMembership() {
                 {field.isStatus ? (
                   <StatusBadge status={field.value} />
                 ) : (
-                  <span className="text-base font-black text-slate-900 font-mono tracking-tight block">
+                  <span className="text-base font-black text-slate-900 font-mono tracking-tight block truncate">
                     {field.value}
                   </span>
                 )}
@@ -126,7 +147,7 @@ export function MemberMembership() {
             <span>Digital Share Certificate</span>
           </div>
           <p className="text-xs text-slate-500 leading-relaxed">
-            Upon verification and allotment approval by the Board of Directors, your signed Digital Share Certificate bearing the common seal will be accessible here.
+            Upon verification and allotment approval by the Board of Directors, your signed Digital Share Certificate bearing the common seal is preserved in our registry.
           </p>
         </div>
 

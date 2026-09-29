@@ -11,12 +11,15 @@ import {
 } from 'lucide-react';
 import brandLogo from '../../assets/image copy 7.png';
 
+import { useMemberAuth } from '../../hooks/useMemberAuth';
+
 /**
  * MemberLogin Page (/member-login)
  * Dedicated authentication portal for New Utkal Finance members.
  */
 export function MemberLogin() {
   const navigate = useNavigate();
+  const { login } = useMemberAuth();
 
   const [identifier, setIdentifier] = useState('');
   const [password, setPassword] = useState('');
@@ -26,7 +29,7 @@ export function MemberLogin() {
   const [isLoading, setIsLoading] = useState(false);
   const [forgotModalOpen, setForgotModalOpen] = useState(false);
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
     setError('');
 
@@ -42,12 +45,15 @@ export function MemberLogin() {
 
     setIsLoading(true);
 
-    // Frontend-only transition for this step:
-    // Simulates auth check and routes straight to Member Dashboard
-    setTimeout(() => {
-      setIsLoading(false);
+    try {
+      await login(identifier.trim(), password);
       navigate('/member-dashboard');
-    }, 600);
+    } catch (err) {
+      console.error('Member login error:', err);
+      setError(err.message || 'Invalid Member ID / Email or password.');
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   return (

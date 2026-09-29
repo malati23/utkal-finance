@@ -68,3 +68,43 @@ export async function updateApplicationApi(id, updateData) {
   return data;
 }
 
+/**
+ * Fetch application document records from MongoDB
+ * GET /api/applications/documents
+ */
+export async function getDocumentsApi() {
+  const response = await fetch(`${apiConfig.baseURL}/applications/documents`, {
+    method: 'GET',
+    headers: {
+      'Content-Type': 'application/json',
+    },
+  });
+
+  const data = await response.json();
+  if (!response.ok || !data.success) {
+    throw new Error(data.message || 'Failed to fetch application documents from server');
+  }
+
+  return data.documents || [];
+}
+
+/**
+ * Upload statutory document files to backend server
+ * POST /api/applications/upload-documents
+ * @param {FormData} formDataFiles
+ */
+export async function uploadDocumentsApi(formDataFiles) {
+  const response = await fetch(`${apiConfig.baseURL}/applications/upload-documents`, {
+    method: 'POST',
+    body: formDataFiles,
+  });
+
+  const data = await response.json();
+  if (!response.ok || !data.success) {
+    throw new Error(data.message || 'Failed to upload document files');
+  }
+
+  return data.files || {};
+}
+
+

@@ -66,7 +66,7 @@ export function Team() {
         {teamMembers.map((member) => (
           <div
             key={member.id}
-            className="bg-white rounded-2xl border border-slate-200/90 p-5 shadow-xs flex flex-col sm:flex-row items-start gap-4 hover:shadow-md transition-all"
+            className="bg-white rounded-2xl border border-slate-200/90 p-5 shadow-xs flex flex-col sm:flex-row items-center sm:items-start text-center sm:text-left gap-4 hover:shadow-md transition-all"
           >
             {member.photo ? (
               <img
@@ -81,7 +81,7 @@ export function Team() {
             )}
 
             <div className="space-y-2 flex-1 w-full">
-              <div className="flex items-start justify-between gap-2">
+              <div className="flex flex-col sm:flex-row items-center sm:items-start justify-between gap-2">
                 <div>
                   <h3 className="text-base font-black text-slate-900">{member.name}</h3>
                   <p className="text-xs font-bold text-blue-700">{member.position}</p>

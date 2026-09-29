@@ -96,7 +96,7 @@ export function AdminHeader({ onToggleMobileMenu }) {
             </button>
 
             {notifPopoverOpen && (
-              <div className="absolute right-0 mt-2 w-80 bg-white rounded-2xl border border-slate-200 shadow-xl py-3 z-50 text-left animate-fade-in">
+              <div className="absolute right-0 mt-2 w-[calc(100vw-2rem)] sm:w-80 max-w-sm bg-white rounded-2xl border border-slate-200 shadow-xl py-3 z-50 text-left animate-fade-in">
                 <div className="px-4 pb-2 border-b border-slate-100 flex items-center justify-between">
                   <span className="text-xs font-black text-slate-900">Notifications</span>
                   <span className="px-2 py-0.5 rounded-full bg-amber-50 text-amber-700 text-[10px] font-bold">
@@ -149,7 +149,7 @@ export function AdminHeader({ onToggleMobileMenu }) {
             </button>
 
             {userDropdownOpen && (
-              <div className="absolute right-0 mt-2 w-56 bg-white rounded-2xl border border-slate-200 shadow-xl py-2 z-50 text-left animate-fade-in space-y-1">
+              <div className="absolute right-0 mt-2 w-56 max-w-[calc(100vw-2rem)] bg-white rounded-2xl border border-slate-200 shadow-xl py-2 z-50 text-left animate-fade-in space-y-1">
                 <div className="px-4 py-2 border-b border-slate-100">
                   <p className="text-xs font-black text-slate-900">{adminUser.name}</p>
                   <p className="text-[11px] text-slate-500 font-mono truncate">{adminUser.email}</p>

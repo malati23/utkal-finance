@@ -16,6 +16,7 @@ import brandLogo from '../../assets/image copy 7.png';
  * Header for the Member Portal with branding, page title, notifications popover, and profile dropdown.
  */
 export function MemberHeader({
+  memberUser,
   onToggleMobileMenu,
   onChangePassword,
   onLogout,
@@ -66,6 +67,11 @@ export function MemberHeader({
     }
   };
 
+  const memberId = memberUser?.memberId || '—';
+  const memberName = memberUser?.name || 'Member';
+  const memberInitial = memberName.charAt(0).toUpperCase() || 'M';
+  const memberStatus = memberUser?.status === 'active' ? 'Active' : (memberUser?.status ? memberUser.status.charAt(0).toUpperCase() + memberUser.status.slice(1) : 'Active');
+
   return (
     <header className="bg-white border-b border-slate-200/90 sticky top-0 z-30 w-full shadow-2xs select-none">
       <div className="px-3 sm:px-6 py-2.5 sm:py-3 flex items-center justify-between gap-2.5 sm:gap-4">
@@ -108,7 +114,7 @@ export function MemberHeader({
               {getComputedTitle()}
             </h1>
             <span className="text-[10px] font-mono px-2 py-0.5 rounded-full bg-slate-100 text-slate-600 border border-slate-200 font-semibold">
-              Member ID: —
+              Member ID: {memberId}
             </span>
           </div>
         </div>
@@ -161,14 +167,14 @@ export function MemberHeader({
               className="flex items-center gap-2 sm:gap-2.5 p-1.5 pl-2 sm:pl-2.5 rounded-xl hover:bg-slate-100 transition-colors border border-slate-200/80 cursor-pointer"
             >
               <div className="w-8 h-8 rounded-lg bg-blue-700 text-white flex items-center justify-center font-black text-xs shadow-xs">
-                M
+                {memberInitial}
               </div>
               <div className="text-left hidden sm:block">
-                <div className="text-xs font-black text-slate-900 leading-tight">
-                  Member
+                <div className="text-xs font-black text-slate-900 leading-tight truncate max-w-[120px]">
+                  {memberName}
                 </div>
                 <div className="text-[10px] font-mono text-slate-500 leading-tight">
-                  ID: —
+                  ID: {memberId}
                 </div>
               </div>
               <ChevronDown className="w-3.5 h-3.5 text-slate-500 ml-0.5" />
@@ -177,8 +183,8 @@ export function MemberHeader({
             {userDropdownOpen && (
               <div className="absolute right-0 mt-2 w-56 bg-white rounded-2xl border border-slate-200 shadow-xl py-2 z-50 text-left animate-fade-in space-y-1">
                 <div className="px-4 py-2 border-b border-slate-100">
-                  <p className="text-xs font-black text-slate-900">Member Portal</p>
-                  <p className="text-[11px] text-slate-500 font-mono">Status: Pending Verification</p>
+                  <p className="text-xs font-black text-slate-900 truncate">{memberName}</p>
+                  <p className="text-[11px] text-slate-500 font-mono">Status: {memberStatus}</p>
                 </div>
 
                 <Link

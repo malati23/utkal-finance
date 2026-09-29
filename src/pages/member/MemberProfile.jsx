@@ -4,16 +4,40 @@ import {
   Mail,
   MapPin,
   Info,
-  Clock,
+  CheckCircle2,
 } from 'lucide-react';
 import { MemberPageHeader } from '../../components/member/MemberPageHeader';
 import { StatusBadge } from '../../components/member/StatusBadge';
+import { useMemberAuth } from '../../hooks/useMemberAuth';
 
 /**
  * MemberProfile Page (/member-dashboard/profile)
- * Displays member KYC, personal, contact, and address records with empty/placeholder states.
+ * Displays authenticated member KYC, personal, contact, and address records.
  */
 export function MemberProfile() {
+  const { memberUser, application } = useMemberAuth();
+
+  const memberId = memberUser?.memberId || application?.memberId || '—';
+  const name = memberUser?.name || application?.applicantName || 'Member';
+  const email = memberUser?.email || application?.contactDetails?.email || '—';
+  const mobile = memberUser?.mobile || application?.contactDetails?.mobile || '—';
+  const altMobile = application?.contactDetails?.altMobile || application?.altMobile || '—';
+  const status = memberUser?.status === 'active' ? 'Active' : (memberUser?.status || 'Active');
+
+  const p = application?.personalDetails || {};
+  const a = application?.addressDetails || {};
+
+  const dob = p.dob || '—';
+  const gender = p.gender || '—';
+  const occupation = p.occupation || '—';
+
+  const addressLine = a.address1 || a.address2 || '—';
+  const district = a.district || '—';
+  const state = a.state || 'Odisha';
+  const pincode = a.pincode || '—';
+
+  const memberInitial = name.charAt(0).toUpperCase() || 'M';
+
   return (
     <div className="space-y-6">
       {/* PAGE HEADER */}
@@ -27,28 +51,28 @@ export function MemberProfile() {
       <div className="bg-white rounded-2xl p-5 sm:p-6 border border-slate-200/80 shadow-2xs flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div className="flex items-center gap-4">
           <div className="w-16 h-16 rounded-2xl bg-gradient-to-br from-blue-700 to-indigo-800 text-white flex items-center justify-center font-black text-2xl shadow-md shrink-0">
-            M
+            {memberInitial}
           </div>
           <div className="space-y-1">
             <div className="flex items-center gap-2 flex-wrap">
               <h2 className="text-base sm:text-lg font-black text-slate-900">
-                Member Profile
+                {name}
               </h2>
-              <StatusBadge status="—" />
+              <StatusBadge status={status} />
             </div>
             <p className="text-xs font-mono text-slate-500">
-              Member ID: <span className="font-bold text-slate-700">—</span>
+              Member ID: <span className="font-bold text-blue-700">{memberId}</span>
             </p>
             <p className="text-[11px] text-slate-400">
-              Account status: <span className="font-semibold text-slate-600">Pending Backend Verification</span>
+              Account status: <span className="font-semibold text-emerald-600">Active & Verified</span>
             </p>
           </div>
         </div>
 
         <div className="flex items-center gap-2 self-start sm:self-auto">
-          <span className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-bold bg-slate-100 text-slate-600 border border-slate-200">
-            <Clock className="w-3.5 h-3.5 text-slate-500" />
-            <span>KYC: Pending</span>
+          <span className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-bold bg-emerald-50 text-emerald-700 border border-emerald-200">
+            <CheckCircle2 className="w-3.5 h-3.5 text-emerald-600" />
+            <span>KYC: Verified</span>
           </span>
         </div>
       </div>
@@ -70,22 +94,22 @@ export function MemberProfile() {
             <div className="space-y-3 text-xs">
               <div className="flex justify-between items-center py-1 border-b border-slate-100">
                 <span className="text-slate-500 font-medium">Full Name</span>
-                <span className="font-bold text-slate-900">—</span>
+                <span className="font-bold text-slate-900">{name}</span>
               </div>
 
               <div className="flex justify-between items-center py-1 border-b border-slate-100">
                 <span className="text-slate-500 font-medium">Date of Birth</span>
-                <span className="font-bold text-slate-900">—</span>
+                <span className="font-bold text-slate-900">{dob}</span>
               </div>
 
               <div className="flex justify-between items-center py-1 border-b border-slate-100">
                 <span className="text-slate-500 font-medium">Gender</span>
-                <span className="font-bold text-slate-900">—</span>
+                <span className="font-bold text-slate-900">{gender}</span>
               </div>
 
               <div className="flex justify-between items-center py-1">
                 <span className="text-slate-500 font-medium">Occupation</span>
-                <span className="font-bold text-slate-900">—</span>
+                <span className="font-bold text-slate-900">{occupation}</span>
               </div>
             </div>
           </div>
@@ -110,17 +134,17 @@ export function MemberProfile() {
             <div className="space-y-3 text-xs">
               <div className="flex justify-between items-center py-1 border-b border-slate-100">
                 <span className="text-slate-500 font-medium">Email Address</span>
-                <span className="font-bold text-slate-900 font-mono text-[11px]">—</span>
+                <span className="font-bold text-slate-900 font-mono text-[11px] truncate max-w-[150px]">{email}</span>
               </div>
 
               <div className="flex justify-between items-center py-1 border-b border-slate-100">
                 <span className="text-slate-500 font-medium">Mobile Number</span>
-                <span className="font-bold text-slate-900 font-mono text-[11px]">—</span>
+                <span className="font-bold text-slate-900 font-mono text-[11px]">+91 {mobile}</span>
               </div>
 
               <div className="flex justify-between items-center py-1 border-b border-slate-100">
                 <span className="text-slate-500 font-medium">Alternate Mobile</span>
-                <span className="font-bold text-slate-900 font-mono text-[11px]">—</span>
+                <span className="font-bold text-slate-900 font-mono text-[11px]">{altMobile !== '—' ? `+91 ${altMobile}` : '—'}</span>
               </div>
 
               <div className="flex justify-between items-center py-1">
@@ -150,22 +174,22 @@ export function MemberProfile() {
             <div className="space-y-3 text-xs">
               <div className="flex justify-between items-center py-1 border-b border-slate-100">
                 <span className="text-slate-500 font-medium">Address</span>
-                <span className="font-bold text-slate-900 text-right">—</span>
+                <span className="font-bold text-slate-900 text-right truncate max-w-[140px]">{addressLine}</span>
               </div>
 
               <div className="flex justify-between items-center py-1 border-b border-slate-100">
                 <span className="text-slate-500 font-medium">District</span>
-                <span className="font-bold text-slate-900">—</span>
+                <span className="font-bold text-slate-900">{district}</span>
               </div>
 
               <div className="flex justify-between items-center py-1 border-b border-slate-100">
                 <span className="text-slate-500 font-medium">State</span>
-                <span className="font-bold text-slate-900">—</span>
+                <span className="font-bold text-slate-900">{state}</span>
               </div>
 
               <div className="flex justify-between items-center py-1">
                 <span className="text-slate-500 font-medium">Pincode</span>
-                <span className="font-bold text-slate-900 font-mono text-[11px]">—</span>
+                <span className="font-bold text-slate-900 font-mono text-[11px]">{pincode}</span>
               </div>
             </div>
           </div>

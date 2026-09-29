@@ -75,10 +75,10 @@ export function AdminProfile() {
           </div>
         </div>
 
-        <div className="p-6 sm:p-8 space-y-6">
-          <div className="flex items-center justify-between border-b border-slate-100 pb-3">
+        <div className="p-5 sm:p-8 space-y-6">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-slate-100 pb-3">
             <h3 className="text-sm font-extrabold text-slate-900 uppercase tracking-wider">Account Information</h3>
-            <div className="flex items-center gap-2">
+            <div className="flex flex-wrap items-center gap-2">
               {!isEditing ? (
                 <button
                   type="button"

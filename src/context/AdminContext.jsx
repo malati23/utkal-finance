@@ -9,9 +9,14 @@ import {
 } from '../utils/storage';
 import {
   getApplicationsApi,
+  getDocumentsApi,
   updateApplicationStatusApi,
   updateApplicationApi,
 } from '../services/applicationService';
+import {
+  getMembersApi,
+  updateMemberStatusApi,
+} from '../services/memberService';
 import {
   isAdminAuthenticated,
   adminLogin as authAdminLogin,
@@ -153,7 +158,7 @@ export const AdminProvider = ({ children }) => {
   const refreshData = useCallback(async () => {
     try {
       const apiApps = await getApplicationsApi();
-      if (Array.isArray(apiApps) && apiApps.length > 0) {
+      if (Array.isArray(apiApps)) {
         setApplications(apiApps.map(normalizeApplication));
       } else {
         setApplications(getApplications().map(normalizeApplication));
@@ -162,9 +167,32 @@ export const AdminProvider = ({ children }) => {
       console.warn('API fetch failed, falling back to local storage:', err.message);
       setApplications(getApplications().map(normalizeApplication));
     }
-    setMembers(getMembers());
+
+    try {
+      const apiDocs = await getDocumentsApi();
+      if (Array.isArray(apiDocs)) {
+        setDocuments(apiDocs);
+      } else {
+        setDocuments(getDocuments());
+      }
+    } catch (err) {
+      console.warn('API documents fetch failed, falling back to local storage:', err.message);
+      setDocuments(getDocuments());
+    }
+
+    try {
+      const apiMembers = await getMembersApi();
+      if (Array.isArray(apiMembers)) {
+        setMembers(apiMembers);
+      } else {
+        setMembers(getMembers());
+      }
+    } catch (err) {
+      console.warn('API members fetch failed, falling back to local storage:', err.message);
+      setMembers(getMembers());
+    }
+
     setPayments(getPayments());
-    setDocuments(getDocuments());
     setDeposits(getDeposits());
     setTransactions(getTransactions());
     setNotices(getNotices());
@@ -227,6 +255,7 @@ export const AdminProvider = ({ children }) => {
     );
 
     storageUpdateApplicationStatus(target?.id || idOrMongoId, newStatus);
+    await refreshData();
     return apiResult;
   };
 
@@ -261,13 +290,18 @@ export const AdminProvider = ({ children }) => {
     );
 
     const storageResult = storageUpdateApplicationRecord(target?.id || idOrMongoId, updatedData);
-    setMembers(getMembers());
+    await refreshData();
     return apiResult || { success: true, application: storageResult };
   };
 
-  const updateMemberStatus = (id, newStatus) => {
+  const updateMemberStatus = async (id, newStatus) => {
+    try {
+      await updateMemberStatusApi(id, newStatus);
+    } catch (err) {
+      console.warn('API member status update failed:', err.message);
+    }
     storageUpdateMemberStatus(id, newStatus);
-    refreshData();
+    await refreshData();
   };
 
   const createNewDeposit = (depositData) => {

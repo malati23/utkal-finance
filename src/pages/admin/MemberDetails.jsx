@@ -8,9 +8,14 @@ import {
   BarChart3,
   FileText,
   CreditCard,
-  FileCheck,
   UserX,
   ExternalLink,
+  Eye,
+  Download,
+  Wallet,
+  Receipt,
+  ArrowRightLeft,
+  FolderOpen,
 } from 'lucide-react';
 import { useAdmin } from '../../context/AdminContext';
 import { MemberDetailsCard } from '../../components/admin/MemberDetailsCard';
@@ -19,34 +24,62 @@ import { MemberStatusBadge } from '../../components/admin/MemberStatusBadge';
 export function MemberDetails() {
   const { memberId } = useParams();
   const navigate = useNavigate();
-  const { applications, updateMemberStatus } = useAdmin();
+  const { members, applications, updateMemberStatus } = useAdmin();
   const [noticeMessage, setNoticeMessage] = useState('');
+  const [selectedPreviewDoc, setSelectedPreviewDoc] = useState(null);
 
-  // Find the approved application record corresponding to this memberId
-  const app = applications.find(
-    (a) => a.status === 'Approved' && (a.memberId === memberId || a.id === memberId)
+  // Helper to convert relative file path to full accessible backend URL
+  const getFileUrl = (pathStr) => {
+    if (!pathStr) return '';
+    if (pathStr.startsWith('http://') || pathStr.startsWith('https://') || pathStr.startsWith('data:')) {
+      return pathStr;
+    }
+    const cleanPath = pathStr.startsWith('/') ? pathStr : `/${pathStr}`;
+    return `http://localhost:5000${cleanPath}`;
+  };
+
+  // 1. Find member from real members array
+  const member = members.find(
+    (m) =>
+      m.memberId === memberId ||
+      m.id === memberId ||
+      m.applicationId === memberId ||
+      m._id === memberId
   );
 
-  if (!app) {
+  // 2. Fallback to applications array if needed
+  const app = applications.find(
+    (a) =>
+      a.memberId === memberId ||
+      a.id === memberId ||
+      a._id === memberId ||
+      a.applicationId === memberId
+  );
+
+  const targetData = member || app;
+
+  if (!targetData) {
     return (
-      <div className="p-12 text-center text-slate-500 bg-white rounded-2xl border border-slate-200">
-        <h3 className="text-lg font-bold text-slate-800">Member Not Found</h3>
-        <p className="text-xs text-slate-500 mt-1 mb-4">
+      <div className="p-12 text-center text-slate-500 bg-white rounded-2xl border border-slate-200 space-y-3">
+        <FolderOpen className="w-10 h-10 text-slate-300 mx-auto" />
+        <h3 className="text-lg font-bold text-slate-800">Approved Member Not Found</h3>
+        <p className="text-xs text-slate-500 max-w-md mx-auto">
           No approved member record matched ID "{memberId}".
         </p>
         <button
           onClick={() => navigate('/admin-dashboard/members')}
           className="px-4 py-2 bg-blue-600 text-white font-bold text-xs rounded-xl hover:bg-blue-700 transition-colors cursor-pointer"
         >
-          Back to Members
+          Back to Members Repository
         </button>
       </div>
     );
   }
 
-  const currentMemberId = app.memberId || memberId;
-  const currentStatus = app.membershipStatus || 'Active';
-  const joiningDate = app.approvalDate || app.date;
+  const currentMemberId = targetData.memberId || targetData.id || memberId;
+  const currentAppId = targetData.applicationId || targetData.appId || targetData.id;
+  const currentStatus = targetData.membershipStatus || (targetData.status === 'inactive' ? 'Inactive' : 'Active');
+  const joiningDate = targetData.joiningDate || (targetData.createdAt ? new Date(targetData.createdAt).toLocaleDateString('en-GB') : 'N/A');
 
   const handleToggleStatus = (newStatus) => {
     updateMemberStatus(currentMemberId, newStatus);
@@ -54,15 +87,71 @@ export function MemberDetails() {
     setTimeout(() => setNoticeMessage(''), 3000);
   };
 
-  // Section details
-  const personal = app.personal || {};
-  const address = app.address || {};
-  const nominee = app.nominee || {};
-  const shares = app.shares || {};
-  const docs = app.documents || {};
+  // Extract sections
+  const p = targetData.personalDetails || targetData.personal || {};
+  const c = targetData.contactDetails || {};
+  const a = targetData.addressDetails || targetData.address || {};
+  const n = targetData.nomineeDetails || targetData.nominee || {};
+  const m = targetData.membershipDetails || targetData.shares || {};
+  const doc = targetData.documentDetails || {};
+
+  const nameParts = [p.title, p.firstName, p.middleName, p.lastName].filter(Boolean);
+  const applicantName = nameParts.length > 0 ? nameParts.join(' ') : (targetData.name || targetData.applicantName || 'Applicant');
+
+  // Extract real uploaded document items
+  const realDocs = Array.isArray(targetData.documents) && targetData.documents.length > 0
+    ? targetData.documents
+    : (() => {
+        const list = [];
+        if (doc.idProofUrl) {
+          list.push({
+            id: 'idproof',
+            documentType: 'Identity Proof',
+            documentName: doc.idProofType || 'Aadhaar Card',
+            documentUrl: doc.idProofUrl,
+          });
+        }
+        if (doc.addressProofUrl) {
+          list.push({
+            id: 'addressproof',
+            documentType: 'Address Proof',
+            documentName: doc.addressProofType || 'Address Document',
+            documentUrl: doc.addressProofUrl,
+          });
+        }
+        if (doc.photoUrl) {
+          list.push({
+            id: 'photo',
+            documentType: 'Photograph',
+            documentName: 'Passport Photograph',
+            documentUrl: doc.photoUrl,
+          });
+        }
+        if (doc.signatureUrl) {
+          list.push({
+            id: 'signature',
+            documentType: 'Signature',
+            documentName: 'Digital Signature Specimen',
+            documentUrl: doc.signatureUrl,
+          });
+        }
+        if (Array.isArray(doc.additionalDocuments)) {
+          doc.additionalDocuments.forEach((addDoc, idx) => {
+            if (addDoc.documentUrl) {
+              list.push({
+                id: `add-${idx}`,
+                documentType: addDoc.documentType || 'Additional Document',
+                documentName: addDoc.documentName || addDoc.documentType || 'Supporting Document',
+                documentUrl: addDoc.documentUrl,
+              });
+            }
+          });
+        }
+        return list;
+      })();
 
   return (
-    <div className="space-y-6 text-left animate-fade-in">
+    <div className="space-y-6 text-left animate-fade-in pb-12">
       {/* BACK BUTTON & TOP BAR */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div className="flex items-center gap-3">
@@ -80,9 +169,9 @@ export function MemberDetails() {
               <h1 className="text-2xl font-black text-slate-900 tracking-tight">Member Profile</h1>
               <MemberStatusBadge status={currentStatus} />
             </div>
-            <p className="text-xs text-slate-500 font-mono">
+            <p className="text-xs text-slate-500 font-mono mt-0.5">
               Member ID: <strong className="text-slate-900">{currentMemberId}</strong> • Application ID:{' '}
-              <strong className="text-blue-700">{app.id}</strong> • Enrolled: {joiningDate}
+              <strong className="text-blue-700">{currentAppId}</strong> • Enrolled: {joiningDate}
             </p>
           </div>
         </div>
@@ -92,7 +181,7 @@ export function MemberDetails() {
           {/* VIEW ORIGINAL APPLICATION */}
           <button
             type="button"
-            onClick={() => navigate(`/admin-dashboard/applications/${app.id}`)}
+            onClick={() => navigate(`/admin-dashboard/applications/${currentAppId}`)}
             className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-800 text-xs font-bold transition-colors border border-slate-300 cursor-pointer"
           >
             <ExternalLink className="w-4 h-4 text-blue-700" />
@@ -112,12 +201,12 @@ export function MemberDetails() {
             {currentStatus === 'Active' ? (
               <>
                 <UserX className="w-4 h-4" />
-                <span>Mark as Inactive</span>
+                <span>Deactivate Member</span>
               </>
             ) : (
               <>
                 <UserCheck className="w-4 h-4" />
-                <span>Mark as Active</span>
+                <span>Activate Member</span>
               </>
             )}
           </button>
@@ -125,7 +214,7 @@ export function MemberDetails() {
       </div>
 
       {noticeMessage && (
-        <div className="bg-emerald-50 border border-emerald-200 text-emerald-800 p-3 rounded-xl text-xs font-bold flex items-center gap-2">
+        <div className="bg-emerald-50 border border-emerald-200 text-emerald-800 p-3.5 rounded-xl text-xs font-bold flex items-center gap-2">
           <UserCheck className="w-4 h-4 text-emerald-600" />
           <span>{noticeMessage}</span>
         </div>
@@ -134,159 +223,201 @@ export function MemberDetails() {
       {/* MEMBER DETAILS SECTIONS GRID */}
       <div className="space-y-5">
         {/* 1. PERSONAL INFORMATION */}
-        <MemberDetailsCard title="Personal Information" icon={User} sectionNo="Section 01">
+        <MemberDetailsCard title="Personal Details" icon={User} sectionNo="Section 01">
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 text-xs">
             <div>
               <strong className="block text-[10px] text-slate-400 uppercase">FULL LEGAL NAME</strong>
-              <span className="font-extrabold text-slate-900 text-sm">{app.applicantName}</span>
+              <span className="font-extrabold text-slate-900 text-sm">{applicantName}</span>
             </div>
             <div>
               <strong className="block text-[10px] text-slate-400 uppercase">DATE OF BIRTH</strong>
-              <span className="font-bold text-slate-800">{app.dob} ({app.age} Years)</span>
+              <span className="font-bold text-slate-800">{p.dob || targetData.dob || 'N/A'} ({p.age || targetData.age || 'N/A'} Yrs)</span>
             </div>
             <div>
-              <strong className="block text-[10px] text-slate-400 uppercase">GENDER</strong>
-              <span className="font-bold text-slate-800">{app.gender}</span>
-            </div>
-            <div>
-              <strong className="block text-[10px] text-slate-400 uppercase">MARITAL STATUS</strong>
-              <span className="font-bold text-slate-800">{app.maritalStatus}</span>
+              <strong className="block text-[10px] text-slate-400 uppercase">GENDER / MARITAL STATUS</strong>
+              <span className="font-bold text-slate-800">{p.gender || targetData.gender || 'Male'} • {p.maritalStatus || targetData.maritalStatus || 'Married'}</span>
             </div>
             <div>
               <strong className="block text-[10px] text-slate-400 uppercase">OCCUPATION</strong>
-              <span className="font-bold text-slate-800">{app.occupation}</span>
+              <span className="font-bold text-slate-800">{p.occupation || targetData.occupation || 'N/A'}</span>
             </div>
             <div>
               <strong className="block text-[10px] text-slate-400 uppercase">MOBILE NUMBER</strong>
-              <span className="font-mono font-bold text-slate-900">+91 {app.mobile}</span>
+              <span className="font-mono font-bold text-slate-900">{targetData.mobile || c.mobile || 'N/A'}</span>
             </div>
             <div className="sm:col-span-2">
               <strong className="block text-[10px] text-slate-400 uppercase">EMAIL ADDRESS</strong>
-              <span className="font-mono font-bold text-slate-900">{app.email}</span>
+              <span className="font-mono font-bold text-slate-900">{targetData.email || c.email || 'N/A'}</span>
+            </div>
+            <div>
+              <strong className="block text-[10px] text-slate-400 uppercase">FATHER / GUARDIAN NAME</strong>
+              <span className="font-bold text-slate-800">{p.fatherLegalName || 'N/A'}</span>
             </div>
           </div>
         </MemberDetailsCard>
 
         {/* 2. ADDRESS DETAILS */}
-        <MemberDetailsCard title="Address" icon={MapPin} sectionNo="Section 02">
+        <MemberDetailsCard title="Residential Address" icon={MapPin} sectionNo="Section 02">
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 text-xs">
             <div className="sm:col-span-2 bg-slate-50 p-3.5 rounded-xl border border-slate-200/80 space-y-1">
-              <strong className="block text-[10px] text-slate-500 uppercase">PRIMARY ADDRESS</strong>
-              <p className="font-bold text-slate-900">{app.address1}</p>
+              <strong className="block text-[10px] text-slate-500 uppercase">PRIMARY ADDRESS LINE</strong>
+              <p className="font-bold text-slate-900">{a.address1 || targetData.address1 || 'N/A'}</p>
             </div>
             <div>
               <strong className="block text-[10px] text-slate-400 uppercase">VILLAGE / TOWN</strong>
-              <span className="font-bold text-slate-800">{app.villageTown || address.villageTown || 'Bhubaneswar'}</span>
+              <span className="font-bold text-slate-800">{a.villageTown || targetData.villageTown || 'N/A'}</span>
             </div>
             <div>
               <strong className="block text-[10px] text-slate-400 uppercase">DISTRICT</strong>
-              <span className="font-bold text-slate-800">{app.district || address.district || 'Khurda'}</span>
+              <span className="font-bold text-slate-800">{a.district || targetData.district || 'N/A'}</span>
             </div>
             <div>
               <strong className="block text-[10px] text-slate-400 uppercase">STATE</strong>
-              <span className="font-bold text-slate-800">{app.state || address.state || 'Odisha'}</span>
+              <span className="font-bold text-slate-800">{a.state || targetData.state || 'Odisha'}</span>
             </div>
             <div>
               <strong className="block text-[10px] text-slate-400 uppercase">PIN CODE</strong>
-              <span className="font-mono font-bold text-slate-900">{app.pincode || address.pincode || '751007'}</span>
-            </div>
-            <div>
-              <strong className="block text-[10px] text-slate-400 uppercase">COUNTRY</strong>
-              <span className="font-bold text-slate-800">India</span>
+              <span className="font-mono font-bold text-slate-900">{a.pincode || targetData.pincode || 'N/A'}</span>
             </div>
           </div>
         </MemberDetailsCard>
 
         {/* 3. NOMINEE DETAILS */}
-        <MemberDetailsCard title="Nominee" icon={UserCheck} sectionNo="Section 03">
+        <MemberDetailsCard title="Nominee Information" icon={UserCheck} sectionNo="Section 03">
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 text-xs">
             <div>
               <strong className="block text-[10px] text-slate-400 uppercase">NOMINEE NAME</strong>
-              <span className="font-extrabold text-slate-900">{app.nomineeName}</span>
+              <span className="font-extrabold text-slate-900">{n.fullName || targetData.nomineeName || 'N/A'}</span>
             </div>
             <div>
               <strong className="block text-[10px] text-slate-400 uppercase">RELATIONSHIP</strong>
-              <span className="font-bold text-slate-800">{app.nomineeRel}</span>
+              <span className="font-bold text-slate-800">{n.relationship || targetData.nomineeRel || 'N/A'}</span>
             </div>
             <div>
               <strong className="block text-[10px] text-slate-400 uppercase">DATE OF BIRTH</strong>
-              <span className="font-bold text-slate-800">{app.nomineeDob}</span>
+              <span className="font-bold text-slate-800">{n.dob || targetData.nomineeDob || 'N/A'}</span>
             </div>
             <div>
               <strong className="block text-[10px] text-slate-400 uppercase">MOBILE</strong>
-              <span className="font-mono font-bold text-slate-800">+91 {nominee.mobile || app.altMobile}</span>
-            </div>
-            <div className="sm:col-span-4 bg-slate-50 p-3 rounded-xl border border-slate-200/80">
-              <strong className="block text-[10px] text-slate-500 uppercase">NOMINEE ADDRESS</strong>
-              <p className="font-bold text-slate-800 mt-0.5">{app.nomineeAddr}</p>
+              <span className="font-mono font-bold text-slate-800">{n.mobile || 'N/A'}</span>
             </div>
           </div>
         </MemberDetailsCard>
 
         {/* 4. MEMBERSHIP & SHARES */}
-        <MemberDetailsCard title="Membership" icon={BarChart3} sectionNo="Section 04">
+        <MemberDetailsCard title="Membership Contribution & Shares" icon={BarChart3} sectionNo="Section 04">
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 text-xs">
             <div>
               <strong className="block text-[10px] text-slate-400 uppercase">MEMBERSHIP TYPE</strong>
-              <span className="font-extrabold text-slate-900">Associate Member</span>
+              <span className="font-extrabold text-slate-900">{m.membershipType || targetData.membershipType || 'Associate Member'}</span>
             </div>
             <div>
               <strong className="block text-[10px] text-slate-400 uppercase">NUMBER OF SHARES</strong>
-              <span className="font-bold text-slate-900">{app.numberOfShares} Equity Shares</span>
+              <span className="font-bold text-slate-900">{m.numberOfShares || targetData.numberOfShares || 10} Equity Shares</span>
             </div>
             <div>
               <strong className="block text-[10px] text-slate-400 uppercase">SHARE VALUE</strong>
-              <span className="font-bold text-slate-900">₹ {app.shareValue}.00 / Share</span>
+              <span className="font-bold text-slate-900">₹ {m.shareValue || targetData.shareValue || 10}.00 / Share</span>
             </div>
             <div>
-              <strong className="block text-[10px] text-slate-400 uppercase">MEMBERSHIP FEE</strong>
-              <span className="font-black text-emerald-700 font-mono text-sm">₹ {app.processingFee}.00</span>
+              <strong className="block text-[10px] text-slate-400 uppercase">PROCESSING FEE</strong>
+              <span className="font-bold text-slate-900">₹ {m.processingFee || targetData.processingFee || 100}.00</span>
+            </div>
+            <div>
+              <strong className="block text-[10px] text-slate-400 uppercase">TOTAL CONTRIBUTION</strong>
+              <span className="font-black text-emerald-700 font-mono text-sm">₹ {m.totalContribution || targetData.totalContribution || 200}.00</span>
+            </div>
+            <div>
+              <strong className="block text-[10px] text-slate-400 uppercase">APPLICATION STATUS</strong>
+              <span className="font-bold text-emerald-700 uppercase">Approved</span>
+            </div>
+            <div>
+              <strong className="block text-[10px] text-slate-400 uppercase">MEMBER STATUS</strong>
+              <span className={`font-extrabold ${currentStatus === 'Active' ? 'text-emerald-700' : 'text-rose-600'}`}>{currentStatus}</span>
+            </div>
+            <div>
+              <strong className="block text-[10px] text-slate-400 uppercase">JOINED DATE</strong>
+              <span className="font-bold text-slate-800">{joiningDate}</span>
             </div>
           </div>
         </MemberDetailsCard>
 
-        {/* 5. DOCUMENTS */}
-        <MemberDetailsCard title="Documents" icon={FileText} sectionNo="Section 05">
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 text-xs">
-            {[
-              { label: 'Aadhaar Card', name: app.idProofType || 'Aadhaar Card', uploaded: true },
-              { label: 'PAN Card', name: `PAN (${app.pan})`, uploaded: true },
-              { label: 'Photograph', name: 'Passport Photo.jpg', uploaded: true },
-              { label: 'Signature', name: 'Digital Signature.png', uploaded: true },
-              { label: 'Address Proof', name: app.addressProofType || 'Aadhaar Card', uploaded: true },
-            ].map((doc, idx) => (
-              <div key={idx} className="flex items-center justify-between p-3 rounded-xl bg-slate-50 border border-slate-200/80">
-                <div className="space-y-0.5">
-                  <span className="block text-[10px] font-extrabold uppercase text-slate-400">{doc.label}</span>
-                  <span className="font-bold text-slate-900 block truncate max-w-[140px]">{doc.name}</span>
-                </div>
-                <span className="px-2 py-0.5 rounded text-[10px] font-bold bg-emerald-100 text-emerald-800 border border-emerald-300">
-                  Uploaded
-                </span>
-              </div>
-            ))}
+        {/* 5. ATTACHED STATUTORY DOCUMENTS */}
+        <MemberDetailsCard title="Attached Statutory Documents" icon={FileText} sectionNo="Section 05">
+          {realDocs.length > 0 ? (
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 text-xs">
+              {realDocs.map((d, idx) => {
+                const fullUrl = getFileUrl(d.documentUrl);
+
+                return (
+                  <div key={idx} className="bg-slate-50 border border-slate-200/90 rounded-xl p-3.5 flex items-center justify-between gap-2">
+                    <div className="space-y-1 min-w-0">
+                      <span className="block text-[10px] font-extrabold uppercase text-blue-800 bg-blue-100 px-2 py-0.5 rounded border border-blue-200 w-max">
+                        {d.documentType}
+                      </span>
+                      <span className="font-bold text-slate-900 block truncate">{d.documentName}</span>
+                    </div>
+
+                    <div className="flex items-center gap-1.5 shrink-0">
+                      {fullUrl ? (
+                        <>
+                          <a
+                            href={fullUrl}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="p-1.5 rounded-lg bg-blue-50 hover:bg-blue-100 text-blue-700 font-bold text-xs"
+                            title="View / Download Document"
+                          >
+                            <ExternalLink className="w-3.5 h-3.5" />
+                          </a>
+                          <a
+                            href={fullUrl}
+                            download
+                            className="p-1.5 rounded-lg bg-slate-200 hover:bg-slate-300 text-slate-700"
+                            title="Download Document"
+                          >
+                            <Download className="w-3.5 h-3.5" />
+                          </a>
+                        </>
+                      ) : (
+                        <span className="text-[10px] text-slate-400 italic">Not uploaded</span>
+                      )}
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          ) : (
+            <div className="py-6 text-center text-slate-400 text-xs bg-slate-50 rounded-xl border border-slate-200">
+              No statutory documents attached for this member.
+            </div>
+          )}
+        </MemberDetailsCard>
+
+        {/* 6. MEMBER DEPOSITS */}
+        <MemberDetailsCard title="Member Deposits" icon={Wallet} sectionNo="Section 06">
+          <div className="py-8 text-center text-slate-400 text-xs bg-slate-50/60 rounded-xl border border-slate-200">
+            <Wallet className="w-8 h-8 text-slate-300 mx-auto mb-2" />
+            <p className="font-bold text-slate-600">No deposits available</p>
+            <p className="text-[11px] text-slate-400">This member has no active fixed, recurring, or savings deposits.</p>
           </div>
         </MemberDetailsCard>
 
-        {/* 6. PAYMENT */}
-        <MemberDetailsCard title="Payment" icon={CreditCard} sectionNo="Section 06">
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 text-xs">
-            <div>
-              <strong className="block text-[10px] text-slate-400 uppercase">MEMBERSHIP FEE &amp; TOTAL PAID</strong>
-              <span className="font-black text-slate-900 text-sm">₹ {app.totalPaid || 200}.00</span>
-            </div>
-            <div>
-              <strong className="block text-[10px] text-slate-400 uppercase">PAYMENT METHOD</strong>
-              <span className="font-extrabold text-slate-900">{app.paymentMethod || 'UPI'}</span>
-            </div>
-            <div>
-              <strong className="block text-[10px] text-slate-400 uppercase">PAYMENT STATUS</strong>
-              <span className="font-extrabold text-emerald-700">Successful (Verified)</span>
-            </div>
-            <div>
-              <strong className="block text-[10px] text-slate-400 uppercase">TRANSACTION UTR / ID</strong>
-              <span className="font-mono font-black text-blue-700">{app.utrNo || 'UTR346393622063'}</span>
-            </div>
+        {/* 7. MEMBER PAYMENTS */}
+        <MemberDetailsCard title="Member Payments" icon={Receipt} sectionNo="Section 07">
+          <div className="py-8 text-center text-slate-400 text-xs bg-slate-50/60 rounded-xl border border-slate-200">
+            <Receipt className="w-8 h-8 text-slate-300 mx-auto mb-2" />
+            <p className="font-bold text-slate-600">No payments available</p>
+            <p className="text-[11px] text-slate-400">No fee or contribution payment records found for this member.</p>
+          </div>
+        </MemberDetailsCard>
+
+        {/* 8. MEMBER TRANSACTIONS */}
+        <MemberDetailsCard title="Member Transactions" icon={ArrowRightLeft} sectionNo="Section 08">
+          <div className="py-8 text-center text-slate-400 text-xs bg-slate-50/60 rounded-xl border border-slate-200">
+            <ArrowRightLeft className="w-8 h-8 text-slate-300 mx-auto mb-2" />
+            <p className="font-bold text-slate-600">No transactions available</p>
+            <p className="text-[11px] text-slate-400">No transaction logs available for Member ID {currentMemberId}.</p>
           </div>
         </MemberDetailsCard>
       </div>

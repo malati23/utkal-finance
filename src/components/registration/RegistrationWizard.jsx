@@ -352,15 +352,103 @@ export function RegistrationWizard({ activeStep = 1, onQuickFillTrigger }) {
     setIsSubmitting(true);
     setSubmitError('');
 
-    console.log("Submitting application to backend...", formData);
-
     try {
+      const docs = formData.documents || {};
+      const fileFormData = new FormData();
+      let hasFiles = false;
+
+      if (docs.idProofFile instanceof File) {
+        fileFormData.append('idProof', docs.idProofFile);
+        hasFiles = true;
+      }
+      if (docs.addressProofFile instanceof File) {
+        fileFormData.append('addressProof', docs.addressProofFile);
+        hasFiles = true;
+      }
+      if (docs.photoFile instanceof File) {
+        fileFormData.append('photo', docs.photoFile);
+        hasFiles = true;
+      }
+      if (docs.signatureFile instanceof File) {
+        fileFormData.append('signature', docs.signatureFile);
+        hasFiles = true;
+      }
+      if (docs.doc3_eduCert instanceof File) {
+        fileFormData.append('doc3_eduCert', docs.doc3_eduCert);
+        hasFiles = true;
+      }
+      if (docs.doc4_birthCert instanceof File) {
+        fileFormData.append('doc4_birthCert', docs.doc4_birthCert);
+        hasFiles = true;
+      }
+      if (docs.doc5_utility instanceof File) {
+        fileFormData.append('doc5_utility', docs.doc5_utility);
+        hasFiles = true;
+      }
+
+      let uploadedFileUrls = {};
+      if (hasFiles) {
+        try {
+          const uploadRes = await fetch('http://localhost:5000/api/applications/upload-documents', {
+            method: 'POST',
+            body: fileFormData,
+          });
+          const uploadData = await uploadRes.json();
+          if (uploadRes.ok && uploadData.success && uploadData.files) {
+            uploadedFileUrls = uploadData.files;
+          }
+        } catch (uploadErr) {
+          console.warn('File upload warning:', uploadErr.message);
+        }
+      }
+
+      const additionalDocs = Array.isArray(docs.additionalDocuments) ? [...docs.additionalDocuments] : [];
+      if (uploadedFileUrls.doc3_eduCert) {
+        additionalDocs.push({
+          documentType: 'Educational Certificate',
+          documentName: 'Educational Degree / Marks Card',
+          documentUrl: uploadedFileUrls.doc3_eduCert,
+          uploadedAt: new Date(),
+        });
+      }
+      if (uploadedFileUrls.doc4_birthCert) {
+        additionalDocs.push({
+          documentType: 'Birth / PAN Certificate',
+          documentName: 'Birth / PAN Card Certificate',
+          documentUrl: uploadedFileUrls.doc4_birthCert,
+          uploadedAt: new Date(),
+        });
+      }
+      if (uploadedFileUrls.doc5_utility) {
+        additionalDocs.push({
+          documentType: 'Financial / Utility Document',
+          documentName: 'Electricity Bill / Bank Statement',
+          documentUrl: uploadedFileUrls.doc5_utility,
+          uploadedAt: new Date(),
+        });
+      }
+
+      const payload = {
+        ...formData,
+        documents: {
+          idProofType: docs.idProofType || 'Aadhaar Card',
+          idProofUrl: uploadedFileUrls.idProof || (typeof docs.idProofFile === 'string' ? docs.idProofFile : (docs.idProofUrl || '')),
+          addressProofType: docs.addressProofType || 'Aadhaar Card',
+          addressProofUrl: uploadedFileUrls.addressProof || (typeof docs.addressProofFile === 'string' ? docs.addressProofFile : (docs.addressProofUrl || '')),
+          photoUrl: uploadedFileUrls.photo || (typeof docs.photoFile === 'string' ? docs.photoFile : (docs.photoUrl || '')),
+          signatureUrl: uploadedFileUrls.signature || (typeof docs.signatureFile === 'string' ? docs.signatureFile : (docs.signatureUrl || '')),
+          additionalDocuments: additionalDocs,
+        },
+      };
+
+      console.log("Submitting application payload to backend:", payload);
+
       const response = await fetch('http://localhost:5000/api/applications', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify(formData),
+        body: JSON.stringify(payload),
       });
 
       const data = await response.json();
@@ -369,7 +457,7 @@ export function RegistrationWizard({ activeStep = 1, onQuickFillTrigger }) {
       if (response.ok && data.success && data.application?.applicationId) {
         const generatedAppId = data.application.applicationId;
         saveApplication({
-          ...formData,
+          ...payload,
           applicationId: generatedAppId,
         });
 

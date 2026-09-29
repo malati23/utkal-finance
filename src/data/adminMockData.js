@@ -394,58 +394,7 @@ export const INITIAL_PAYMENTS = [
   },
 ];
 
-export const INITIAL_DOCUMENTS = [
-  {
-    id: 'DOC-101',
-    applicant: 'Rahul Kumar Das',
-    appId: 'NUF-10231',
-    documentType: 'Aadhaar Card',
-    fileName: 'Aadhaar_Rahul_Das.pdf',
-    fileSize: '1.4 MB',
-    uploadedDate: '18 Sep 2026',
-    status: 'Pending Verification',
-  },
-  {
-    id: 'DOC-102',
-    applicant: 'Priya Rout',
-    appId: 'NUF-10230',
-    documentType: 'PAN Card',
-    fileName: 'PAN_Priya_Rout.jpg',
-    fileSize: '850 KB',
-    uploadedDate: '18 Sep 2026',
-    status: 'Verified',
-  },
-  {
-    id: 'DOC-103',
-    applicant: 'Amit Kumar Swain',
-    appId: 'NUF-10229',
-    documentType: 'Address Proof',
-    fileName: 'Electricity_Bill_Berhampur.pdf',
-    fileSize: '1.1 MB',
-    uploadedDate: '17 Sep 2026',
-    status: 'Pending Verification',
-  },
-  {
-    id: 'DOC-104',
-    applicant: 'Sneha Mohanty',
-    appId: 'NUF-10228',
-    documentType: 'Photograph',
-    fileName: 'Passport_Photo_Sneha.png',
-    fileSize: '420 KB',
-    uploadedDate: '17 Sep 2026',
-    status: 'Rejected',
-  },
-  {
-    id: 'DOC-105',
-    applicant: 'Priyabrata Kumar Mohapatra',
-    appId: 'NUF-10227',
-    documentType: 'Signature',
-    fileName: 'Digital_Signature_Specimen.png',
-    fileSize: '290 KB',
-    uploadedDate: '16 Sep 2026',
-    status: 'Verified',
-  },
-];
+export const INITIAL_DOCUMENTS = [];
 
 export const INITIAL_NOTICES = [
   {
