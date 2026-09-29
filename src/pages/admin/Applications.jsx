@@ -4,6 +4,7 @@ import { Search, Download, CheckCircle2, XCircle, FileText, UserPlus, Filter } f
 import { useAdmin } from '../../context/AdminContext';
 import { ApplicationTable } from '../../components/admin/ApplicationTable';
 import { EditApplicationModal } from '../../components/admin/EditApplicationModal';
+import { PaymentReceiptModal } from '../../components/admin/PaymentReceiptModal';
 
 export function Applications() {
   const { applications, updateApplicationStatus, updateApplication } = useAdmin();
@@ -12,6 +13,7 @@ export function Applications() {
   const [filterStatus, setFilterStatus] = useState('All');
   const [selectedBranch, setSelectedBranch] = useState('All Branches');
   const [selectedApp, setSelectedApp] = useState(null);
+  const [selectedReceiptApp, setSelectedReceiptApp] = useState(null);
   const [editingApp, setEditingApp] = useState(null);
   const [actionType, setActionType] = useState(null); // 'Approve' or 'Reject'
   const [isProcessing, setIsProcessing] = useState(false);
@@ -98,6 +100,46 @@ export function Applications() {
     } catch (err) {
       console.error('Failed to update status:', err);
       setErrorMessage(err.message || 'Failed to update application status.');
+    } finally {
+      setIsProcessing(false);
+    }
+  };
+
+  const handleReceiptApprove = async (app) => {
+    if (!app) return;
+    try {
+      setIsProcessing(true);
+      setErrorMessage('');
+      const mongoId = app._id || app.id;
+      await updateApplicationStatus(mongoId, 'approved');
+      setSuccessMessage(`Application for ${app.applicantName} approved successfully.`);
+      setSelectedReceiptApp(null);
+      setTimeout(() => {
+        setSuccessMessage('');
+      }, 5000);
+    } catch (err) {
+      console.error('Failed to approve application from receipt:', err);
+      setErrorMessage(err.message || 'Failed to approve application.');
+    } finally {
+      setIsProcessing(false);
+    }
+  };
+
+  const handleReceiptReject = async (app) => {
+    if (!app) return;
+    try {
+      setIsProcessing(true);
+      setErrorMessage('');
+      const mongoId = app._id || app.id;
+      await updateApplicationStatus(mongoId, 'rejected');
+      setSuccessMessage(`Application for ${app.applicantName} rejected.`);
+      setSelectedReceiptApp(null);
+      setTimeout(() => {
+        setSuccessMessage('');
+      }, 5000);
+    } catch (err) {
+      console.error('Failed to reject application from receipt:', err);
+      setErrorMessage(err.message || 'Failed to reject application.');
     } finally {
       setIsProcessing(false);
     }
@@ -449,6 +491,7 @@ export function Applications() {
           onApprove={(app) => handleOpenModal(app, 'Approve')}
           onReject={(app) => handleOpenModal(app, 'Reject')}
           onEdit={(app) => setEditingApp(app)}
+          onViewReceipt={(app) => setSelectedReceiptApp(app)}
         />
       </div>
 
@@ -543,6 +586,16 @@ export function Applications() {
         </div>,
         document.body
       )}
+
+      {/* PAYMENT RECEIPT & 1-CLICK APPROVAL MODAL */}
+      <PaymentReceiptModal
+        isOpen={!!selectedReceiptApp}
+        application={selectedReceiptApp}
+        onClose={() => setSelectedReceiptApp(null)}
+        onApprove={handleReceiptApprove}
+        onReject={handleReceiptReject}
+        isProcessing={isProcessing}
+      />
 
       {/* EDIT APPLICATION MODAL */}
       <EditApplicationModal

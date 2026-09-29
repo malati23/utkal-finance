@@ -115,6 +115,11 @@ export function RegistrationWizard({ activeStep = 1, onQuickFillTrigger }) {
       signatureName: '',
       declarationDate: new Date().toISOString().split('T')[0],
     },
+    payment: {
+      method: 'upi',
+      receiptFile: null,
+      utr: '',
+    },
   });
 
   const [errors, setErrors] = useState({});
@@ -347,7 +352,7 @@ export function RegistrationWizard({ activeStep = 1, onQuickFillTrigger }) {
     }
   };
 
-  const handleSubmitApplication = async () => {
+  const handleSubmitApplication = async (customPaymentData) => {
     if (isSubmitting) return;
 
     setIsSubmitting(true);
@@ -355,6 +360,11 @@ export function RegistrationWizard({ activeStep = 1, onQuickFillTrigger }) {
 
     try {
       const docs = formData.documents || {};
+      const paymentInfo = (customPaymentData && typeof customPaymentData === 'object' && customPaymentData.receiptFile !== undefined)
+        ? customPaymentData
+        : (formData.payment?.data || formData.payment || {});
+      const receiptFileObj = paymentInfo.receiptFile;
+
       const fileFormData = new FormData();
       let hasFiles = false;
 
@@ -384,6 +394,10 @@ export function RegistrationWizard({ activeStep = 1, onQuickFillTrigger }) {
       }
       if (docs.doc5_utility instanceof File) {
         fileFormData.append('doc5_utility', docs.doc5_utility);
+        hasFiles = true;
+      }
+      if (receiptFileObj?.rawFile instanceof File) {
+        fileFormData.append('paymentReceipt', receiptFileObj.rawFile);
         hasFiles = true;
       }
 
@@ -422,8 +436,36 @@ export function RegistrationWizard({ activeStep = 1, onQuickFillTrigger }) {
         });
       }
 
+      const paymentReceiptUrl = uploadedFileUrls.paymentReceipt ||
+        (receiptFileObj?.previewUrl ? receiptFileObj.previewUrl : (typeof receiptFileObj === 'string' ? receiptFileObj : ''));
+
+      if (paymentReceiptUrl && !additionalDocs.some((d) => d.documentType === 'Payment Receipt')) {
+        additionalDocs.push({
+          documentType: 'Payment Receipt',
+          documentName: '₹200 Statutory Membership Payment Screenshot',
+          documentUrl: paymentReceiptUrl,
+          uploadedAt: new Date(),
+        });
+      }
+
       const payload = {
         ...formData,
+        payment: {
+          method: paymentInfo.method || 'UPI (IndusInd Bank QR)',
+          amount: 200,
+          receiptUrl: paymentReceiptUrl,
+          receiptFileName: receiptFileObj?.name || 'UPI_Payment_Receipt.png',
+          utrNumber: paymentInfo.utr || 'UPI_PAYMENT_VERIFIED',
+          paidAt: new Date(),
+        },
+        paymentDetails: {
+          method: paymentInfo.method || 'UPI (IndusInd Bank QR)',
+          amount: 200,
+          receiptUrl: paymentReceiptUrl,
+          receiptFileName: receiptFileObj?.name || 'UPI_Payment_Receipt.png',
+          utrNumber: paymentInfo.utr || 'UPI_PAYMENT_VERIFIED',
+          paidAt: new Date(),
+        },
         documents: {
           idProofType: docs.idProofType || 'Aadhaar Card',
           idProofUrl: uploadedFileUrls.idProof || (typeof docs.idProofFile === 'string' ? docs.idProofFile : (docs.idProofUrl || '')),
@@ -431,6 +473,7 @@ export function RegistrationWizard({ activeStep = 1, onQuickFillTrigger }) {
           addressProofUrl: uploadedFileUrls.addressProof || (typeof docs.addressProofFile === 'string' ? docs.addressProofFile : (docs.addressProofUrl || '')),
           photoUrl: uploadedFileUrls.photo || (typeof docs.photoFile === 'string' ? docs.photoFile : (docs.photoUrl || '')),
           signatureUrl: uploadedFileUrls.signature || (typeof docs.signatureFile === 'string' ? docs.signatureFile : (docs.signatureUrl || '')),
+          paymentReceiptUrl: paymentReceiptUrl,
           additionalDocuments: additionalDocs,
         },
       };
@@ -568,6 +611,7 @@ export function RegistrationWizard({ activeStep = 1, onQuickFillTrigger }) {
             formData={formData}
             onGoToStep={handleStepClick}
             onSubmit={handleSubmitApplication}
+            onPaymentChange={(val) => handleStepDataChange('payment', 'data', val)}
             errors={errors.review || {}}
           />
         )}

@@ -37,6 +37,7 @@ export function SubmissionSuccess({ referenceNo, formData = {}, onReset }) {
   const documents = formData.documents || {};
   const witness = formData.witness || {};
   const declaration = formData.declaration || {};
+  const payment = formData.payment || {};
 
   // 1. Dynamic Personal Details
   const title = personal.title || 'Mr.';
@@ -107,9 +108,12 @@ export function SubmissionSuccess({ referenceNo, formData = {}, onReset }) {
   const w2Mobile = witness.witness2Mobile ? (witness.witness2Mobile.startsWith('+91') ? witness.witness2Mobile : `+91 ${witness.witness2Mobile}`) : '+91 9437889900';
   const w2Address = witness.witness2Address || 'Cuttack, Odisha';
 
-  // 7. Dynamic Declaration
+  // 7. Dynamic Declaration & Payment Clearance
   const sigName = declaration.signatureName || fullName;
   const declDate = declaration.declarationDate || new Date().toISOString().split('T')[0];
+  const paymentMethodLabel = payment.paymentMethod || 'UPI (QR Code Payment)';
+  const paymentUtrVal = payment.utrNumber || payment.utr || (payment.receiptFile ? 'RECEIPT_ATTACHED' : 'PENDING_ADMIN_VERIFY');
+  const paymentReceiptNo = payment.receiptNo || `REC-${new Date().getFullYear()}-${refId.replace(/[^0-9]/g, '').slice(-4) || '6834'}`;
 
   const handleCopyMemberId = () => {
     if (navigator.clipboard) {
@@ -1104,9 +1108,9 @@ export function SubmissionSuccess({ referenceNo, formData = {}, onReset }) {
             </div>
             <div className="p-3 grid grid-cols-4 gap-2 text-[11px]">
               <div><strong className="block text-[9px] uppercase text-slate-600">AMOUNT PAID</strong><span className="font-black text-emerald-800">₹ {totalPaidVal}.00</span></div>
-              <div><strong className="block text-[9px] uppercase text-slate-600">PAYMENT METHOD</strong><span className="font-bold">UPI (Google Pay)</span></div>
-              <div><strong className="block text-[9px] uppercase text-slate-600">TRANSACTION UTR</strong><span className="font-mono font-bold">UTR426774469795</span></div>
-              <div><strong className="block text-[9px] uppercase text-slate-600">RECEIPT NO.</strong><span className="font-mono font-bold">REC-2026-6834</span></div>
+              <div><strong className="block text-[9px] uppercase text-slate-600">PAYMENT METHOD</strong><span className="font-bold">{paymentMethodLabel}</span></div>
+              <div><strong className="block text-[9px] uppercase text-slate-600">TRANSACTION UTR</strong><span className="font-mono font-bold">{paymentUtrVal}</span></div>
+              <div><strong className="block text-[9px] uppercase text-slate-600">RECEIPT NO.</strong><span className="font-mono font-bold">{paymentReceiptNo}</span></div>
             </div>
           </div>
 

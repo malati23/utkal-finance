@@ -70,6 +70,31 @@ function normalizeApplication(app) {
     ? nameParts.join(' ')
     : app.applicantName || 'Applicant';
 
+  const pay = app.paymentDetails || app.payment || {};
+  const paymentReceiptUrl =
+    pay.receiptUrl ||
+    doc.paymentReceiptUrl ||
+    app.paymentReceiptUrl ||
+    (Array.isArray(doc.additionalDocuments)
+      ? doc.additionalDocuments.find((d) => d.documentType === 'Payment Receipt')?.documentUrl
+      : '') ||
+    '';
+
+  const paymentReceiptName =
+    pay.receiptFileName ||
+    (paymentReceiptUrl ? 'UPI_Payment_Receipt.png' : '');
+
+  const paymentMethod =
+    pay.method ||
+    app.paymentMethod ||
+    'UPI (IndusInd Bank Scan & Pay)';
+
+  const utrNo =
+    pay.utrNumber ||
+    pay.utr ||
+    app.utrNo ||
+    'UPI_VERIFIED';
+
   return {
     ...app,
     _id: app._id || app.id,
@@ -111,7 +136,7 @@ function normalizeApplication(app) {
     numberOfShares: m.numberOfShares || 10,
     shareValue: m.shareValue || 10,
     processingFee: m.processingFee || 100,
-    totalPaid: m.totalContribution || 200,
+    totalPaid: pay.amount || m.totalContribution || 200,
     idProofType: doc.idProofType || 'Aadhaar Card',
     addressProofType: doc.addressProofType || 'Aadhaar Card',
     witness1Name: w.witness1Name || 'Rajesh Kumar Swain',
@@ -122,9 +147,19 @@ function normalizeApplication(app) {
     witness2Address: w.witness2Address || 'Cuttack, Odisha',
     sigName: d.signatureName || applicantName,
     declarationDate: d.declarationDate || new Date().toISOString().split('T')[0],
-    paymentMethod: 'UPI (Google Pay)',
-    utrNo: app.utrNo || 'UTR346393622063',
+    paymentMethod,
+    utrNo,
     receiptNo: app.receiptNo || 'REC-2026-1001',
+    paymentReceiptUrl,
+    paymentReceiptName,
+    paymentDetails: {
+      ...pay,
+      receiptUrl: paymentReceiptUrl,
+      receiptFileName: paymentReceiptName,
+      method: paymentMethod,
+      utrNumber: utrNo,
+      amount: pay.amount || m.totalContribution || 200,
+    },
     date: app.submittedAt ? new Date(app.submittedAt).toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' }) : app.date || 'Today',
     status: app.status || 'pending',
     createdAt: app.createdAt || new Date().toISOString(),

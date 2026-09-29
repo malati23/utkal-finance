@@ -5,14 +5,14 @@ import { MembershipFeeSection } from './payment/MembershipFeeSection';
 import { Edit3, CheckCircle2, User, MapPin, Shield, Heart, Coins, FileText, UserCheck, ShieldCheck, AlertCircle } from 'lucide-react';
 import { formatCurrency } from '../../utils/formatters';
 
-export function StepReview({ formData = {}, onGoToStep, onSubmit, errors = {} }) {
+export function StepReview({ formData = {}, onGoToStep, onSubmit, onPaymentChange, errors = {} }) {
   const [reviewedChecked, setReviewedChecked] = useState(false);
   const [reviewError, setReviewError] = useState('');
 
   // Payment section local state
   const [selectedMethod, setSelectedMethod] = useState('upi');
-  const [paymentData, setPaymentData] = useState({
-    utr: '423189745120',
+  const [paymentData, setPaymentData] = useState(() => formData.payment?.data || {
+    receiptFile: null,
     card: {},
     netBank: 'State Bank of India (SBI)',
     branch: { branchLocation: 'Bhubaneswar HQ (Nayapalli, Khurda)' },
@@ -29,28 +29,45 @@ export function StepReview({ formData = {}, onGoToStep, onSubmit, errors = {} })
   const declaration = formData.declaration || {};
 
   const handlePaymentDataChange = (key, val) => {
-    setPaymentData((prev) => ({
-      ...prev,
-      [key]: val,
-    }));
-    if (key === 'utr') setUtrError('');
+    setPaymentData((prev) => {
+      const updated = {
+        ...prev,
+        [key]: val,
+      };
+      if (onPaymentChange) {
+        onPaymentChange({ ...updated, method: selectedMethod });
+      }
+      return updated;
+    });
+    if (key === 'receiptFile' || key === 'utr') setUtrError('');
+  };
+
+  const handleMethodSelect = (method) => {
+    setSelectedMethod(method);
+    if (onPaymentChange) {
+      onPaymentChange({ ...paymentData, method });
+    }
   };
 
   const handleAutoFillTestInfo = () => {
     setSelectedMethod('upi');
-    setPaymentData((prev) => ({
-      ...prev,
-      utr: '423189745120',
-    }));
+    const updated = {
+      ...paymentData,
+      receiptFile: null,
+    };
+    setPaymentData(updated);
+    if (onPaymentChange) {
+      onPaymentChange({ ...updated, method: 'upi' });
+    }
     setUtrError('');
   };
 
   const handleFinalSubmitValidation = () => {
-    // Validate UPI UTR if UPI method selected
+    // Validate UPI payment receipt file if UPI method selected
     if (selectedMethod === 'upi') {
-      if (!paymentData.utr || paymentData.utr.trim().length < 6) {
-        setUtrError('Please enter a valid 12-digit UPI UTR number.');
-        setReviewError('Please complete required payment details for UPI.');
+      if (!paymentData.receiptFile) {
+        setUtrError('Please upload your ₹200 payment confirmation screenshot / receipt.');
+        setReviewError('Please complete required payment receipt upload for UPI.');
         return false;
       }
     }
@@ -62,7 +79,10 @@ export function StepReview({ formData = {}, onGoToStep, onSubmit, errors = {} })
 
     setReviewError('');
     setUtrError('');
-    onSubmit();
+    onSubmit({
+      ...paymentData,
+      method: selectedMethod,
+    });
     return true;
   };
 
@@ -339,7 +359,7 @@ export function StepReview({ formData = {}, onGoToStep, onSubmit, errors = {} })
 
           <MembershipFeeSection
             selectedMethod={selectedMethod}
-            onSelectMethod={setSelectedMethod}
+            onSelectMethod={handleMethodSelect}
             paymentData={paymentData}
             onPaymentDataChange={handlePaymentDataChange}
             utrError={utrError}

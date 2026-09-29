@@ -15,11 +15,18 @@ import {
   FileText,
   PenTool,
   ShieldCheck,
-  CreditCard
+  CreditCard,
+  ExternalLink,
+  Download,
+  Maximize2,
+  Image as ImageIcon
 } from 'lucide-react';
 import { useAdmin } from '../../context/AdminContext';
 import { StatusBadge } from '../../components/admin/StatusBadge';
 import { EditApplicationModal } from '../../components/admin/EditApplicationModal';
+import { PaymentReceiptModal } from '../../components/admin/PaymentReceiptModal';
+import { getBackendAssetUrl } from '../../config/env';
+import indusIndQr from '../../assets/image copy 23.png';
 
 export function ApplicationDetails() {
   const { id } = useParams();
@@ -30,6 +37,7 @@ export function ApplicationDetails() {
   const [errorMessage, setErrorMessage] = useState('');
   const [isProcessing, setIsProcessing] = useState(false);
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
+  const [isReceiptModalOpen, setIsReceiptModalOpen] = useState(false);
 
   const app = applications.find((a) => a._id === id || a.id === id || a.applicationId === id);
 
@@ -46,6 +54,7 @@ export function ApplicationDetails() {
       } else {
         setMessage(`Application status updated to "${newStatus}"`);
       }
+      setIsReceiptModalOpen(false);
       setTimeout(() => setMessage(''), 5000);
     } catch (err) {
       console.error('Error updating status:', err);
@@ -86,6 +95,18 @@ export function ApplicationDetails() {
     );
   }
 
+  const statusLower = (app.status || '').toLowerCase();
+  const isPending = statusLower === 'pending';
+
+  let receiptUrl = app.paymentReceiptUrl || app.paymentDetails?.receiptUrl;
+  if (!receiptUrl && Array.isArray(app.documentDetails?.additionalDocuments)) {
+    const found = app.documentDetails.additionalDocuments.find(
+      (d) => d.documentType === 'Payment Receipt' || d.documentName?.includes('Payment')
+    );
+    if (found) receiptUrl = found.documentUrl;
+  }
+  const displayReceiptUrl = receiptUrl ? getBackendAssetUrl(receiptUrl) : indusIndQr;
+
   return (
     <div className="space-y-6 text-left animate-fade-in">
       {/* BACK BUTTON & TOP BAR */}
@@ -112,6 +133,15 @@ export function ApplicationDetails() {
 
         {/* TOP ACTIONS TOOLBAR */}
         <div className="flex flex-wrap items-center gap-2">
+          <button
+            type="button"
+            onClick={() => setIsReceiptModalOpen(true)}
+            className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl bg-indigo-50 hover:bg-indigo-100 text-indigo-900 text-xs font-bold transition-colors border border-indigo-300 cursor-pointer shadow-xs"
+          >
+            <FileText className="w-4 h-4 text-indigo-700" />
+            <span>View Payment Receipt</span>
+          </button>
+
           <button
             type="button"
             onClick={() => setIsEditModalOpen(true)}
@@ -342,18 +372,113 @@ export function ApplicationDetails() {
           <div className="bg-slate-50/80 px-5 py-3.5 border-b border-slate-200/80 flex items-center justify-between">
             <div className="flex items-center gap-2 text-xs font-extrabold text-slate-900 uppercase tracking-wider">
               <CreditCard className="w-4 h-4 text-blue-700" />
-              <span>9. PAYMENT CLEARANCE</span>
+              <span>9. PAYMENT CLEARANCE &amp; RECEIPT VERIFICATION</span>
             </div>
             <span className="text-xs font-bold text-slate-400 font-mono">Section 09</span>
           </div>
 
-          <div className="p-5 grid grid-cols-1 sm:grid-cols-3 gap-4 text-xs">
-            <div><strong className="block text-[10px] text-slate-400 uppercase">PAYMENT METHOD</strong><span className="font-extrabold text-slate-900">{app.paymentMethod}</span></div>
-            <div><strong className="block text-[10px] text-slate-400 uppercase">TRANSACTION UTR</strong><span className="font-mono font-black text-blue-700">{app.utrNo}</span></div>
-            <div><strong className="block text-[10px] text-slate-400 uppercase">OFFICIAL RECEIPT NO</strong><span className="font-mono font-black text-slate-900">{app.receiptNo}</span></div>
+          <div className="p-5 space-y-5">
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 text-xs border-b border-slate-100 pb-4">
+              <div><strong className="block text-[10px] text-slate-400 uppercase">PAYMENT METHOD</strong><span className="font-extrabold text-slate-900">{app.paymentMethod}</span></div>
+              <div><strong className="block text-[10px] text-slate-400 uppercase">TRANSACTION UTR</strong><span className="font-mono font-black text-blue-700">{app.utrNo}</span></div>
+              <div><strong className="block text-[10px] text-slate-400 uppercase">TOTAL PAID CONSIDERATION</strong><span className="font-mono font-black text-emerald-700">₹{app.totalPaid || 200}.00 (Settled)</span></div>
+            </div>
+
+            {/* RECEIPT SCREENSHOT PREVIEW CARD */}
+            <div className="bg-slate-50 rounded-2xl p-4.5 border border-slate-200 flex flex-col md:flex-row md:items-center justify-between gap-5">
+              <div className="flex items-center gap-4">
+                <div
+                  onClick={() => setIsReceiptModalOpen(true)}
+                  className="w-20 h-20 sm:w-24 sm:h-24 rounded-2xl bg-slate-950 border-2 border-blue-600/60 p-1 flex items-center justify-center overflow-hidden cursor-pointer shrink-0 shadow-md group relative hover:scale-105 transition-transform"
+                >
+                  <img
+                    src={displayReceiptUrl}
+                    alt="Payment Screenshot Preview"
+                    className="w-full h-full object-contain rounded-xl"
+                  />
+                  <div className="absolute inset-0 bg-slate-900/40 opacity-0 group-hover:opacity-100 flex items-center justify-center transition-opacity">
+                    <Maximize2 className="w-5 h-5 text-white" />
+                  </div>
+                </div>
+
+                <div className="space-y-1">
+                  <div className="flex items-center gap-2">
+                    <h4 className="font-black text-slate-900 text-sm">
+                      Uploaded Payment Receipt Screenshot
+                    </h4>
+                    <span className="px-2 py-0.5 rounded-full text-[10px] font-extrabold bg-emerald-100 text-emerald-800 border border-emerald-300">
+                      ₹{app.totalPaid || 200} Attached
+                    </span>
+                  </div>
+                  <p className="text-xs text-slate-500 font-medium">
+                    UPI payment confirmation uploaded by applicant for statutory admission fee.
+                  </p>
+                  <div className="pt-1 flex items-center gap-3">
+                    <button
+                      type="button"
+                      onClick={() => setIsReceiptModalOpen(true)}
+                      className="text-xs font-bold text-blue-700 hover:text-blue-900 inline-flex items-center gap-1 cursor-pointer"
+                    >
+                      <FileText className="w-3.5 h-3.5" />
+                      <span>Inspect Full Screenshot</span>
+                    </button>
+                    <span>•</span>
+                    <a
+                      href={displayReceiptUrl}
+                      download={`Payment_Receipt_${app.id || 'NUF'}.png`}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="text-xs font-bold text-slate-600 hover:text-slate-900 inline-flex items-center gap-1"
+                    >
+                      <Download className="w-3.5 h-3.5" />
+                      <span>Download File</span>
+                    </a>
+                  </div>
+                </div>
+              </div>
+
+              {/* DIRECT APPROVAL BUTTON IN SECTION 9 */}
+              <div className="shrink-0 flex flex-col items-stretch sm:items-end gap-2">
+                {isPending ? (
+                  <button
+                    type="button"
+                    disabled={isProcessing}
+                    onClick={() => handleStatusChange('Approved')}
+                    className="inline-flex items-center justify-center gap-2 px-6 py-3 rounded-2xl bg-[#00C853] hover:bg-emerald-600 text-slate-950 font-black text-xs uppercase tracking-wider shadow-lg shadow-emerald-500/20 transition-all cursor-pointer disabled:opacity-50"
+                  >
+                    {isProcessing ? (
+                      <>
+                        <span className="w-4 h-4 border-2 border-slate-950 border-t-transparent rounded-full animate-spin"></span>
+                        <span>Approving...</span>
+                      </>
+                    ) : (
+                      <>
+                        <CheckCircle2 className="w-4 h-4 text-slate-950" />
+                        <span>APPROVE APPLICATION</span>
+                      </>
+                    )}
+                  </button>
+                ) : (
+                  <div className="flex items-center gap-1.5 text-emerald-700 text-xs font-bold bg-white px-4 py-2 rounded-xl border border-emerald-200 shadow-2xs">
+                    <CheckCircle2 className="w-4 h-4 text-emerald-600" />
+                    <span>Payment &amp; Membership Cleared</span>
+                  </div>
+                )}
+              </div>
+            </div>
           </div>
         </div>
       </div>
+
+      {/* PAYMENT RECEIPT MODAL */}
+      <PaymentReceiptModal
+        isOpen={isReceiptModalOpen}
+        application={app}
+        onClose={() => setIsReceiptModalOpen(false)}
+        onApprove={() => handleStatusChange('Approved')}
+        onReject={() => handleStatusChange('Rejected')}
+        isProcessing={isProcessing}
+      />
 
       {/* EDIT APPLICATION MODAL */}
       <EditApplicationModal

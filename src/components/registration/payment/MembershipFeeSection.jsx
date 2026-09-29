@@ -55,8 +55,8 @@ export function MembershipFeeSection({
       {/* ACTIVE PAYMENT METHOD CONTENT */}
       {selectedMethod === 'upi' && (
         <UpiPayment
-          utrValue={paymentData.utr || ''}
-          onUtrChange={(val) => onPaymentDataChange('utr', val)}
+          receiptFile={paymentData.receiptFile || null}
+          onReceiptChange={(file) => onPaymentDataChange('receiptFile', file)}
           error={utrError}
         />
       )}
