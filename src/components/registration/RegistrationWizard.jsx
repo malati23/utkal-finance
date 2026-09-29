@@ -363,7 +363,7 @@ export function RegistrationWizard({ activeStep = 1, onQuickFillTrigger }) {
       const paymentInfo = (customPaymentData && typeof customPaymentData === 'object' && customPaymentData.receiptFile !== undefined)
         ? customPaymentData
         : (formData.payment?.data || formData.payment || {});
-      const receiptFileObj = paymentInfo.receiptFile;
+      const receiptFileObj = paymentInfo.receiptFile || formData.payment?.data?.receiptFile || formData.payment?.receiptFile;
 
       const fileFormData = new FormData();
       let hasFiles = false;
@@ -396,8 +396,18 @@ export function RegistrationWizard({ activeStep = 1, onQuickFillTrigger }) {
         fileFormData.append('doc5_utility', docs.doc5_utility);
         hasFiles = true;
       }
-      if (receiptFileObj?.rawFile instanceof File) {
-        fileFormData.append('paymentReceipt', receiptFileObj.rawFile);
+
+      // Extract raw receipt file
+      let receiptRaw = null;
+      if (receiptFileObj instanceof File) {
+        receiptRaw = receiptFileObj;
+      } else if (receiptFileObj?.rawFile instanceof File) {
+        receiptRaw = receiptFileObj.rawFile;
+      }
+
+      if (receiptRaw) {
+        fileFormData.append('paymentReceipt', receiptRaw);
+        fileFormData.append('receiptFile', receiptRaw);
         hasFiles = true;
       }
 
@@ -436,8 +446,12 @@ export function RegistrationWizard({ activeStep = 1, onQuickFillTrigger }) {
         });
       }
 
-      const paymentReceiptUrl = uploadedFileUrls.paymentReceipt ||
-        (receiptFileObj?.previewUrl ? receiptFileObj.previewUrl : (typeof receiptFileObj === 'string' ? receiptFileObj : ''));
+      const paymentReceiptUrl =
+        uploadedFileUrls.paymentReceipt ||
+        uploadedFileUrls.receiptFile ||
+        receiptFileObj?.dataUrl ||
+        receiptFileObj?.previewUrl ||
+        (typeof receiptFileObj === 'string' ? receiptFileObj : '');
 
       if (paymentReceiptUrl && !additionalDocs.some((d) => d.documentType === 'Payment Receipt')) {
         additionalDocs.push({

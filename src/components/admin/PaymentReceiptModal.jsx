@@ -50,19 +50,29 @@ export function PaymentReceiptModal({
   const isApproved = statusLower === 'approved';
 
   // Determine receipt URL
-  let receiptUrl = app.paymentReceiptUrl || app.paymentDetails?.receiptUrl;
+  let receiptUrl =
+    app.paymentReceiptUrl ||
+    app.paymentDetails?.receiptUrl ||
+    app.payment?.receiptUrl ||
+    app.documentDetails?.paymentReceiptUrl ||
+    app.documents?.paymentReceiptUrl;
+
   if (!receiptUrl && Array.isArray(app.documentDetails?.additionalDocuments)) {
     const found = app.documentDetails.additionalDocuments.find(
-      (d) => d.documentType === 'Payment Receipt' || d.documentName?.includes('Payment')
+      (d) => d.documentType === 'Payment Receipt' || d.documentName?.toLowerCase().includes('payment') || d.documentName?.toLowerCase().includes('receipt')
+    );
+    if (found) receiptUrl = found.documentUrl;
+  }
+  if (!receiptUrl && Array.isArray(app.documents?.additionalDocuments)) {
+    const found = app.documents.additionalDocuments.find(
+      (d) => d.documentType === 'Payment Receipt' || d.documentName?.toLowerCase().includes('payment') || d.documentName?.toLowerCase().includes('receipt')
     );
     if (found) receiptUrl = found.documentUrl;
   }
 
-  // If no URL uploaded, fallback to sample IndusInd QR demo receipt
-  const displayUrl = receiptUrl ? getBackendAssetUrl(receiptUrl) : indusIndQr;
-  const isSample = !receiptUrl;
-
-  const isPdf = typeof displayUrl === 'string' && displayUrl.toLowerCase().endsWith('.pdf');
+  const hasReceipt = Boolean(receiptUrl);
+  const displayUrl = hasReceipt ? getBackendAssetUrl(receiptUrl) : null;
+  const isPdf = typeof displayUrl === 'string' && displayUrl.toLowerCase().includes('.pdf');
 
   return createPortal(
     <div
@@ -153,45 +163,51 @@ export function PaymentReceiptModal({
             </div>
 
             {/* RECEIPT IMAGE CONTAINER */}
-            <div className="relative w-full h-[340px] sm:h-[380px] rounded-2xl bg-slate-950 border border-slate-800 flex items-center justify-center overflow-hidden group shadow-inner">
-              {isPdf ? (
-                <object
-                  data={`${displayUrl}#toolbar=0&navpanes=0`}
-                  type="application/pdf"
-                  className="w-full h-full border-0 rounded-2xl bg-white"
-                >
-                  <iframe src={displayUrl} title="Receipt PDF" className="w-full h-full border-0 rounded-2xl bg-white" />
-                </object>
+            <div className="relative w-full h-[340px] sm:h-[390px] rounded-2xl bg-slate-900 border border-slate-700/80 flex items-center justify-center overflow-hidden group shadow-inner">
+              {displayUrl ? (
+                isPdf ? (
+                  <object
+                    data={`${displayUrl}#toolbar=0&navpanes=0`}
+                    type="application/pdf"
+                    className="w-full h-full border-0 rounded-2xl bg-white"
+                  >
+                    <iframe src={displayUrl} title="Receipt PDF" className="w-full h-full border-0 rounded-2xl bg-white" />
+                  </object>
+                ) : (
+                  <div className="w-full h-full p-2.5 flex items-center justify-center bg-slate-950/30">
+                    <img
+                      src={displayUrl}
+                      alt={`Payment Receipt for ${app.applicantName}`}
+                      className={`max-w-full max-h-full object-contain rounded-xl bg-white shadow-md transition-transform duration-300 ${
+                        isZoomed ? 'scale-150 cursor-zoom-out' : 'cursor-zoom-in'
+                      }`}
+                      onClick={() => setIsZoomed(!isZoomed)}
+                    />
+                  </div>
+                )
               ) : (
-                <img
-                  src={displayUrl}
-                  alt={`Payment Receipt for ${app.applicantName}`}
-                  className={`max-w-full max-h-full object-contain transition-transform duration-300 ${
-                    isZoomed ? 'scale-150 cursor-zoom-out' : 'cursor-zoom-in'
-                  }`}
-                  onClick={() => setIsZoomed(!isZoomed)}
-                  onError={(e) => {
-                    e.target.onerror = null;
-                    e.target.src = indusIndQr;
-                  }}
-                />
+                <div className="flex flex-col items-center justify-center text-center p-6 space-y-3">
+                  <div className="w-14 h-14 rounded-2xl bg-slate-800 text-slate-400 flex items-center justify-center">
+                    <FileText className="w-7 h-7" />
+                  </div>
+                  <div className="space-y-1">
+                    <p className="text-sm font-black text-slate-200">No Payment Screenshot Uploaded</p>
+                    <p className="text-xs text-slate-400 max-w-xs">
+                      The applicant submitted this application without attaching a receipt file.
+                    </p>
+                  </div>
+                </div>
               )}
 
-              {!isPdf && (
+              {displayUrl && !isPdf && (
                 <button
                   type="button"
                   onClick={() => setIsZoomed(!isZoomed)}
-                  className="absolute bottom-3 right-3 bg-slate-900/80 hover:bg-slate-900 text-white p-2 rounded-xl text-xs backdrop-blur-xs border border-white/20 transition-all opacity-80 group-hover:opacity-100 cursor-pointer"
+                  className="absolute bottom-3 right-3 bg-slate-900/90 hover:bg-slate-800 text-white p-2 rounded-xl text-xs backdrop-blur-xs border border-white/20 transition-all opacity-80 group-hover:opacity-100 cursor-pointer shadow-md"
                   title={isZoomed ? 'Zoom Out' : 'Zoom In'}
                 >
                   <Maximize2 className="w-4 h-4" />
                 </button>
-              )}
-
-              {isSample && (
-                <div className="absolute top-3 left-3 bg-amber-500/90 text-slate-950 font-black text-[10px] uppercase px-2.5 py-1 rounded-lg shadow-md">
-                  Official QR Record Attached
-                </div>
               )}
             </div>
 

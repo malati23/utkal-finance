@@ -98,14 +98,26 @@ export function ApplicationDetails() {
   const statusLower = (app.status || '').toLowerCase();
   const isPending = statusLower === 'pending';
 
-  let receiptUrl = app.paymentReceiptUrl || app.paymentDetails?.receiptUrl;
+  let receiptUrl =
+    app.paymentReceiptUrl ||
+    app.paymentDetails?.receiptUrl ||
+    app.payment?.receiptUrl ||
+    app.documentDetails?.paymentReceiptUrl ||
+    app.documents?.paymentReceiptUrl;
+
   if (!receiptUrl && Array.isArray(app.documentDetails?.additionalDocuments)) {
     const found = app.documentDetails.additionalDocuments.find(
-      (d) => d.documentType === 'Payment Receipt' || d.documentName?.includes('Payment')
+      (d) => d.documentType === 'Payment Receipt' || d.documentName?.toLowerCase().includes('payment') || d.documentName?.toLowerCase().includes('receipt')
     );
     if (found) receiptUrl = found.documentUrl;
   }
-  const displayReceiptUrl = receiptUrl ? getBackendAssetUrl(receiptUrl) : indusIndQr;
+  if (!receiptUrl && Array.isArray(app.documents?.additionalDocuments)) {
+    const found = app.documents.additionalDocuments.find(
+      (d) => d.documentType === 'Payment Receipt' || d.documentName?.toLowerCase().includes('payment') || d.documentName?.toLowerCase().includes('receipt')
+    );
+    if (found) receiptUrl = found.documentUrl;
+  }
+  const displayReceiptUrl = receiptUrl ? getBackendAssetUrl(receiptUrl) : null;
 
   return (
     <div className="space-y-6 text-left animate-fade-in">
@@ -389,14 +401,18 @@ export function ApplicationDetails() {
               <div className="flex items-center gap-4">
                 <div
                   onClick={() => setIsReceiptModalOpen(true)}
-                  className="w-20 h-20 sm:w-24 sm:h-24 rounded-2xl bg-slate-950 border-2 border-blue-600/60 p-1 flex items-center justify-center overflow-hidden cursor-pointer shrink-0 shadow-md group relative hover:scale-105 transition-transform"
+                  className="w-20 h-20 sm:w-24 sm:h-24 rounded-2xl bg-white border-2 border-blue-600/40 p-1 flex items-center justify-center overflow-hidden cursor-pointer shrink-0 shadow-md group relative hover:scale-105 transition-transform"
                 >
-                  <img
-                    src={displayReceiptUrl}
-                    alt="Payment Screenshot Preview"
-                    className="w-full h-full object-contain rounded-xl"
-                  />
-                  <div className="absolute inset-0 bg-slate-900/40 opacity-0 group-hover:opacity-100 flex items-center justify-center transition-opacity">
+                  {displayReceiptUrl ? (
+                    <img
+                      src={displayReceiptUrl}
+                      alt="Payment Screenshot Preview"
+                      className="w-full h-full object-contain rounded-xl"
+                    />
+                  ) : (
+                    <FileText className="w-8 h-8 text-slate-400" />
+                  )}
+                  <div className="absolute inset-0 bg-slate-900/30 opacity-0 group-hover:opacity-100 flex items-center justify-center transition-opacity rounded-xl">
                     <Maximize2 className="w-5 h-5 text-white" />
                   </div>
                 </div>

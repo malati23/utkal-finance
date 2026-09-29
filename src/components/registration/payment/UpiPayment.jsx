@@ -57,16 +57,38 @@ export function UpiPayment({
     }
 
     const isImage = file.type.startsWith('image/');
-    const fileObj = {
-      name: file.name,
-      size: `${(file.size / (1024 * 1024)).toFixed(2)} MB`,
-      type: file.type,
-      previewUrl: isImage ? URL.createObjectURL(file) : null,
-      rawFile: file,
+    const reader = new FileReader();
+
+    reader.onload = (loadEvt) => {
+      const dataUrl = loadEvt.target?.result;
+      const fileObj = {
+        name: file.name,
+        size: `${(file.size / (1024 * 1024)).toFixed(2)} MB`,
+        type: file.type,
+        previewUrl: dataUrl,
+        dataUrl: dataUrl,
+        rawFile: file,
+      };
+
+      if (onReceiptChange) {
+        onReceiptChange(fileObj);
+      }
     };
 
-    if (onReceiptChange) {
-      onReceiptChange(fileObj);
+    if (isImage) {
+      reader.readAsDataURL(file);
+    } else {
+      const fileObj = {
+        name: file.name,
+        size: `${(file.size / (1024 * 1024)).toFixed(2)} MB`,
+        type: file.type,
+        previewUrl: null,
+        dataUrl: null,
+        rawFile: file,
+      };
+      if (onReceiptChange) {
+        onReceiptChange(fileObj);
+      }
     }
   };
 
