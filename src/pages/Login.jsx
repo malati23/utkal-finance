@@ -3,6 +3,8 @@ import { Link, useNavigate } from 'react-router-dom';
 import { FormInput } from '../components/FormInput';
 import { Button } from '../components/Button';
 import { useAuth } from '../hooks/useAuth';
+import { useAdmin } from '../context/AdminContext';
+import { adminLogin } from '../auth/adminAuth';
 import { validateEmail } from '../utils/validators';
 import { LogIn, Lock, Mail, ArrowRight } from 'lucide-react';
 
@@ -15,6 +17,7 @@ export function Login() {
   const [errors, setErrors] = useState({});
   const [loading, setLoading] = useState(false);
   const { login } = useAuth();
+  const { loginAdmin } = useAdmin();
   const navigate = useNavigate();
 
   const handleChange = (e) => {
@@ -29,12 +32,13 @@ export function Login() {
     e.preventDefault();
     const newErrors = {};
 
-    if (!formData.email || !validateEmail(formData.email)) {
-      newErrors.email = 'Please enter a valid email address';
+    const cleanEmail = (formData.email || '').trim();
+    if (!cleanEmail) {
+      newErrors.email = 'Please enter your email address or admin ID';
     }
 
-    if (!formData.password || formData.password.length < 6) {
-      newErrors.password = 'Password must be at least 6 characters';
+    if (!formData.password || formData.password.length < 4) {
+      newErrors.password = 'Please enter your password';
     }
 
     if (Object.keys(newErrors).length > 0) {
@@ -44,6 +48,16 @@ export function Login() {
 
     setLoading(true);
     try {
+      // 1. Role-based check: Check if credentials match administrator
+      const adminRes = adminLogin(cleanEmail, formData.password);
+      if (adminRes && adminRes.success) {
+        if (loginAdmin) {
+          loginAdmin(cleanEmail, formData.password);
+        }
+        navigate('/admin-dashboard');
+        return;
+      }
+
       await login(formData);
       navigate('/');
     } catch (err) {

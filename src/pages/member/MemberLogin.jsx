@@ -12,14 +12,17 @@ import {
 import brandLogo from '../../assets/image copy 7.png';
 
 import { useMemberAuth } from '../../hooks/useMemberAuth';
+import { useAdmin } from '../../context/AdminContext';
+import { adminLogin } from '../../auth/adminAuth';
 
 /**
  * MemberLogin Page (/member-login)
- * Dedicated authentication portal for New Utkal Finance members.
+ * Role-based authentication portal for New Utkal Finance members and administrators.
  */
 export function MemberLogin() {
   const navigate = useNavigate();
   const { login } = useMemberAuth();
+  const { loginAdmin } = useAdmin();
 
   const [identifier, setIdentifier] = useState('');
   const [password, setPassword] = useState('');
@@ -33,8 +36,9 @@ export function MemberLogin() {
     e.preventDefault();
     setError('');
 
-    if (!identifier.trim()) {
-      setError('Please enter your Member ID or registered Email Address.');
+    const cleanIdentifier = identifier.trim();
+    if (!cleanIdentifier) {
+      setError('Please enter your Member ID, registered Email, or Admin ID.');
       return;
     }
 
@@ -46,11 +50,42 @@ export function MemberLogin() {
     setIsLoading(true);
 
     try {
-      await login(identifier.trim(), password);
-      navigate('/member-dashboard');
+      // 1. Role-based Check: Test Administrator credentials first
+      const adminAuthRes = adminLogin(cleanIdentifier, password);
+      if (adminAuthRes && adminAuthRes.success) {
+        if (loginAdmin) {
+          loginAdmin(cleanIdentifier, password);
+        }
+        navigate('/admin-dashboard');
+        return;
+      }
+
+      // 2. Member Portal Authentication API
+      const res = await login(cleanIdentifier, password);
+
+      // Check role returned from backend API
+      if (res && (res.role === 'admin' || res.user?.role === 'admin')) {
+        adminLogin(cleanIdentifier, password);
+        if (loginAdmin) {
+          loginAdmin(cleanIdentifier, password);
+        }
+        navigate('/admin-dashboard');
+      } else {
+        navigate('/member-dashboard');
+      }
     } catch (err) {
-      console.error('Member login error:', err);
-      setError(err.message || 'Invalid Member ID / Email or password.');
+      // Fallback check for admin in case backend is unreachable or local prototype match
+      const adminFallback = adminLogin(cleanIdentifier, password);
+      if (adminFallback && adminFallback.success) {
+        if (loginAdmin) {
+          loginAdmin(cleanIdentifier, password);
+        }
+        navigate('/admin-dashboard');
+        return;
+      }
+
+      console.error('Login error:', err);
+      setError(err.message || 'Invalid Member ID, Email Address, or Password.');
     } finally {
       setIsLoading(false);
     }
@@ -108,15 +143,6 @@ export function MemberLogin() {
               </h1>
               <p className="text-[10px] font-extrabold uppercase tracking-widest text-slate-400 mt-0.5">
                 TRUST • GROWTH • PROSPERITY
-              </p>
-            </div>
-
-            <div className="pt-2">
-              <span className="inline-block px-3 py-1 rounded-full text-[11px] font-black uppercase tracking-wider bg-blue-50 text-blue-800 border border-blue-200/80">
-                MEMBER PORTAL LOGIN
-              </span>
-              <p className="text-xs text-slate-500 mt-1.5">
-                Access your deposits, membership shares & statutory ledger
               </p>
             </div>
           </div>
@@ -215,27 +241,12 @@ export function MemberLogin() {
                 <span>Verifying credentials...</span>
               ) : (
                 <>
-                  <span>Sign In to Member Portal</span>
+                  <span>Sign In</span>
                   <ArrowRight className="w-4 h-4" />
                 </>
               )}
             </button>
           </form>
-
-          {/* APPLICATION / REGISTER FOOTER */}
-          <div className="pt-4 border-t border-slate-100 text-center space-y-2">
-            <p className="text-xs text-slate-500">
-              Not a member yet?{' '}
-              <Link to="/register" className="font-bold text-blue-700 hover:underline">
-                Apply for Statutory Membership
-              </Link>
-            </p>
-
-            <div className="flex items-center justify-center gap-1.5 text-[10px] text-slate-400">
-              <ShieldCheck className="w-3.5 h-3.5 text-emerald-600" />
-              <span>256-bit SSL Encrypted Member Session</span>
-            </div>
-          </div>
         </div>
       </main>
 

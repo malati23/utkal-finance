@@ -205,25 +205,14 @@ export function Navbar({ onOpenApplyModal }) {
           </Link>
         </nav>
 
-        {/* Right: Notification Bell & Action Buttons */}
+        {/* Right: Action Buttons */}
         <div className="hidden xl:flex items-center gap-2.5 xl:gap-3 shrink-0">
-          {/* Bell Notification Button */}
-          <button
-            type="button"
-            className="relative w-9 h-9 xl:w-10 xl:h-10 rounded-xl bg-slate-50 border border-slate-200/90 text-slate-700 hover:bg-slate-100 flex items-center justify-center transition-colors shadow-xs cursor-pointer"
-            title="Notifications"
-            onClick={() => alert("No new notifications")}
-          >
-            <Bell className="w-4 h-4 text-slate-600" />
-            <span className="w-2 h-2 rounded-full bg-rose-500 border-2 border-white absolute top-2 right-2" />
-          </button>
-
-          {/* Member Login Button */}
+          {/* Login Button */}
           <Link
             to="/member-login"
-            className="text-xs xl:text-sm font-bold text-slate-700 hover:text-blue-700 bg-slate-50 hover:bg-slate-100 px-3 py-2 rounded-xl transition-all border border-slate-200 shadow-xs whitespace-nowrap"
+            className="text-xs xl:text-sm font-bold text-slate-700 hover:text-blue-700 bg-slate-50 hover:bg-slate-100 px-3.5 py-2 rounded-xl transition-all border border-slate-200 shadow-xs whitespace-nowrap"
           >
-            Member Login
+            Login
           </Link>
 
           {/* Join Button */}
@@ -365,7 +354,7 @@ export function Navbar({ onOpenApplyModal }) {
               onClick={() => setMobileMenuOpen(false)}
               className="w-full bg-slate-100 hover:bg-slate-200 text-slate-800 font-bold py-2.5 px-4 rounded-xl flex items-center justify-center gap-2 text-sm transition-colors border border-slate-200"
             >
-              <span>Member Portal Login</span>
+              <span>Login</span>
             </Link>
 
             <Link
