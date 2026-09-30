@@ -90,56 +90,99 @@ export function MemberDetails() {
   const applicantName = nameParts.length > 0 ? nameParts.join(' ') : (targetData.name || targetData.applicantName || 'Applicant');
 
   // Extract real uploaded document items
-  const realDocs = Array.isArray(targetData.documents) && targetData.documents.length > 0
-    ? targetData.documents
-    : (() => {
-        const list = [];
-        if (doc.idProofUrl) {
-          list.push({
-            id: 'idproof',
-            documentType: 'Identity Proof',
-            documentName: doc.idProofType || 'Aadhaar Card',
-            documentUrl: doc.idProofUrl,
-          });
-        }
-        if (doc.addressProofUrl) {
-          list.push({
-            id: 'addressproof',
-            documentType: 'Address Proof',
-            documentName: doc.addressProofType || 'Address Document',
-            documentUrl: doc.addressProofUrl,
-          });
-        }
-        if (doc.photoUrl) {
-          list.push({
-            id: 'photo',
-            documentType: 'Photograph',
-            documentName: 'Passport Photograph',
-            documentUrl: doc.photoUrl,
-          });
-        }
-        if (doc.signatureUrl) {
-          list.push({
-            id: 'signature',
-            documentType: 'Signature',
-            documentName: 'Digital Signature Specimen',
-            documentUrl: doc.signatureUrl,
-          });
-        }
-        if (Array.isArray(doc.additionalDocuments)) {
-          doc.additionalDocuments.forEach((addDoc, idx) => {
-            if (addDoc.documentUrl) {
+  const sanitizeDocsList = (rawList) => {
+    if (!Array.isArray(rawList)) return [];
+    const result = [];
+    const seenUrls = new Set();
+    let hasAadhaar = false;
+
+    rawList.forEach((d) => {
+      if (!d || !d.documentUrl) return;
+      const name = (d.documentName || '').toLowerCase();
+      const type = (d.documentType || '').toLowerCase();
+      const isAadhaar = name.includes('aadhaar') || type.includes('aadhaar');
+
+      if (seenUrls.has(d.documentUrl)) return;
+      if (isAadhaar) {
+        if (hasAadhaar) return;
+        hasAadhaar = true;
+      }
+      seenUrls.add(d.documentUrl);
+      result.push(d);
+    });
+
+    return result;
+  };
+
+  const realDocs = sanitizeDocsList(
+    Array.isArray(targetData.documents) && targetData.documents.length > 0
+      ? targetData.documents
+      : (() => {
+          const list = [];
+          const idType = (doc.idProofType || 'Aadhaar Card').trim();
+          const addrType = (doc.addressProofType || 'Aadhaar Card').trim();
+          const isIdAadhaar = idType.toLowerCase().includes('aadhaar');
+          const isAddrAadhaar = addrType.toLowerCase().includes('aadhaar');
+          const isSameUrl = doc.idProofUrl && doc.addressProofUrl && doc.idProofUrl === doc.addressProofUrl;
+
+          if (doc.idProofUrl) {
+            const isCombined = (isIdAadhaar && isAddrAadhaar) || isSameUrl;
+            list.push({
+              id: 'idproof',
+              documentType: isCombined ? 'Identity & Address Proof' : 'Identity Proof',
+              documentName: isCombined ? `${idType} (Identity & Address Proof)` : (doc.idProofType || 'Aadhaar Card'),
+              documentUrl: doc.idProofUrl,
+            });
+          }
+          if (doc.addressProofUrl) {
+            const isDuplicateAadhaar = isAddrAadhaar && (isIdAadhaar || isSameUrl);
+            if (!doc.idProofUrl) {
               list.push({
-                id: `add-${idx}`,
-                documentType: addDoc.documentType || 'Additional Document',
-                documentName: addDoc.documentName || addDoc.documentType || 'Supporting Document',
-                documentUrl: addDoc.documentUrl,
+                id: 'addressproof',
+                documentType: 'Address Proof',
+                documentName: doc.addressProofType || 'Address Document',
+                documentUrl: doc.addressProofUrl,
+              });
+            } else if (!isDuplicateAadhaar && doc.addressProofUrl !== doc.idProofUrl) {
+              list.push({
+                id: 'addressproof',
+                documentType: 'Address Proof',
+                documentName: doc.addressProofType || 'Address Document',
+                documentUrl: doc.addressProofUrl,
               });
             }
-          });
-        }
-        return list;
-      })();
+          }
+          if (doc.photoUrl) {
+            list.push({
+              id: 'photo',
+              documentType: 'Photograph',
+              documentName: 'Passport Photograph',
+              documentUrl: doc.photoUrl,
+            });
+          }
+          if (doc.signatureUrl) {
+            list.push({
+              id: 'signature',
+              documentType: 'Signature',
+              documentName: 'Digital Signature Specimen',
+              documentUrl: doc.signatureUrl,
+            });
+          }
+          if (Array.isArray(doc.additionalDocuments)) {
+            doc.additionalDocuments.forEach((addDoc, idx) => {
+              if (addDoc.documentUrl) {
+                list.push({
+                  id: `add-${idx}`,
+                  documentType: addDoc.documentType || 'Additional Document',
+                  documentName: addDoc.documentName || addDoc.documentType || 'Supporting Document',
+                  documentUrl: addDoc.documentUrl,
+                });
+              }
+            });
+          }
+          return list;
+        })()
+  );
 
   return (
     <div className="space-y-6 text-left animate-fade-in pb-12">

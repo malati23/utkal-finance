@@ -76,13 +76,45 @@ export function Documents() {
     };
   }, [selectedPreviewDoc]);
 
-  // Helper function to extract ALL valid uploaded documents for a single application
+  // Helper function to extract and sanitize valid uploaded documents for a single application
   const getApplicantDocuments = (app) => {
     if (!app) return [];
-    
-    // If backend already provided extracted documents array, return it
+
+    const sanitizeDocsList = (rawList) => {
+      if (!Array.isArray(rawList)) return [];
+      const result = [];
+      const seenUrls = new Set();
+      let hasAadhaar = false;
+
+      rawList.forEach((d) => {
+        if (!d || !d.documentUrl) return;
+        const name = (d.documentName || '').toLowerCase();
+        const type = (d.documentType || '').toLowerCase();
+        const isAadhaar = name.includes('aadhaar') || type.includes('aadhaar');
+
+        // Prevent duplicate file URLs
+        if (seenUrls.has(d.documentUrl)) {
+          return;
+        }
+
+        // Prevent duplicate Aadhaar proof cards (ensure only one Aadhaar proof occurs)
+        if (isAadhaar) {
+          if (hasAadhaar) {
+            return;
+          }
+          hasAadhaar = true;
+        }
+
+        seenUrls.add(d.documentUrl);
+        result.push(d);
+      });
+
+      return result;
+    };
+
+    // If backend already provided extracted documents array, sanitize and return it
     if (Array.isArray(app.documents) && app.documents.length > 0) {
-      return app.documents;
+      return sanitizeDocsList(app.documents);
     }
 
     const doc = app.documentDetails || {};
@@ -94,12 +126,18 @@ export function Documents() {
         : 'Pending Verification';
 
     const list = [];
+    const idType = (doc.idProofType || 'Aadhaar Card').trim();
+    const addrType = (doc.addressProofType || 'Aadhaar Card').trim();
+    const isIdAadhaar = idType.toLowerCase().includes('aadhaar');
+    const isAddrAadhaar = addrType.toLowerCase().includes('aadhaar');
+    const isSameUrl = doc.idProofUrl && doc.addressProofUrl && doc.idProofUrl === doc.addressProofUrl;
 
     if (doc.idProofUrl) {
+      const isCombined = (isIdAadhaar && isAddrAadhaar) || isSameUrl;
       list.push({
         id: `${app._id}-idproof`,
-        documentType: 'Identity Proof',
-        documentName: doc.idProofType || 'Aadhaar Card',
+        documentType: isCombined ? 'Identity & Address Proof' : 'Identity Proof',
+        documentName: isCombined ? `${idType} (Identity & Address Proof)` : (doc.idProofType || 'Aadhaar Card'),
         documentUrl: doc.idProofUrl,
         uploadedAt: app.submittedAt || app.createdAt,
         verificationStatus: defaultVerification,
@@ -107,14 +145,26 @@ export function Documents() {
     }
 
     if (doc.addressProofUrl) {
-      list.push({
-        id: `${app._id}-addressproof`,
-        documentType: 'Address Proof',
-        documentName: doc.addressProofType || 'Address Proof Document',
-        documentUrl: doc.addressProofUrl,
-        uploadedAt: app.submittedAt || app.createdAt,
-        verificationStatus: defaultVerification,
-      });
+      const isDuplicateAadhaar = isAddrAadhaar && (isIdAadhaar || isSameUrl);
+      if (!doc.idProofUrl) {
+        list.push({
+          id: `${app._id}-addressproof`,
+          documentType: 'Address Proof',
+          documentName: doc.addressProofType || 'Address Proof Document',
+          documentUrl: doc.addressProofUrl,
+          uploadedAt: app.submittedAt || app.createdAt,
+          verificationStatus: defaultVerification,
+        });
+      } else if (!isDuplicateAadhaar && doc.addressProofUrl !== doc.idProofUrl) {
+        list.push({
+          id: `${app._id}-addressproof`,
+          documentType: 'Address Proof',
+          documentName: doc.addressProofType || 'Address Proof Document',
+          documentUrl: doc.addressProofUrl,
+          uploadedAt: app.submittedAt || app.createdAt,
+          verificationStatus: defaultVerification,
+        });
+      }
     }
 
     if (doc.photoUrl) {
@@ -154,7 +204,7 @@ export function Documents() {
       });
     }
 
-    return list;
+    return sanitizeDocsList(list);
   };
 
   // Filter applications by search string & status filter
