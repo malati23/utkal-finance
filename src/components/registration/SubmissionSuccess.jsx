@@ -1129,7 +1129,7 @@ export function SubmissionSuccess({ referenceNo, formData = {}, onReset }) {
                 <img 
                   src={boardStamp} 
                   alt="New Utkal Finance Limited Official Board Stamp" 
-                  className="w-24 h-24 object-contain -mb-2.5 z-10 select-none pointer-events-none"
+                  className="w-24 h-24 object-contain mix-blend-multiply -mb-2.5 z-10 select-none pointer-events-none"
                 />
                 <div className="border-b border-slate-900 w-48 text-[9px] text-slate-600 font-mono pt-1 text-center font-bold">
                   [ Official Seal &amp; Authority ]
