@@ -7,12 +7,21 @@
  * - Clean imports across components and services
  */
 
-const rawApiUrl = import.meta.env.VITE_API_URL || 'http://localhost:5000/api';
-// Remove trailing slash if present
-const cleanApiUrl = rawApiUrl.replace(/\/+$/, '');
+const rawApiUrl = (import.meta.env.VITE_API_URL || '').trim();
+// Default to localhost:5000/api in local dev, or handle clean API URL
+const cleanApiUrl = rawApiUrl
+  ? rawApiUrl.replace(/\/+$/, '')
+  : 'http://localhost:5000/api';
 
 // Derive server root base URL (without /api suffix)
-const rawServerUrl = import.meta.env.VITE_SERVER_URL || cleanApiUrl.replace(/\/api$/, '');
+let rawServerUrl = (import.meta.env.VITE_SERVER_URL || '').trim();
+if (!rawServerUrl) {
+  if (cleanApiUrl.startsWith('http://') || cleanApiUrl.startsWith('https://')) {
+    rawServerUrl = cleanApiUrl.replace(/\/api\/?$/, '');
+  } else {
+    rawServerUrl = 'http://localhost:5000';
+  }
+}
 const cleanServerUrl = rawServerUrl.replace(/\/+$/, '');
 
 export const env = Object.freeze({
@@ -40,17 +49,22 @@ export const env = Object.freeze({
  * @returns {string} Fully qualified URL
  */
 export function getBackendAssetUrl(pathStr) {
-  if (!pathStr) return '';
+  if (!pathStr || typeof pathStr !== 'string') return '';
+  const trimmed = pathStr.trim();
   if (
-    pathStr.startsWith('http://') ||
-    pathStr.startsWith('https://') ||
-    pathStr.startsWith('data:') ||
-    pathStr.startsWith('blob:')
+    trimmed.startsWith('http://') ||
+    trimmed.startsWith('https://') ||
+    trimmed.startsWith('data:') ||
+    trimmed.startsWith('blob:')
   ) {
-    return pathStr;
+    return trimmed;
   }
-  const cleanPath = pathStr.startsWith('/') ? pathStr : `/${pathStr}`;
-  return `${env.SERVER_BASE_URL}${cleanPath}`;
+  const cleanPath = trimmed.startsWith('/') ? trimmed : `/${trimmed}`;
+  const base = env.SERVER_BASE_URL || (cleanApiUrl.startsWith('http') ? cleanApiUrl.replace(/\/api\/?$/, '') : '');
+  if (base) {
+    return `${base}${cleanPath}`;
+  }
+  return cleanPath;
 }
 
 export const {
