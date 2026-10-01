@@ -789,16 +789,16 @@ export function SubmissionSuccess({ referenceNo, formData = {}, onReset }) {
                 </div>
               </div>
 
-              <div className="bg-slate-50 p-4 rounded-xl border border-slate-200/80 space-y-2 text-center flex flex-col items-center justify-between">
+              <div className="bg-slate-50 p-4 rounded-xl border border-slate-200/80 space-y-1 text-center flex flex-col items-center justify-between">
                 <span className="text-[10px] font-extrabold text-slate-500 uppercase tracking-wider block text-left w-full">
                   AUTHORIZED SIGNATORY &amp; BOARD STAMP
                 </span>
 
-                <div className="flex items-center justify-center py-1">
+                <div className="flex items-center justify-center -my-3">
                   <img
                     src={boardStamp}
                     alt="Official Board Stamp"
-                    className="w-24 h-24 object-contain mix-blend-multiply select-none pointer-events-none"
+                    className="w-28 h-28 object-contain mix-blend-multiply select-none pointer-events-none"
                   />
                 </div>
 
@@ -1140,14 +1140,14 @@ export function SubmissionSuccess({ referenceNo, formData = {}, onReset }) {
               <span className="text-[9px] text-slate-400 font-mono block">Digitally Verified &amp; Signed</span>
             </div>
             <div className="text-right flex flex-col items-end">
-              <span className="text-[10px] font-bold text-slate-600 uppercase block mb-1">
+              <span className="text-[10px] font-bold text-slate-600 uppercase block">
                 AUTHORIZED SIGNATORY &amp; BOARD STAMP
               </span>
-              <div className="relative flex flex-col items-center">
+              <div className="relative flex flex-col items-center -mt-4">
                 <img
                   src={boardStamp}
                   alt="New Utkal Finance Limited Official Board Stamp"
-                  className="w-24 h-24 object-contain mix-blend-multiply -mb-2.5 z-10 select-none pointer-events-none"
+                  className="w-28 h-28 object-contain mix-blend-multiply -mb-4 z-10 select-none pointer-events-none"
                 />
                 <div className="border-b border-slate-900 w-48 text-[9px] text-slate-600 font-mono pt-1 text-center font-bold">
                   [ Official Seal &amp; Authority ]
