@@ -79,10 +79,8 @@ export function AppRoutes() {
       {/* Standalone Pages */}
       <Route path="brochure" element={<Brochure />} />
 
-      {/* Authentication Layout */}
-      <Route element={<AuthLayout />}>
-        <Route path="login" element={<Login />} />
-      </Route>
+      {/* Unified Login Route */}
+      <Route path="login" element={<MemberLogin />} />
 
       {/* Statutory Membership Application Portal */}
       <Route path="register" element={<Register />} />
