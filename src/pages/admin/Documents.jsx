@@ -84,25 +84,12 @@ export function Documents() {
       if (!Array.isArray(rawList)) return [];
       const result = [];
       const seenUrls = new Set();
-      let hasAadhaar = false;
 
       rawList.forEach((d) => {
         if (!d || !d.documentUrl) return;
-        const name = (d.documentName || '').toLowerCase();
-        const type = (d.documentType || '').toLowerCase();
-        const isAadhaar = name.includes('aadhaar') || type.includes('aadhaar');
-
-        // Prevent duplicate file URLs
+        // Prevent exact duplicate file URLs
         if (seenUrls.has(d.documentUrl)) {
           return;
-        }
-
-        // Prevent duplicate Aadhaar proof cards (ensure only one Aadhaar proof occurs)
-        if (isAadhaar) {
-          if (hasAadhaar) {
-            return;
-          }
-          hasAadhaar = true;
         }
 
         seenUrls.add(d.documentUrl);

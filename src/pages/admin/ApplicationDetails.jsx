@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { createPortal } from 'react-dom';
 import { useParams, useNavigate } from 'react-router-dom';
 import {
   ArrowLeft,
@@ -20,7 +21,10 @@ import {
   Download,
   Maximize2,
   Image as ImageIcon,
-  Mail
+  Mail,
+  Eye,
+  X,
+  FolderOpen
 } from 'lucide-react';
 import { useAdmin } from '../../context/AdminContext';
 import { StatusBadge } from '../../components/admin/StatusBadge';
@@ -39,6 +43,7 @@ export function ApplicationDetails() {
   const [isProcessing, setIsProcessing] = useState(false);
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
   const [isReceiptModalOpen, setIsReceiptModalOpen] = useState(false);
+  const [selectedDocPreview, setSelectedDocPreview] = useState(null);
 
   const app = applications.find((a) => a._id === id || a.id === id || a.applicationId === id);
 
@@ -350,15 +355,148 @@ export function ApplicationDetails() {
           <div className="bg-slate-50/80 px-5 py-3.5 border-b border-slate-200/80 flex items-center justify-between">
             <div className="flex items-center gap-2 text-xs font-extrabold text-slate-900 uppercase tracking-wider">
               <FileText className="w-4 h-4 text-blue-700" />
-              <span>6. IDENTIFICATION DOCUMENTS</span>
+              <span>6. IDENTIFICATION DOCUMENTS &amp; UPLOADED ATTACHMENTS</span>
             </div>
             <span className="text-xs font-bold text-slate-400 font-mono">Section 06</span>
           </div>
 
-          <div className="p-5 grid grid-cols-1 sm:grid-cols-3 gap-4 text-xs">
-            <div><strong className="block text-[10px] text-slate-400 uppercase">PRIMARY ID PROOF TYPE</strong><span className="font-bold text-slate-900">{app.idProofType}</span></div>
-            <div><strong className="block text-[10px] text-slate-400 uppercase">ADDRESS PROOF TYPE</strong><span className="font-bold text-slate-900">{app.addressProofType}</span></div>
-            <div><strong className="block text-[10px] text-slate-400 uppercase">DIGITAL ARCHIVE STATUS</strong><span className="font-bold text-emerald-700">Verified &amp; Archived</span></div>
+          <div className="p-5 space-y-4">
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 text-xs border-b border-slate-100 pb-4">
+              <div><strong className="block text-[10px] text-slate-400 uppercase">PRIMARY ID PROOF TYPE</strong><span className="font-bold text-slate-900">{app.idProofType || 'Aadhaar Card'}</span></div>
+              <div><strong className="block text-[10px] text-slate-400 uppercase">ADDRESS PROOF TYPE</strong><span className="font-bold text-slate-900">{app.addressProofType || 'Aadhaar Card'}</span></div>
+              <div><strong className="block text-[10px] text-slate-400 uppercase">DIGITAL ARCHIVE STATUS</strong><span className="font-bold text-emerald-700">Verified &amp; Cloud Archived</span></div>
+            </div>
+
+            {/* ATTACHED DOCUMENTS GRID */}
+            {(() => {
+              const doc = app.documentDetails || app.documents || {};
+              const attachedDocs = [];
+
+              const idProofUrl = app.idProofUrl || doc.idProofUrl || (typeof doc.idProofFile === 'string' ? doc.idProofFile : '');
+              if (idProofUrl) {
+                attachedDocs.push({
+                  id: 'idproof',
+                  type: 'Identity Proof',
+                  title: `${app.idProofType || doc.idProofType || 'Government ID'} (ID Proof)`,
+                  url: getBackendAssetUrl(idProofUrl),
+                });
+              }
+
+              const addressProofUrl = app.addressProofUrl || doc.addressProofUrl || (typeof doc.addressProofFile === 'string' ? doc.addressProofFile : '');
+              if (addressProofUrl && addressProofUrl !== idProofUrl) {
+                attachedDocs.push({
+                  id: 'addressproof',
+                  type: 'Address Proof',
+                  title: `${app.addressProofType || doc.addressProofType || 'Address Document'} (Address Proof)`,
+                  url: getBackendAssetUrl(addressProofUrl),
+                });
+              }
+
+              const photoUrl = app.photoUrl || doc.photoUrl || (typeof doc.photoFile === 'string' ? doc.photoFile : '');
+              if (photoUrl) {
+                attachedDocs.push({
+                  id: 'photo',
+                  type: 'Photograph',
+                  title: 'Passport Photograph',
+                  url: getBackendAssetUrl(photoUrl),
+                });
+              }
+
+              const signatureUrl = app.signatureUrl || doc.signatureUrl || (typeof doc.signatureFile === 'string' ? doc.signatureFile : '');
+              if (signatureUrl) {
+                attachedDocs.push({
+                  id: 'signature',
+                  type: 'Signature',
+                  title: 'Digital Signature Specimen',
+                  url: getBackendAssetUrl(signatureUrl),
+                });
+              }
+
+              if (Array.isArray(doc.additionalDocuments)) {
+                doc.additionalDocuments.forEach((add, idx) => {
+                  if (add?.documentUrl) {
+                    attachedDocs.push({
+                      id: `add-${idx}`,
+                      type: add.documentType || 'Supporting Document',
+                      title: add.documentName || add.documentType || 'Additional Document',
+                      url: getBackendAssetUrl(add.documentUrl),
+                    });
+                  }
+                });
+              }
+
+              if (attachedDocs.length === 0) {
+                return (
+                  <div className="py-6 text-center text-slate-400 text-xs bg-slate-50 rounded-xl border border-slate-200">
+                    <FolderOpen className="w-8 h-8 text-slate-300 mx-auto mb-1.5" />
+                    <p className="font-bold text-slate-600">No document files attached</p>
+                    <p className="text-[11px] text-slate-400">No digital document scans were uploaded with this application.</p>
+                  </div>
+                );
+              }
+
+              return (
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3.5">
+                  {attachedDocs.map((item, idx) => {
+                    const isImg = item.url.match(/\.(jpeg|jpg|png|gif|webp|svg)$/i) || item.type.toLowerCase().includes('photo') || item.type.toLowerCase().includes('signature');
+                    const isPdf = item.url.match(/\.pdf$/i);
+
+                    return (
+                      <div
+                        key={idx}
+                        className="bg-slate-50/80 border border-slate-200/90 rounded-2xl p-3.5 flex flex-col justify-between space-y-3 hover:bg-slate-100/60 transition-colors shadow-2xs"
+                      >
+                        <div className="flex items-start gap-3">
+                          <div
+                            onClick={() => setSelectedDocPreview(item)}
+                            className="w-14 h-14 rounded-xl bg-white border border-slate-200 p-1 flex items-center justify-center overflow-hidden cursor-pointer shrink-0 shadow-2xs hover:scale-105 transition-transform"
+                          >
+                            {isImg ? (
+                              <img src={item.url} alt={item.title} className="w-full h-full object-cover rounded-lg" />
+                            ) : isPdf ? (
+                              <FileText className="w-6 h-6 text-rose-500" />
+                            ) : (
+                              <FileText className="w-6 h-6 text-blue-500" />
+                            )}
+                          </div>
+
+                          <div className="min-w-0 space-y-1">
+                            <span className="block text-[10px] font-extrabold uppercase text-blue-800 bg-blue-100/80 px-2 py-0.5 rounded border border-blue-200/80 w-max">
+                              {item.type}
+                            </span>
+                            <h4 className="font-bold text-xs text-slate-900 truncate" title={item.title}>
+                              {item.title}
+                            </h4>
+                          </div>
+                        </div>
+
+                        <div className="pt-2 border-t border-slate-200/60 flex items-center justify-end gap-2">
+                          <button
+                            type="button"
+                            onClick={() => setSelectedDocPreview(item)}
+                            className="inline-flex items-center gap-1 px-3 py-1.5 rounded-lg bg-blue-600 hover:bg-blue-700 text-white font-bold text-xs transition-colors cursor-pointer"
+                          >
+                            <Eye className="w-3.5 h-3.5" />
+                            <span>View</span>
+                          </button>
+                          <a
+                            href={item.url}
+                            download
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="inline-flex items-center gap-1 px-3 py-1.5 rounded-lg bg-slate-200 hover:bg-slate-300 text-slate-700 font-bold text-xs transition-colors"
+                            title="Download File"
+                          >
+                            <Download className="w-3.5 h-3.5" />
+                            <span>Download</span>
+                          </a>
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              );
+            })()}
           </div>
         </div>
 
@@ -530,6 +668,131 @@ export function ApplicationDetails() {
         onClose={() => setIsEditModalOpen(false)}
         onSave={handleSaveEdit}
       />
+
+      {/* DOCUMENT PREVIEW MODAL */}
+      {selectedDocPreview &&
+        createPortal(
+          <div
+            className="fixed inset-0 z-[99999] flex items-center justify-center p-3 sm:p-5 bg-slate-950/80 backdrop-blur-md select-none animate-fade-in"
+            onClick={() => setSelectedDocPreview(null)}
+          >
+            <div
+              className="bg-white rounded-2xl sm:rounded-3xl border border-slate-200/90 shadow-2xl p-4 sm:p-5 w-[92vw] max-w-4xl h-[82vh] max-h-[84vh] flex flex-col justify-between space-y-3 text-left overflow-hidden"
+              onClick={(e) => e.stopPropagation()}
+            >
+              {/* MODAL HEADER */}
+              <div className="flex items-center justify-between border-b border-slate-100 pb-3 shrink-0">
+                <div className="pr-4 min-w-0">
+                  <h3 className="text-base sm:text-lg font-black text-slate-900 truncate">
+                    {selectedDocPreview.title}
+                  </h3>
+                  <p className="text-xs text-slate-500 font-mono truncate mt-0.5">
+                    Applicant: <span className="font-bold text-slate-800">{app.applicantName}</span> • App ID:{' '}
+                    <span className="font-bold text-blue-700">{app.applicationId || app.refId}</span>
+                  </p>
+                </div>
+
+                <div className="flex items-center gap-2 shrink-0">
+                  <a
+                    href={selectedDocPreview.url}
+                    download
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl bg-blue-50 text-blue-700 hover:bg-blue-100 font-bold text-xs transition-colors"
+                    title="Download Original File"
+                  >
+                    <Download className="w-3.5 h-3.5" />
+                    <span className="hidden sm:inline">Download File</span>
+                  </a>
+                  <a
+                    href={selectedDocPreview.url}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="p-1.5 rounded-xl text-slate-400 hover:text-slate-700 hover:bg-slate-100 transition-colors"
+                    title="Open in new window"
+                  >
+                    <ExternalLink className="w-4 h-4" />
+                  </a>
+                  <button
+                    type="button"
+                    onClick={() => setSelectedDocPreview(null)}
+                    className="p-1.5 rounded-xl text-slate-400 hover:text-slate-900 hover:bg-slate-100 transition-colors cursor-pointer"
+                    title="Close preview"
+                  >
+                    <X className="w-5 h-5" />
+                  </button>
+                </div>
+              </div>
+
+              {/* PREVIEW CONTAINER */}
+              <div className="bg-slate-900 rounded-2xl overflow-hidden flex-1 w-full min-h-0 flex items-center justify-center relative border border-slate-800 p-0">
+                {selectedDocPreview.url.match(/\.(jpeg|jpg|png|gif|webp|svg)$/i) ||
+                selectedDocPreview.type?.toLowerCase().includes('photo') ||
+                selectedDocPreview.type?.toLowerCase().includes('signature') ? (
+                  <div className="w-full h-full flex items-center justify-center p-3 overflow-hidden bg-slate-950">
+                    <img
+                      src={selectedDocPreview.url}
+                      alt={selectedDocPreview.title}
+                      className="max-w-full max-h-full object-contain rounded shadow-lg"
+                      onError={(e) => {
+                        e.target.onerror = null;
+                        e.target.style.display = 'none';
+                        e.target.parentNode.innerHTML = `
+                          <div class="text-center text-slate-300 p-6 space-y-2">
+                            <p class="font-bold text-sm">Unable to render image inline</p>
+                            <a href="${selectedDocPreview.url}" target="_blank" class="text-blue-400 underline text-xs">Click here to open file</a>
+                          </div>
+                        `;
+                      }}
+                    />
+                  </div>
+                ) : selectedDocPreview.url.match(/\.pdf$/i) ? (
+                  <object
+                    data={`${selectedDocPreview.url}#toolbar=0&navpanes=0&scrollbar=0&view=FitH`}
+                    type="application/pdf"
+                    className="w-full h-full border-0 rounded-2xl bg-white"
+                  >
+                    <iframe
+                      src={`${selectedDocPreview.url}#toolbar=0&navpanes=0&scrollbar=0&view=FitH`}
+                      title="PDF Document Preview"
+                      className="w-full h-full border-0 rounded-2xl bg-white"
+                    />
+                  </object>
+                ) : (
+                  <div className="text-center text-white space-y-3 p-8">
+                    <FileText className="w-14 h-14 text-blue-400 mx-auto" />
+                    <p className="font-bold text-sm">{selectedDocPreview.title}</p>
+                    <p className="text-xs text-slate-400 font-mono">{selectedDocPreview.url}</p>
+                    <a
+                      href={selectedDocPreview.url}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl bg-blue-600 hover:bg-blue-700 text-white font-bold text-xs transition-colors"
+                    >
+                      <span>Open / Download File</span>
+                      <ExternalLink className="w-3.5 h-3.5" />
+                    </a>
+                  </div>
+                )}
+              </div>
+
+              {/* MODAL FOOTER */}
+              <div className="flex items-center justify-between shrink-0 pt-1">
+                <span className="text-[11px] font-extrabold text-slate-400 uppercase tracking-wider">
+                  {selectedDocPreview.type || 'Document Preview'}
+                </span>
+                <button
+                  type="button"
+                  onClick={() => setSelectedDocPreview(null)}
+                  className="px-6 py-2 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-800 font-bold text-xs cursor-pointer transition-colors"
+                >
+                  Close Preview
+                </button>
+              </div>
+            </div>
+          </div>,
+          document.body
+        )}
     </div>
   );
 }

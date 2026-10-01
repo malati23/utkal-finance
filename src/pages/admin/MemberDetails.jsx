@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { createPortal } from 'react-dom';
 import { useParams, useNavigate } from 'react-router-dom';
 import {
   ArrowLeft,
@@ -16,6 +17,7 @@ import {
   Receipt,
   ArrowRightLeft,
   FolderOpen,
+  X,
 } from 'lucide-react';
 import { useAdmin } from '../../context/AdminContext';
 import { MemberDetailsCard } from '../../components/admin/MemberDetailsCard';
@@ -395,12 +397,28 @@ export function MemberDetails() {
                     <div className="flex items-center gap-1.5 shrink-0">
                       {fullUrl ? (
                         <>
+                          <button
+                            type="button"
+                            onClick={() =>
+                              setSelectedPreviewDoc({
+                                title: d.documentName,
+                                type: d.documentType,
+                                applicant: applicantName,
+                                memberId: currentMemberId,
+                                url: fullUrl,
+                              })
+                            }
+                            className="p-1.5 rounded-lg bg-blue-50 hover:bg-blue-100 text-blue-700 font-bold text-xs cursor-pointer"
+                            title="View Document"
+                          >
+                            <Eye className="w-3.5 h-3.5" />
+                          </button>
                           <a
                             href={fullUrl}
                             target="_blank"
                             rel="noopener noreferrer"
-                            className="p-1.5 rounded-lg bg-blue-50 hover:bg-blue-100 text-blue-700 font-bold text-xs"
-                            title="View / Download Document"
+                            className="p-1.5 rounded-lg bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold text-xs"
+                            title="Open in new window"
                           >
                             <ExternalLink className="w-3.5 h-3.5" />
                           </a>
@@ -455,6 +473,131 @@ export function MemberDetails() {
           </div>
         </MemberDetailsCard>
       </div>
+
+      {/* DOCUMENT PREVIEW MODAL */}
+      {selectedPreviewDoc &&
+        createPortal(
+          <div
+            className="fixed inset-0 z-[99999] flex items-center justify-center p-3 sm:p-5 bg-slate-950/80 backdrop-blur-md select-none animate-fade-in"
+            onClick={() => setSelectedPreviewDoc(null)}
+          >
+            <div
+              className="bg-white rounded-2xl sm:rounded-3xl border border-slate-200/90 shadow-2xl p-4 sm:p-5 w-[92vw] max-w-4xl h-[82vh] max-h-[84vh] flex flex-col justify-between space-y-3 text-left overflow-hidden"
+              onClick={(e) => e.stopPropagation()}
+            >
+              {/* MODAL HEADER */}
+              <div className="flex items-center justify-between border-b border-slate-100 pb-3 shrink-0">
+                <div className="pr-4 min-w-0">
+                  <h3 className="text-base sm:text-lg font-black text-slate-900 truncate">
+                    {selectedPreviewDoc.title}
+                  </h3>
+                  <p className="text-xs text-slate-500 font-mono truncate mt-0.5">
+                    Member: <span className="font-bold text-slate-800">{selectedPreviewDoc.applicant}</span> • Member ID:{' '}
+                    <span className="font-bold text-blue-700">{selectedPreviewDoc.memberId}</span>
+                  </p>
+                </div>
+
+                <div className="flex items-center gap-2 shrink-0">
+                  <a
+                    href={selectedPreviewDoc.url}
+                    download
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl bg-blue-50 text-blue-700 hover:bg-blue-100 font-bold text-xs transition-colors"
+                    title="Download Original File"
+                  >
+                    <Download className="w-3.5 h-3.5" />
+                    <span className="hidden sm:inline">Download File</span>
+                  </a>
+                  <a
+                    href={selectedPreviewDoc.url}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="p-1.5 rounded-xl text-slate-400 hover:text-slate-700 hover:bg-slate-100 transition-colors"
+                    title="Open in new window"
+                  >
+                    <ExternalLink className="w-4 h-4" />
+                  </a>
+                  <button
+                    type="button"
+                    onClick={() => setSelectedPreviewDoc(null)}
+                    className="p-1.5 rounded-xl text-slate-400 hover:text-slate-900 hover:bg-slate-100 transition-colors cursor-pointer"
+                    title="Close preview"
+                  >
+                    <X className="w-5 h-5" />
+                  </button>
+                </div>
+              </div>
+
+              {/* PREVIEW CONTAINER */}
+              <div className="bg-slate-900 rounded-2xl overflow-hidden flex-1 w-full min-h-0 flex items-center justify-center relative border border-slate-800 p-0">
+                {selectedPreviewDoc.url.match(/\.(jpeg|jpg|png|gif|webp|svg)$/i) ||
+                selectedPreviewDoc.type?.toLowerCase().includes('photo') ||
+                selectedPreviewDoc.type?.toLowerCase().includes('signature') ? (
+                  <div className="w-full h-full flex items-center justify-center p-3 overflow-hidden bg-slate-950">
+                    <img
+                      src={selectedPreviewDoc.url}
+                      alt={selectedPreviewDoc.title}
+                      className="max-w-full max-h-full object-contain rounded shadow-lg"
+                      onError={(e) => {
+                        e.target.onerror = null;
+                        e.target.style.display = 'none';
+                        e.target.parentNode.innerHTML = `
+                          <div class="text-center text-slate-300 p-6 space-y-2">
+                            <p class="font-bold text-sm">Unable to render image inline</p>
+                            <a href="${selectedPreviewDoc.url}" target="_blank" class="text-blue-400 underline text-xs">Click here to open file</a>
+                          </div>
+                        `;
+                      }}
+                    />
+                  </div>
+                ) : selectedPreviewDoc.url.match(/\.pdf$/i) ? (
+                  <object
+                    data={`${selectedPreviewDoc.url}#toolbar=0&navpanes=0&scrollbar=0&view=FitH`}
+                    type="application/pdf"
+                    className="w-full h-full border-0 rounded-2xl bg-white"
+                  >
+                    <iframe
+                      src={`${selectedPreviewDoc.url}#toolbar=0&navpanes=0&scrollbar=0&view=FitH`}
+                      title="PDF Document Preview"
+                      className="w-full h-full border-0 rounded-2xl bg-white"
+                    />
+                  </object>
+                ) : (
+                  <div className="text-center text-white space-y-3 p-8">
+                    <FileText className="w-14 h-14 text-blue-400 mx-auto" />
+                    <p className="font-bold text-sm">{selectedPreviewDoc.title}</p>
+                    <p className="text-xs text-slate-400 font-mono">{selectedPreviewDoc.url}</p>
+                    <a
+                      href={selectedPreviewDoc.url}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl bg-blue-600 hover:bg-blue-700 text-white font-bold text-xs transition-colors"
+                    >
+                      <span>Open / Download File</span>
+                      <ExternalLink className="w-3.5 h-3.5" />
+                    </a>
+                  </div>
+                )}
+              </div>
+
+              {/* MODAL FOOTER */}
+              <div className="flex items-center justify-between shrink-0 pt-1">
+                <span className="text-[11px] font-extrabold text-slate-400 uppercase tracking-wider">
+                  {selectedPreviewDoc.type || 'Document Preview'}
+                </span>
+                <button
+                  type="button"
+                  onClick={() => setSelectedPreviewDoc(null)}
+                  className="px-6 py-2 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-800 font-bold text-xs cursor-pointer transition-colors"
+                >
+                  Close Preview
+                </button>
+              </div>
+            </div>
+          </div>,
+          document.body
+        )}
     </div>
   );
 }
