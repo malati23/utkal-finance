@@ -129,4 +129,26 @@ export async function uploadDocumentsApi(formDataFiles) {
   return data.files || {};
 }
 
+/**
+ * Resend login credentials email for an approved application
+ * POST /api/applications/:id/resend-credentials
+ * @param {string} id - MongoDB document _id or applicationId
+ */
+export async function resendCredentialsApi(id) {
+  const response = await fetch(`${apiConfig.baseURL}/applications/${id}/resend-credentials`, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+    },
+  });
+
+  const data = await response.json();
+  if (!response.ok || !data.success) {
+    throw new Error(data.message || 'Failed to resend credentials email');
+  }
+
+  return data;
+}
+
+
 

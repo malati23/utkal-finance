@@ -12,6 +12,7 @@ import {
   getDocumentsApi,
   updateApplicationStatusApi,
   updateApplicationApi,
+  resendCredentialsApi,
 } from '../services/applicationService';
 import {
   getMembersApi,
@@ -339,6 +340,16 @@ export const AdminProvider = ({ children }) => {
     await refreshData();
   };
 
+  const resendCredentials = async (idOrMongoId) => {
+    const target = applications.find(
+      (a) => a._id === idOrMongoId || a.id === idOrMongoId || a.applicationId === idOrMongoId
+    );
+    const mongoId = target?._id || idOrMongoId;
+    const apiResult = await resendCredentialsApi(mongoId);
+    await refreshData();
+    return apiResult;
+  };
+
   const createNewDeposit = (depositData) => {
     const created = storageAddDeposit(depositData);
     refreshData();
@@ -487,6 +498,7 @@ export const AdminProvider = ({ children }) => {
         teamMembers,
         updateApplication,
         updateApplicationStatus,
+        resendCredentials,
         updateMemberStatus,
         createNewDeposit,
         updateDepositRecord,

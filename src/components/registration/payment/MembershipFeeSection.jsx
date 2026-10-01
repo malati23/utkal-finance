@@ -6,8 +6,6 @@ import { RazorpayPayment } from './RazorpayPayment';
 import { CardPayment } from './CardPayment';
 import { NetBankingPayment } from './NetBankingPayment';
 import { BranchCashPayment } from './BranchCashPayment';
-import { ActivationPolicy } from './ActivationPolicy';
-import { DossierStatus } from './DossierStatus';
 
 export function MembershipFeeSection({
   selectedMethod = 'upi',
@@ -15,7 +13,6 @@ export function MembershipFeeSection({
   paymentData = {},
   onPaymentDataChange,
   utrError,
-  onAutoFillTestInfo,
   onGoToStep,
 }) {
   return (
@@ -87,12 +84,7 @@ export function MembershipFeeSection({
           }
         />
       )}
-
-      {/* INSTANT ACTIVATION POLICY BOX */}
-      <ActivationPolicy />
-
-      {/* APPLICATION DOSSIER STATUS CARD WITH AUTO-FILL BUTTON */}
-      <DossierStatus onAutoFillTestInfo={onAutoFillTestInfo} />
     </div>
   );
 }
+

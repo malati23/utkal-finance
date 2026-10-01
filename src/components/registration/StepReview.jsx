@@ -363,7 +363,6 @@ export function StepReview({ formData = {}, onGoToStep, onSubmit, onPaymentChang
             paymentData={paymentData}
             onPaymentDataChange={handlePaymentDataChange}
             utrError={utrError}
-            onAutoFillTestInfo={handleAutoFillTestInfo}
             onGoToStep={onGoToStep}
           />
         </div>

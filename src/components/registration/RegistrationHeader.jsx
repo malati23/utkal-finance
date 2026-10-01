@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { ArrowLeft, Shield, FileText, Menu, X, CheckCircle2, Download } from 'lucide-react';
+import { ArrowLeft, FileText, Menu, X, CheckCircle2, Download } from 'lucide-react';
 import brandLogo from '../../assets/image copy 7.png';
 import { StatutoryPdfModal } from '../common/StatutoryPdfModal';
 
@@ -62,15 +62,6 @@ export function RegistrationHeader() {
               <span>Statutory 2-Page Form</span>
               <Download className="w-3.5 h-3.5 text-blue-600 ml-0.5" />
             </button>
-
-            <button
-              type="button"
-              onClick={() => navigate('/admin')}
-              className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl bg-[#0B1528] hover:bg-slate-900 text-white text-xs font-bold transition-colors border border-slate-800 shadow-xs cursor-pointer"
-            >
-              <Shield className="w-4 h-4 text-emerald-400" />
-              <span>Admin Portal</span>
-            </button>
           </div>
 
           {/* MOBILE MENU TOGGLE */}
@@ -104,20 +95,6 @@ export function RegistrationHeader() {
                 <span>Statutory 2-Page Form</span>
               </span>
               <Download className="w-4 h-4 text-blue-600" />
-            </button>
-
-            <button
-              type="button"
-              onClick={() => {
-                setMobileMenuOpen(false);
-                navigate('/admin');
-              }}
-              className="w-full flex items-center justify-between px-3.5 py-2.5 rounded-xl bg-[#0B1528] text-white text-xs font-bold cursor-pointer"
-            >
-              <span className="flex items-center gap-2">
-                <Shield className="w-4 h-4 text-emerald-400" />
-                <span>Admin Portal</span>
-              </span>
             </button>
           </div>
         )}

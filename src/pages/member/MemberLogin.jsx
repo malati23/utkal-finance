@@ -106,22 +106,6 @@ export function MemberLogin() {
           <ChevronLeft className="w-4 h-4" />
           <span>Back to Main Website</span>
         </Link>
-
-        <div className="flex items-center gap-3">
-          <Link
-            to="/register"
-            className="text-xs font-bold text-blue-400 hover:text-blue-300 transition-colors"
-          >
-            New Member? Apply Here
-          </Link>
-          <span className="text-slate-600 text-xs hidden sm:inline">•</span>
-          <Link
-            to="/admin-login"
-            className="text-xs text-slate-400 hover:text-slate-200 transition-colors hidden sm:inline"
-          >
-            Admin Portal →
-          </Link>
-        </div>
       </header>
 
       {/* MAIN CARD CONTAINER */}
