@@ -13,12 +13,23 @@ import {
   CheckCircle2,
   Clock,
   XCircle,
+  FileText,
+  Upload,
+  Eye,
+  Trash2,
+  CreditCard,
+  PenTool,
+  Image as ImageIcon,
+  Download,
+  ExternalLink,
 } from 'lucide-react';
+import { getBackendAssetUrl } from '../../config/env';
 
 export function EditApplicationModal({ isOpen, application, onClose, onSave }) {
   const [activeSection, setActiveSection] = useState('personal');
   const [isSaving, setIsSaving] = useState(false);
   const [error, setError] = useState('');
+  const [previewDoc, setPreviewDoc] = useState(null);
   const scrollContainerRef = useRef(null);
 
   // Form State
@@ -69,6 +80,16 @@ export function EditApplicationModal({ isOpen, application, onClose, onSave }) {
     shareValue: 10,
     processingFee: 100,
 
+    // Document Details
+    idProofType: 'Aadhaar Card',
+    idProofUrl: '',
+    addressProofType: 'Aadhaar Card',
+    addressProofUrl: '',
+    photoUrl: '',
+    signatureUrl: '',
+    paymentReceiptUrl: '',
+    additionalDocuments: [],
+
     // Status
     status: 'pending',
   });
@@ -81,6 +102,8 @@ export function EditApplicationModal({ isOpen, application, onClose, onSave }) {
       const a = application.addressDetails || {};
       const n = application.nomineeDetails || {};
       const m = application.membershipDetails || {};
+      const d = application.documentDetails || application.documents || {};
+      const pay = application.paymentDetails || application.payment || {};
 
       let initialFirstName = application.firstName || p.firstName || '';
       let initialMiddleName = application.middleName || p.middleName || '';
@@ -140,6 +163,16 @@ export function EditApplicationModal({ isOpen, application, onClose, onSave }) {
         shareValue: Number(application.shareValue || m.shareValue) || 10,
         processingFee: Number(application.processingFee || m.processingFee) || 100,
 
+        // Documents
+        idProofType: d.idProofType || application.idProofType || 'Aadhaar Card',
+        idProofUrl: d.idProofUrl || application.idProofUrl || '',
+        addressProofType: d.addressProofType || application.addressProofType || 'Aadhaar Card',
+        addressProofUrl: d.addressProofUrl || application.addressProofUrl || '',
+        photoUrl: d.photoUrl || application.photoUrl || '',
+        signatureUrl: d.signatureUrl || application.signatureUrl || '',
+        paymentReceiptUrl: pay.receiptUrl || d.paymentReceiptUrl || application.paymentReceiptUrl || '',
+        additionalDocuments: Array.isArray(d.additionalDocuments) ? [...d.additionalDocuments] : [],
+
         status: (application.status || 'pending').toLowerCase(),
       });
       setError('');
@@ -179,6 +212,17 @@ export function EditApplicationModal({ isOpen, application, onClose, onSave }) {
       }
       return updated;
     });
+  };
+
+  const handleFileUpload = (docField, file) => {
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onload = () => {
+      if (reader.result) {
+        handleChange(docField, reader.result);
+      }
+    };
+    reader.readAsDataURL(file);
   };
 
   const scrollToSection = (sectionId) => {
@@ -230,6 +274,17 @@ export function EditApplicationModal({ isOpen, application, onClose, onSave }) {
         Number(formData.numberOfShares) * Number(formData.shareValue) +
         Number(formData.processingFee);
 
+      const documentPayload = {
+        idProofType: formData.idProofType,
+        idProofUrl: formData.idProofUrl,
+        addressProofType: formData.addressProofType,
+        addressProofUrl: formData.addressProofUrl,
+        photoUrl: formData.photoUrl,
+        signatureUrl: formData.signatureUrl,
+        paymentReceiptUrl: formData.paymentReceiptUrl,
+        additionalDocuments: formData.additionalDocuments,
+      };
+
       const payload = {
         applicantName,
         title: formData.title,
@@ -268,6 +323,26 @@ export function EditApplicationModal({ isOpen, application, onClose, onSave }) {
         processingFee: Number(formData.processingFee),
         totalPaid: totalContribution,
         status: formData.status,
+
+        // Synchronized Document & Payment structures
+        documentDetails: documentPayload,
+        documents: documentPayload,
+        paymentDetails: {
+          method: 'UPI (IndusInd Bank QR)',
+          amount: 200,
+          receiptUrl: formData.paymentReceiptUrl,
+          receiptFileName: 'Payment_Receipt.png',
+          utrNumber: 'UPI_PAYMENT_VERIFIED',
+          paidAt: new Date(),
+        },
+        payment: {
+          method: 'UPI (IndusInd Bank QR)',
+          amount: 200,
+          receiptUrl: formData.paymentReceiptUrl,
+          receiptFileName: 'Payment_Receipt.png',
+          utrNumber: 'UPI_PAYMENT_VERIFIED',
+          paidAt: new Date(),
+        },
 
         personalDetails: {
           title: formData.title,
@@ -326,14 +401,147 @@ export function EditApplicationModal({ isOpen, application, onClose, onSave }) {
     }
   };
 
+  const renderDocumentCard = (title, typeKey, urlKey, allowedTypes, iconComponent, fallbackName) => {
+    const rawUrl = formData[urlKey];
+    const fullUrl = rawUrl ? getBackendAssetUrl(rawUrl) : '';
+    const hasDoc = Boolean(fullUrl);
+    const isPdf = typeof fullUrl === 'string' && (fullUrl.includes('.pdf') || fullUrl.startsWith('data:application/pdf'));
+
+    return (
+      <div className="bg-slate-50 rounded-2xl border border-slate-200/90 p-4 flex flex-col justify-between space-y-3 shadow-2xs hover:border-blue-300 transition-all">
+        <div className="flex items-center justify-between gap-2 border-b border-slate-200/70 pb-2.5">
+          <div className="flex items-center gap-2 min-w-0">
+            <div className="w-8 h-8 rounded-xl bg-blue-50 text-blue-700 flex items-center justify-center shrink-0 border border-blue-100">
+              {iconComponent}
+            </div>
+            <div className="min-w-0">
+              <span className="text-[11px] font-extrabold text-slate-800 uppercase block truncate">
+                {title}
+              </span>
+              <span className="text-[10px] text-slate-500 font-medium">
+                {hasDoc ? 'Document attached' : 'No document uploaded'}
+              </span>
+            </div>
+          </div>
+
+          <span
+            className={`px-2 py-0.5 rounded-full text-[9px] font-bold uppercase tracking-wider border shrink-0 ${
+              hasDoc
+                ? 'bg-emerald-50 text-emerald-700 border-emerald-200'
+                : 'bg-slate-200/70 text-slate-500 border-slate-300'
+            }`}
+          >
+            {hasDoc ? 'Uploaded' : 'Empty'}
+          </span>
+        </div>
+
+        {/* DOCUMENT TYPE SELECTOR (IF APPLICABLE) */}
+        {allowedTypes && allowedTypes.length > 0 && (
+          <div className="space-y-1">
+            <label className="block text-[10px] font-extrabold text-slate-500 uppercase">
+              Statutory Proof Type
+            </label>
+            <select
+              value={formData[typeKey] || allowedTypes[0]}
+              onChange={(e) => handleChange(typeKey, e.target.value)}
+              className="w-full bg-white border border-slate-200 rounded-xl px-2.5 py-1.5 text-xs text-slate-800 font-semibold focus:border-blue-600 focus:outline-none"
+            >
+              {allowedTypes.map((t) => (
+                <option key={t} value={t}>
+                  {t}
+                </option>
+              ))}
+            </select>
+          </div>
+        )}
+
+        {/* THUMBNAIL / PREVIEW BOX */}
+        <div className="bg-white rounded-xl border border-slate-200/80 p-2.5 h-36 flex items-center justify-center overflow-hidden relative group">
+          {hasDoc ? (
+            isPdf ? (
+              <div className="flex flex-col items-center justify-center text-center space-y-1 p-2">
+                <FileText className="w-10 h-10 text-rose-500" />
+                <span className="text-[11px] font-bold text-slate-700">PDF Document</span>
+                <span className="text-[9px] text-slate-400 font-mono">Ready to view / download</span>
+              </div>
+            ) : (
+              <img
+                src={fullUrl}
+                alt={title}
+                className="max-h-full max-w-full object-contain rounded-lg transition-transform group-hover:scale-105"
+              />
+            )
+          ) : (
+            <div className="text-center space-y-1 text-slate-400">
+              <Upload className="w-7 h-7 mx-auto opacity-40" />
+              <span className="text-[10px] font-medium block">No file attached</span>
+            </div>
+          )}
+
+          {hasDoc && (
+            <div className="absolute inset-0 bg-slate-950/60 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center gap-2 p-2">
+              <button
+                type="button"
+                onClick={() => setPreviewDoc({ title, url: fullUrl, type: title })}
+                className="p-2 rounded-xl bg-white text-blue-700 hover:bg-blue-50 font-bold text-xs shadow-md flex items-center gap-1.5 cursor-pointer"
+                title="View Full Document"
+              >
+                <Eye className="w-4 h-4" />
+                <span>View</span>
+              </button>
+              <a
+                href={fullUrl}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="p-2 rounded-xl bg-white/20 text-white hover:bg-white/30 font-bold text-xs shadow-md transition-colors"
+                title="Open in new tab"
+              >
+                <ExternalLink className="w-4 h-4" />
+              </a>
+            </div>
+          )}
+        </div>
+
+        {/* ACTION BUTTONS: UPLOAD / REPLACE & REMOVE */}
+        <div className="flex items-center gap-2 pt-1">
+          <label className="flex-1 inline-flex items-center justify-center gap-1.5 py-1.5 px-3 rounded-xl bg-blue-50 hover:bg-blue-100 text-blue-700 font-bold text-xs transition-colors cursor-pointer border border-blue-200">
+            <Upload className="w-3.5 h-3.5" />
+            <span>{hasDoc ? 'Replace File' : 'Upload File'}</span>
+            <input
+              type="file"
+              accept="image/*,.pdf"
+              className="hidden"
+              onChange={(e) => {
+                if (e.target.files && e.target.files[0]) {
+                  handleFileUpload(urlKey, e.target.files[0]);
+                }
+              }}
+            />
+          </label>
+
+          {hasDoc && (
+            <button
+              type="button"
+              onClick={() => handleChange(urlKey, '')}
+              className="p-1.5 rounded-xl bg-slate-100 hover:bg-rose-50 text-slate-500 hover:text-rose-600 transition-colors border border-slate-200"
+              title="Remove document"
+            >
+              <Trash2 className="w-3.5 h-3.5" />
+            </button>
+          )}
+        </div>
+      </div>
+    );
+  };
+
   const modalContent = (
-    <div 
+    <div
       className="fixed inset-0 z-[9999] flex items-center justify-center p-2 sm:p-4 md:p-6 bg-slate-950/80 backdrop-blur-xs select-none"
       onClick={(e) => {
         if (e.target === e.currentTarget) onClose();
       }}
     >
-      <div 
+      <div
         className="bg-white rounded-2xl sm:rounded-3xl border border-slate-200 shadow-2xl w-full max-w-4xl max-h-[88vh] sm:max-h-[90vh] flex flex-col text-left overflow-hidden animate-fade-in"
         onClick={(e) => e.stopPropagation()}
       >
@@ -353,7 +561,7 @@ export function EditApplicationModal({ isOpen, application, onClose, onSave }) {
                 </span>
               </div>
               <p className="text-[11px] text-blue-200/80">
-                Modify statutory member dossier particulars and synchronize changes instantly
+                Modify statutory member dossier particulars, review and replace uploaded documents
               </p>
             </div>
           </div>
@@ -450,6 +658,19 @@ export function EditApplicationModal({ isOpen, application, onClose, onSave }) {
 
           <button
             type="button"
+            onClick={() => scrollToSection('documents')}
+            className={`px-3 py-1.5 rounded-xl text-xs font-bold flex items-center gap-1.5 transition-all cursor-pointer whitespace-nowrap ${
+              activeSection === 'documents'
+                ? 'bg-blue-900 text-white shadow-xs'
+                : 'text-slate-600 hover:bg-slate-200/70'
+            }`}
+          >
+            <FileText className="w-3.5 h-3.5" />
+            <span>7. Documents &amp; Uploads</span>
+          </button>
+
+          <button
+            type="button"
             onClick={() => scrollToSection('status')}
             className={`px-3 py-1.5 rounded-xl text-xs font-bold flex items-center gap-1.5 transition-all cursor-pointer whitespace-nowrap ${
               activeSection === 'status'
@@ -458,30 +679,29 @@ export function EditApplicationModal({ isOpen, application, onClose, onSave }) {
             }`}
           >
             <CheckCircle2 className="w-3.5 h-3.5" />
-            <span>7. Status</span>
+            <span>8. Status</span>
           </button>
         </div>
 
-        {/* ERROR ALERT */}
+        {/* ERROR NOTIFICATION BAR */}
         {error && (
-          <div className="mx-6 mt-3 p-3 rounded-xl bg-rose-50 border border-rose-200 text-rose-700 text-xs font-bold flex items-center gap-2 shrink-0">
-            <AlertCircle className="w-4 h-4 shrink-0" />
+          <div className="mx-6 mt-4 p-3 rounded-xl bg-rose-50 border border-rose-200 text-rose-700 text-xs font-bold flex items-center gap-2">
+            <AlertCircle className="w-4 h-4 shrink-0 text-rose-600" />
             <span>{error}</span>
           </div>
         )}
 
-        {/* 3. FORM WRAPPER (FILLS REMAINING HEIGHT WITH PINNED FOOTER) */}
-        <form onSubmit={handleSubmit} className="flex flex-col flex-1 min-h-0 overflow-hidden">
-          {/* CONTINUOUS SCROLLABLE CONTENT WITH ALWAYS-VISIBLE RIGHT-SIDE SCROLLBAR */}
+        {/* 3. SCROLLABLE FORM BODY */}
+        <form onSubmit={handleSubmit} className="flex-1 flex flex-col overflow-hidden">
           <div
             ref={scrollContainerRef}
-            className="flex-1 min-h-0 overflow-y-auto custom-scrollbar p-5 sm:p-6 space-y-6 text-xs"
+            className="flex-1 overflow-y-auto px-5 sm:px-6 py-5 space-y-6 text-slate-800"
           >
-            {/* SECTION 1: PERSONAL DETAILS */}
+            {/* SECTION 1: PERSONAL PARTICULARS */}
             <div id="edit-section-personal" className="space-y-3.5 scroll-mt-2">
               <div className="flex items-center gap-2 pb-2 border-b border-slate-200 text-xs font-black text-slate-800 uppercase tracking-wider">
                 <User className="w-4 h-4 text-blue-700" />
-                <span>1. Applicant Personal Identification</span>
+                <span>1. Personal &amp; Demographic Particulars</span>
               </div>
 
               <div className="grid grid-cols-1 sm:grid-cols-4 gap-3.5">
@@ -492,7 +712,7 @@ export function EditApplicationModal({ isOpen, application, onClose, onSave }) {
                   <select
                     value={formData.title}
                     onChange={(e) => handleChange('title', e.target.value)}
-                    className="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 text-xs font-bold text-slate-800 focus:bg-white focus:border-blue-600 focus:outline-none"
+                    className="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 text-xs text-slate-800 font-bold focus:bg-white focus:border-blue-600 focus:outline-none"
                   >
                     <option value="Mr.">Mr.</option>
                     <option value="Mrs.">Mrs.</option>
@@ -503,14 +723,13 @@ export function EditApplicationModal({ isOpen, application, onClose, onSave }) {
 
                 <div>
                   <label className="block text-[10px] font-extrabold text-slate-500 uppercase mb-1">
-                    First Name *
+                    First Name <span className="text-rose-500">*</span>
                   </label>
                   <input
                     type="text"
                     required
                     value={formData.firstName}
                     onChange={(e) => handleChange('firstName', e.target.value)}
-                    placeholder="First Name"
                     className="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 text-xs font-bold text-slate-900 focus:bg-white focus:border-blue-600 focus:outline-none"
                   />
                 </div>
@@ -523,20 +742,19 @@ export function EditApplicationModal({ isOpen, application, onClose, onSave }) {
                     type="text"
                     value={formData.middleName}
                     onChange={(e) => handleChange('middleName', e.target.value)}
-                    placeholder="Middle Name"
                     className="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 text-xs text-slate-800 focus:bg-white focus:border-blue-600 focus:outline-none"
                   />
                 </div>
 
                 <div>
                   <label className="block text-[10px] font-extrabold text-slate-500 uppercase mb-1">
-                    Last Name
+                    Last Name <span className="text-rose-500">*</span>
                   </label>
                   <input
                     type="text"
+                    required
                     value={formData.lastName}
                     onChange={(e) => handleChange('lastName', e.target.value)}
-                    placeholder="Last Name"
                     className="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 text-xs font-bold text-slate-900 focus:bg-white focus:border-blue-600 focus:outline-none"
                   />
                 </div>
@@ -545,30 +763,29 @@ export function EditApplicationModal({ isOpen, application, onClose, onSave }) {
               <div className="grid grid-cols-1 sm:grid-cols-3 gap-3.5">
                 <div>
                   <label className="block text-[10px] font-extrabold text-slate-500 uppercase mb-1">
-                    Relationship Prefix
+                    Relationship Type
                   </label>
                   <select
                     value={formData.relationshipPrefix}
                     onChange={(e) => handleChange('relationshipPrefix', e.target.value)}
                     className="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 text-xs text-slate-800 focus:bg-white focus:border-blue-600 focus:outline-none"
                   >
-                    <option value="S/o.">S/o (Son of)</option>
-                    <option value="D/o.">D/o (Daughter of)</option>
-                    <option value="W/o.">W/o (Wife of)</option>
-                    <option value="C/o.">C/o (Care of)</option>
+                    <option value="S/o.">Son of (S/o.)</option>
+                    <option value="D/o.">Daughter of (D/o.)</option>
+                    <option value="W/o.">Wife of (W/o.)</option>
+                    <option value="C/o.">Care of (C/o.)</option>
                   </select>
                 </div>
 
                 <div className="sm:col-span-2">
                   <label className="block text-[10px] font-extrabold text-slate-500 uppercase mb-1">
-                    Father / Spouse Legal Name
+                    Father / Husband / Guardian Legal Name
                   </label>
                   <input
                     type="text"
                     value={formData.fatherLegalName}
                     onChange={(e) => handleChange('fatherLegalName', e.target.value)}
-                    placeholder="Father or Husband Full Legal Name"
-                    className="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 text-xs font-bold text-slate-800 focus:bg-white focus:border-blue-600 focus:outline-none"
+                    className="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 text-xs text-slate-800 focus:bg-white focus:border-blue-600 focus:outline-none"
                   />
                 </div>
               </div>
@@ -582,7 +799,7 @@ export function EditApplicationModal({ isOpen, application, onClose, onSave }) {
                     type="date"
                     value={formData.dob}
                     onChange={(e) => handleChange('dob', e.target.value)}
-                    className="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 text-xs text-slate-800 font-mono focus:bg-white focus:border-blue-600 focus:outline-none"
+                    className="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 text-xs text-slate-800 focus:bg-white focus:border-blue-600 focus:outline-none"
                   />
                 </div>
 
@@ -594,8 +811,7 @@ export function EditApplicationModal({ isOpen, application, onClose, onSave }) {
                     type="number"
                     value={formData.age}
                     onChange={(e) => handleChange('age', e.target.value)}
-                    placeholder="Age"
-                    className="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 text-xs text-slate-800 font-mono focus:bg-white focus:border-blue-600 focus:outline-none"
+                    className="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 text-xs text-slate-800 focus:bg-white focus:border-blue-600 focus:outline-none"
                   />
                 </div>
 
@@ -624,9 +840,9 @@ export function EditApplicationModal({ isOpen, application, onClose, onSave }) {
                     className="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 text-xs text-slate-800 focus:bg-white focus:border-blue-600 focus:outline-none"
                   >
                     <option value="Married">Married</option>
-                    <option value="Single">Single</option>
-                    <option value="Divorced">Divorced</option>
+                    <option value="Single">Single / Unmarried</option>
                     <option value="Widowed">Widowed</option>
+                    <option value="Divorced">Divorced</option>
                   </select>
                 </div>
               </div>
@@ -636,12 +852,18 @@ export function EditApplicationModal({ isOpen, application, onClose, onSave }) {
                   <label className="block text-[10px] font-extrabold text-slate-500 uppercase mb-1">
                     Religion
                   </label>
-                  <input
-                    type="text"
+                  <select
                     value={formData.religion}
                     onChange={(e) => handleChange('religion', e.target.value)}
                     className="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 text-xs text-slate-800 focus:bg-white focus:border-blue-600 focus:outline-none"
-                  />
+                  >
+                    <option value="Hindu">Hindu</option>
+                    <option value="Muslim">Muslim</option>
+                    <option value="Christian">Christian</option>
+                    <option value="Sikh">Sikh</option>
+                    <option value="Jain">Jain</option>
+                    <option value="Other">Other</option>
+                  </select>
                 </div>
 
                 <div>
@@ -655,9 +877,9 @@ export function EditApplicationModal({ isOpen, application, onClose, onSave }) {
                   >
                     <option value="General">General</option>
                     <option value="OBC">OBC</option>
+                    <option value="SEBC">SEBC</option>
                     <option value="SC">SC</option>
                     <option value="ST">ST</option>
-                    <option value="SEBC">SEBC</option>
                   </select>
                 </div>
 
@@ -685,41 +907,26 @@ export function EditApplicationModal({ isOpen, application, onClose, onSave }) {
                   />
                 </div>
               </div>
-
-              <div>
-                <label className="block text-[10px] font-extrabold text-slate-500 uppercase mb-1">
-                  Income Tax PAN Number
-                </label>
-                <input
-                  type="text"
-                  maxLength={10}
-                  value={formData.pan}
-                  onChange={(e) => handleChange('pan', e.target.value.toUpperCase())}
-                  placeholder="e.g. ABCDE1234F"
-                  className="w-full sm:w-64 bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 text-xs font-mono font-bold text-amber-700 uppercase focus:bg-white focus:border-blue-600 focus:outline-none"
-                />
-              </div>
             </div>
 
-            {/* SECTION 2: CONTACT DETAILS */}
+            {/* SECTION 2: CONTACT & PAN */}
             <div id="edit-section-contact" className="space-y-3.5 pt-4 border-t border-slate-200 scroll-mt-2">
               <div className="flex items-center gap-2 pb-2 border-b border-slate-200 text-xs font-black text-slate-800 uppercase tracking-wider">
                 <Phone className="w-4 h-4 text-blue-700" />
-                <span>2. Contact &amp; Communication Details</span>
+                <span>2. Contact Particulars &amp; Income Tax PAN</span>
               </div>
 
               <div className="grid grid-cols-1 sm:grid-cols-3 gap-3.5">
                 <div>
                   <label className="block text-[10px] font-extrabold text-slate-500 uppercase mb-1">
-                    Primary Mobile *
+                    Primary Mobile Number <span className="text-rose-500">*</span>
                   </label>
                   <input
-                    type="text"
+                    type="tel"
                     required
                     value={formData.mobile}
                     onChange={(e) => handleChange('mobile', e.target.value)}
-                    placeholder="98610 xxxxx"
-                    className="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 text-xs font-mono font-bold text-slate-900 focus:bg-white focus:border-blue-600 focus:outline-none"
+                    className="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 text-xs font-bold text-slate-900 focus:bg-white focus:border-blue-600 focus:outline-none"
                   />
                 </div>
 
@@ -728,27 +935,38 @@ export function EditApplicationModal({ isOpen, application, onClose, onSave }) {
                     Alternate Contact
                   </label>
                   <input
-                    type="text"
+                    type="tel"
                     value={formData.altMobile}
                     onChange={(e) => handleChange('altMobile', e.target.value)}
-                    placeholder="94371 xxxxx"
-                    className="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 text-xs font-mono text-slate-800 focus:bg-white focus:border-blue-600 focus:outline-none"
+                    className="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 text-xs text-slate-800 focus:bg-white focus:border-blue-600 focus:outline-none"
                   />
                 </div>
 
                 <div>
                   <label className="block text-[10px] font-extrabold text-slate-500 uppercase mb-1">
-                    Registered Email *
+                    Registered Email Address <span className="text-rose-500">*</span>
                   </label>
                   <input
                     type="email"
                     required
                     value={formData.email}
                     onChange={(e) => handleChange('email', e.target.value)}
-                    placeholder="applicant@domain.com"
-                    className="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 text-xs font-mono font-bold text-slate-900 focus:bg-white focus:border-blue-600 focus:outline-none"
+                    className="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 text-xs font-bold text-slate-900 focus:bg-white focus:border-blue-600 focus:outline-none"
                   />
                 </div>
+              </div>
+
+              <div>
+                <label className="block text-[10px] font-extrabold text-slate-500 uppercase mb-1">
+                  Income Tax PAN Card Number
+                </label>
+                <input
+                  type="text"
+                  maxLength={10}
+                  value={formData.pan}
+                  onChange={(e) => handleChange('pan', e.target.value.toUpperCase())}
+                  className="w-full sm:w-1/2 bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 text-xs font-mono font-bold text-amber-700 uppercase focus:bg-white focus:border-blue-600 focus:outline-none"
+                />
               </div>
             </div>
 
@@ -756,32 +974,30 @@ export function EditApplicationModal({ isOpen, application, onClose, onSave }) {
             <div id="edit-section-address" className="space-y-3.5 pt-4 border-t border-slate-200 scroll-mt-2">
               <div className="flex items-center gap-2 pb-2 border-b border-slate-200 text-xs font-black text-slate-800 uppercase tracking-wider">
                 <MapPin className="w-4 h-4 text-blue-700" />
-                <span>3. Permanent Residential Address</span>
+                <span>3. Residential Address Particulars</span>
               </div>
 
-              <div>
-                <label className="block text-[10px] font-extrabold text-slate-500 uppercase mb-1">
-                  Residential Street Address Line
-                </label>
-                <textarea
-                  rows={2}
-                  value={formData.address1}
-                  onChange={(e) => handleChange('address1', e.target.value)}
-                  placeholder="Plot/House No., Street, Landmark..."
-                  className="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 text-xs font-medium text-slate-800 focus:bg-white focus:border-blue-600 focus:outline-none resize-none"
-                />
-              </div>
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3.5">
+                <div className="sm:col-span-2">
+                  <label className="block text-[10px] font-extrabold text-slate-500 uppercase mb-1">
+                    Address Line (House / Plot / Street)
+                  </label>
+                  <input
+                    type="text"
+                    value={formData.address1}
+                    onChange={(e) => handleChange('address1', e.target.value)}
+                    className="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 text-xs text-slate-800 focus:bg-white focus:border-blue-600 focus:outline-none"
+                  />
+                </div>
 
-              <div className="grid grid-cols-1 sm:grid-cols-4 gap-3.5">
                 <div>
                   <label className="block text-[10px] font-extrabold text-slate-500 uppercase mb-1">
-                    Village / Town / Taluka
+                    Village / Town / City
                   </label>
                   <input
                     type="text"
                     value={formData.villageTown}
                     onChange={(e) => handleChange('villageTown', e.target.value)}
-                    placeholder="e.g. Nayapalli"
                     className="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 text-xs text-slate-800 focus:bg-white focus:border-blue-600 focus:outline-none"
                   />
                 </div>
@@ -794,8 +1010,7 @@ export function EditApplicationModal({ isOpen, application, onClose, onSave }) {
                     type="text"
                     value={formData.district}
                     onChange={(e) => handleChange('district', e.target.value)}
-                    placeholder="Khurda"
-                    className="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 text-xs font-bold text-slate-800 focus:bg-white focus:border-blue-600 focus:outline-none"
+                    className="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 text-xs text-slate-800 focus:bg-white focus:border-blue-600 focus:outline-none"
                   />
                 </div>
 
@@ -807,21 +1022,19 @@ export function EditApplicationModal({ isOpen, application, onClose, onSave }) {
                     type="text"
                     value={formData.state}
                     onChange={(e) => handleChange('state', e.target.value)}
-                    placeholder="Odisha"
                     className="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 text-xs text-slate-800 focus:bg-white focus:border-blue-600 focus:outline-none"
                   />
                 </div>
 
                 <div>
                   <label className="block text-[10px] font-extrabold text-slate-500 uppercase mb-1">
-                    Postal PIN Code
+                    Postal Pincode
                   </label>
                   <input
                     type="text"
                     maxLength={6}
                     value={formData.pincode}
                     onChange={(e) => handleChange('pincode', e.target.value)}
-                    placeholder="751012"
                     className="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 text-xs font-mono font-bold text-slate-800 focus:bg-white focus:border-blue-600 focus:outline-none"
                   />
                 </div>
@@ -832,50 +1045,49 @@ export function EditApplicationModal({ isOpen, application, onClose, onSave }) {
             <div id="edit-section-branch" className="space-y-3.5 pt-4 border-t border-slate-200 scroll-mt-2">
               <div className="flex items-center gap-2 pb-2 border-b border-slate-200 text-xs font-black text-slate-800 uppercase tracking-wider">
                 <Building2 className="w-4 h-4 text-blue-700" />
-                <span>4. Branch Allocation &amp; Associate</span>
+                <span>4. Registered Branch &amp; Associate Allocation</span>
               </div>
 
               <div className="grid grid-cols-1 sm:grid-cols-3 gap-3.5">
                 <div>
                   <label className="block text-[10px] font-extrabold text-slate-500 uppercase mb-1">
-                    Registered Branch
+                    Assigned Branch
                   </label>
                   <select
                     value={formData.branch}
                     onChange={(e) => handleChange('branch', e.target.value)}
-                    className="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 text-xs font-bold text-slate-800 focus:bg-white focus:border-blue-600 focus:outline-none"
+                    className="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 text-xs text-slate-800 font-semibold focus:bg-white focus:border-blue-600 focus:outline-none"
                   >
-                    <option value="Bhubaneswar HQ (Nayapalli, IRC Village)">Bhubaneswar HQ (Nayapalli)</option>
-                    <option value="Cuttack Branch (Badambadi)">Cuttack Branch (Badambadi)</option>
-                    <option value="Berhampur Branch (Ganjam Hub)">Berhampur Branch</option>
-                    <option value="Rourkela Branch (Panposh)">Rourkela Branch</option>
-                    <option value="Sambalpur Branch (Khetrajpur)">Sambalpur Branch</option>
+                    <option value="Bhubaneswar HQ (Nayapalli, IRC Village)">Bhubaneswar HQ (Nayapalli, IRC Village)</option>
+                    <option value="Cuttack Main Branch (Badambadi)">Cuttack Main Branch (Badambadi)</option>
+                    <option value="Berhampur Regional Branch">Berhampur Regional Branch</option>
+                    <option value="Rourkela Steel City Branch">Rourkela Steel City Branch</option>
+                    <option value="Sambalpur Branch">Sambalpur Branch</option>
+                    <option value="Balasore Branch">Balasore Branch</option>
                   </select>
                 </div>
 
                 <div>
                   <label className="block text-[10px] font-extrabold text-slate-500 uppercase mb-1">
-                    Introducer / Agent Associate
+                    Associate / Introducer Name
                   </label>
                   <input
                     type="text"
                     value={formData.introducer}
                     onChange={(e) => handleChange('introducer', e.target.value)}
-                    placeholder="Introducer Legal Name"
-                    className="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 text-xs font-bold text-slate-800 focus:bg-white focus:border-blue-600 focus:outline-none"
+                    className="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 text-xs text-slate-800 focus:bg-white focus:border-blue-600 focus:outline-none"
                   />
                 </div>
 
                 <div>
                   <label className="block text-[10px] font-extrabold text-slate-500 uppercase mb-1">
-                    Employee (EMP) ID
+                    Employee / Agent ID
                   </label>
                   <input
                     type="text"
                     value={formData.empId}
                     onChange={(e) => handleChange('empId', e.target.value)}
-                    placeholder="EMP-2026-XXXX"
-                    className="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 text-xs font-mono font-bold text-slate-800 focus:bg-white focus:border-blue-600 focus:outline-none"
+                    className="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 text-xs font-mono text-slate-800 focus:bg-white focus:border-blue-600 focus:outline-none"
                   />
                 </div>
               </div>
@@ -888,8 +1100,8 @@ export function EditApplicationModal({ isOpen, application, onClose, onSave }) {
                 <span>5. Nominee Beneficiary Particulars</span>
               </div>
 
-              <div className="grid grid-cols-1 sm:grid-cols-4 gap-3.5">
-                <div className="sm:col-span-2">
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-3.5">
+                <div>
                   <label className="block text-[10px] font-extrabold text-slate-500 uppercase mb-1">
                     Nominee Full Name
                   </label>
@@ -897,8 +1109,7 @@ export function EditApplicationModal({ isOpen, application, onClose, onSave }) {
                     type="text"
                     value={formData.nomineeName}
                     onChange={(e) => handleChange('nomineeName', e.target.value)}
-                    placeholder="Nominee Legal Name"
-                    className="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 text-xs font-bold text-slate-800 focus:bg-white focus:border-blue-600 focus:outline-none"
+                    className="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 text-xs font-bold text-slate-900 focus:bg-white focus:border-blue-600 focus:outline-none"
                   />
                 </div>
 
@@ -909,15 +1120,16 @@ export function EditApplicationModal({ isOpen, application, onClose, onSave }) {
                   <select
                     value={formData.nomineeRel}
                     onChange={(e) => handleChange('nomineeRel', e.target.value)}
-                    className="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 text-xs font-bold text-slate-800 focus:bg-white focus:border-blue-600 focus:outline-none"
+                    className="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 text-xs text-slate-800 focus:bg-white focus:border-blue-600 focus:outline-none"
                   >
-                    <option value="Spouse">Spouse</option>
+                    <option value="Spouse">Spouse (Wife / Husband)</option>
                     <option value="Father">Father</option>
                     <option value="Mother">Mother</option>
                     <option value="Son">Son</option>
                     <option value="Daughter">Daughter</option>
                     <option value="Brother">Brother</option>
                     <option value="Sister">Sister</option>
+                    <option value="Other">Other</option>
                   </select>
                 </div>
 
@@ -929,22 +1141,19 @@ export function EditApplicationModal({ isOpen, application, onClose, onSave }) {
                     type="date"
                     value={formData.nomineeDob}
                     onChange={(e) => handleChange('nomineeDob', e.target.value)}
-                    className="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 text-xs text-slate-800 font-mono focus:bg-white focus:border-blue-600 focus:outline-none"
+                    className="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 text-xs text-slate-800 focus:bg-white focus:border-blue-600 focus:outline-none"
                   />
                 </div>
-              </div>
 
-              <div className="grid grid-cols-1 sm:grid-cols-3 gap-3.5">
                 <div>
                   <label className="block text-[10px] font-extrabold text-slate-500 uppercase mb-1">
                     Nominee Contact Number
                   </label>
                   <input
-                    type="text"
+                    type="tel"
                     value={formData.nomineeMobile}
                     onChange={(e) => handleChange('nomineeMobile', e.target.value)}
-                    placeholder="+91 98610 xxxxx"
-                    className="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 text-xs font-mono text-slate-800 focus:bg-white focus:border-blue-600 focus:outline-none"
+                    className="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 text-xs text-slate-800 focus:bg-white focus:border-blue-600 focus:outline-none"
                   />
                 </div>
 
@@ -1020,11 +1229,71 @@ export function EditApplicationModal({ isOpen, application, onClose, onSave }) {
               </div>
             </div>
 
-            {/* SECTION 7: APPLICATION STATUS */}
+            {/* SECTION 7: UPLOADED DOCUMENTS & REVIEWS */}
+            <div id="edit-section-documents" className="space-y-4 pt-4 border-t border-slate-200 scroll-mt-2">
+              <div className="flex items-center justify-between pb-2 border-b border-slate-200">
+                <div className="flex items-center gap-2 text-xs font-black text-slate-800 uppercase tracking-wider">
+                  <FileText className="w-4 h-4 text-blue-700" />
+                  <span>7. Statutory Uploaded Documents &amp; Verification</span>
+                </div>
+                <span className="text-[11px] font-bold text-blue-700 bg-blue-50 px-2.5 py-0.5 rounded-full border border-blue-200">
+                  Review &amp; Replace Files
+                </span>
+              </div>
+
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+                {/* 1. Identity Proof */}
+                {renderDocumentCard(
+                  'Identity Proof (Govt ID)',
+                  'idProofType',
+                  'idProofUrl',
+                  ['Aadhaar Card', 'PAN Card', 'Voter ID Card', 'Passport', 'Driving License'],
+                  <UserCheck className="w-4 h-4" />
+                )}
+
+                {/* 2. Address Proof */}
+                {renderDocumentCard(
+                  'Address Proof Document',
+                  'addressProofType',
+                  'addressProofUrl',
+                  ['Aadhaar Card', 'Electricity / Utility Bill', 'Bank Passbook / Statement', 'Ration Card', 'Rent Agreement'],
+                  <MapPin className="w-4 h-4" />
+                )}
+
+                {/* 3. Applicant Photograph */}
+                {renderDocumentCard(
+                  'Applicant Photograph',
+                  null,
+                  'photoUrl',
+                  null,
+                  <ImageIcon className="w-4 h-4" />
+                )}
+
+                {/* 4. Signature Specimen */}
+                {renderDocumentCard(
+                  'Signature Specimen',
+                  null,
+                  'signatureUrl',
+                  null,
+                  <PenTool className="w-4 h-4" />
+                )}
+
+                {/* 5. Payment Receipt Screenshot */}
+                {renderDocumentCard(
+                  'Payment Receipt Proof',
+                  null,
+                  'paymentReceiptUrl',
+                  null,
+                  <CreditCard className="w-4 h-4" />
+                )}
+              </div>
+            </div>
+
+            {/* SECTION 8: APPLICATION STATUS */}
             <div id="edit-section-status" className="space-y-3.5 pt-4 border-t border-slate-200 scroll-mt-2">
               <div className="flex items-center gap-2 pb-2 border-b border-slate-200 text-xs font-black text-slate-800 uppercase tracking-wider">
                 <CheckCircle2 className="w-4 h-4 text-blue-700" />
-                <span>7. Application Review Status</span>
+                <span>8. Application Review Status</span>
               </div>
 
               <div>
@@ -1092,7 +1361,7 @@ export function EditApplicationModal({ isOpen, application, onClose, onSave }) {
           <div className="px-5 sm:px-6 py-3.5 border-t border-slate-200 bg-slate-50/90 flex items-center justify-between shrink-0 shadow-xs z-10">
             <div className="flex items-center gap-2">
               <span className="font-mono text-xs font-bold text-slate-500">
-                {application.id}
+                {application.id || application.applicationId}
               </span>
               <span className="text-slate-300">•</span>
               <span className="text-[11px] font-extrabold uppercase text-slate-600">
@@ -1130,6 +1399,74 @@ export function EditApplicationModal({ isOpen, application, onClose, onSave }) {
             </div>
           </div>
         </form>
+
+        {/* 5. LIGHTBOX MODAL FOR PREVIEWING DOCUMENTS FULLSCREEN */}
+        {previewDoc && (
+          <div
+            className="fixed inset-0 z-[99999] flex items-center justify-center p-3 sm:p-5 bg-slate-950/85 backdrop-blur-md select-none"
+            onClick={() => setPreviewDoc(null)}
+          >
+            <div
+              className="bg-white rounded-2xl sm:rounded-3xl border border-slate-200 shadow-2xl p-4 sm:p-5 w-[92vw] max-w-4xl h-[82vh] max-h-[85vh] flex flex-col justify-between space-y-3 text-left overflow-hidden"
+              onClick={(e) => e.stopPropagation()}
+            >
+              <div className="flex items-center justify-between border-b border-slate-100 pb-3 shrink-0">
+                <div>
+                  <h3 className="text-base font-black text-slate-900">{previewDoc.title}</h3>
+                  <p className="text-xs text-slate-500 font-mono">
+                    Applicant: {formData.firstName} {formData.lastName} ({application.applicationId || application.id})
+                  </p>
+                </div>
+
+                <div className="flex items-center gap-2">
+                  <a
+                    href={previewDoc.url}
+                    download
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-blue-50 text-blue-700 font-bold text-xs hover:bg-blue-100 transition-colors"
+                  >
+                    <Download className="w-3.5 h-3.5" />
+                    <span>Download</span>
+                  </a>
+                  <button
+                    type="button"
+                    onClick={() => setPreviewDoc(null)}
+                    className="p-1.5 rounded-xl text-slate-400 hover:text-slate-800 hover:bg-slate-100 transition-colors cursor-pointer"
+                  >
+                    <X className="w-5 h-5" />
+                  </button>
+                </div>
+              </div>
+
+              <div className="bg-slate-900 rounded-2xl flex-1 flex items-center justify-center p-2 overflow-hidden">
+                {previewDoc.url.startsWith('data:application/pdf') || previewDoc.url.includes('.pdf') ? (
+                  <iframe
+                    src={`${previewDoc.url}#toolbar=0`}
+                    title="Document PDF"
+                    className="w-full h-full rounded-xl bg-white"
+                  />
+                ) : (
+                  <img
+                    src={previewDoc.url}
+                    alt={previewDoc.title}
+                    className="max-w-full max-h-full object-contain rounded-lg shadow-lg"
+                  />
+                )}
+              </div>
+
+              <div className="flex items-center justify-end pt-1 shrink-0">
+                <button
+                  type="button"
+                  onClick={() => setPreviewDoc(null)}
+                  className="px-5 py-2 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-800 font-bold text-xs cursor-pointer"
+                >
+                  Close Preview
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
       </div>
     </div>
   );
