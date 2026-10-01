@@ -1,5 +1,5 @@
-import React, { useState, useEffect } from 'react';
-import { Link, useNavigate, useLocation } from 'react-router-dom';
+import React, { useState } from 'react';
+import { Link, useNavigate } from 'react-router-dom';
 import {
   Lock,
   Mail,
@@ -8,30 +8,20 @@ import {
   ArrowRight,
   ShieldCheck,
   ChevronLeft,
-  User,
-  Shield,
-  CheckCircle2,
-  Building2,
 } from 'lucide-react';
 import brandLogo from '../../assets/image copy 7.png';
 
 import { useMemberAuth } from '../../hooks/useMemberAuth';
 import { useAdmin } from '../../context/AdminContext';
-import { adminLogin } from '../../auth/adminAuth';
 
 /**
- * Unified Portal Login Page (/login, /member-login, /admin-login)
- * Unified authentication for Members and Administrators of New Utkal Finance Ltd.
+ * Single Unified Portal Login Page (/login, /member-login, /admin-login)
+ * Auto-detects Member vs Administrator from credentials and routes to the appropriate dashboard.
  */
 export function MemberLogin() {
   const navigate = useNavigate();
-  const location = useLocation();
   const { login } = useMemberAuth();
   const { loginAdmin } = useAdmin();
-
-  // Determine initial tab from query param or route
-  const isInitialAdmin = location.pathname.includes('admin') || location.search.includes('role=admin');
-  const [activeTab, setActiveTab] = useState(isInitialAdmin ? 'admin' : 'member');
 
   const [identifier, setIdentifier] = useState('');
   const [password, setPassword] = useState('');
@@ -41,21 +31,13 @@ export function MemberLogin() {
   const [isLoading, setIsLoading] = useState(false);
   const [forgotModalOpen, setForgotModalOpen] = useState(false);
 
-  useEffect(() => {
-    setError('');
-  }, [activeTab]);
-
   const handleSubmit = async (e) => {
     e.preventDefault();
     setError('');
 
     const cleanIdentifier = identifier.trim();
     if (!cleanIdentifier) {
-      setError(
-        activeTab === 'admin'
-          ? 'Please enter your Admin Email or ID.'
-          : 'Please enter your Member ID, registered Email, or Admin ID.'
-      );
+      setError('Please enter your Member ID, registered Email, or Admin ID.');
       return;
     }
 
@@ -67,10 +49,10 @@ export function MemberLogin() {
     setIsLoading(true);
 
     try {
-      // 1. Direct Backend API Authentication (POST /api/auth/member-login)
+      // 1. Send live authentication request to backend API
       const res = await login(cleanIdentifier, password);
 
-      // 2. Check role returned from backend API response
+      // 2. Automatically navigate according to role returned by backend
       if (res && (res.role === 'admin' || res.user?.role === 'admin')) {
         if (loginAdmin) {
           loginAdmin(cleanIdentifier, password);
@@ -81,22 +63,10 @@ export function MemberLogin() {
       }
     } catch (err) {
       console.error('Login error:', err);
-      setError(
-        err.message ||
-          (activeTab === 'admin'
-            ? 'Invalid Admin credentials. Please check your email and password.'
-            : 'Invalid Member ID, Email Address, or Password.')
-      );
+      setError(err.message || 'Invalid Member ID, Email Address, or Password.');
     } finally {
       setIsLoading(false);
     }
-  };
-
-  const handleQuickFillAdmin = () => {
-    setActiveTab('admin');
-    setIdentifier('admin@newutkalfinance.com');
-    setPassword('Admin@123');
-    setError('');
   };
 
   return (
@@ -144,41 +114,9 @@ export function MemberLogin() {
             </div>
           </div>
 
-          {/* UNIFIED PORTAL TAB SWITCHER */}
-          <div className="grid grid-cols-2 p-1 bg-slate-100 rounded-2xl border border-slate-200 text-xs font-bold">
-            <button
-              type="button"
-              onClick={() => setActiveTab('member')}
-              className={`py-2 px-3 rounded-xl transition-all flex items-center justify-center gap-2 cursor-pointer ${
-                activeTab === 'member'
-                  ? 'bg-white text-blue-700 shadow-xs'
-                  : 'text-slate-500 hover:text-slate-800'
-              }`}
-            >
-              <User className="w-3.5 h-3.5" />
-              <span>Member Login</span>
-            </button>
-            <button
-              type="button"
-              onClick={() => setActiveTab('admin')}
-              className={`py-2 px-3 rounded-xl transition-all flex items-center justify-center gap-2 cursor-pointer ${
-                activeTab === 'admin'
-                  ? 'bg-[#0B1528] text-white shadow-xs'
-                  : 'text-slate-500 hover:text-slate-800'
-              }`}
-            >
-              <Shield className="w-3.5 h-3.5 text-amber-400" />
-              <span>Admin Login</span>
-            </button>
-          </div>
-
           {/* SUBTITLE */}
           <div className="text-center text-xs text-slate-500">
-            {activeTab === 'admin' ? (
-              <span>Enter administrator credentials to access management dashboard.</span>
-            ) : (
-              <span>Enter your Member ID or registered email to access your member account.</span>
-            )}
+            Enter your Member ID, registered Email, or Admin ID to access your portal dashboard.
           </div>
 
           {/* ERROR ALERT */}
@@ -197,7 +135,7 @@ export function MemberLogin() {
                 htmlFor="identifier"
                 className="block text-[11px] font-extrabold uppercase tracking-wider text-slate-700"
               >
-                {activeTab === 'admin' ? 'Admin Email / ID' : 'Member ID or Email Address'}
+                Member ID / Email Address / Admin ID
               </label>
               <div className="relative">
                 <input
@@ -205,11 +143,7 @@ export function MemberLogin() {
                   type="text"
                   value={identifier}
                   onChange={(e) => setIdentifier(e.target.value)}
-                  placeholder={
-                    activeTab === 'admin'
-                      ? 'admin@newutkalfinance.com'
-                      : 'e.g. NUF-M-0001 or member@example.com'
-                  }
+                  placeholder="e.g. NUF-2026-1001, member@example.com or admin ID"
                   className="w-full text-xs bg-slate-50 border border-slate-200 rounded-xl pl-10 pr-4 py-2.5 text-slate-900 placeholder:text-slate-400 focus:bg-white focus:border-blue-600 focus:outline-none transition-all"
                   required
                 />
@@ -226,15 +160,13 @@ export function MemberLogin() {
                 >
                   Password
                 </label>
-                {activeTab === 'member' && (
-                  <button
-                    type="button"
-                    onClick={() => setForgotModalOpen(true)}
-                    className="text-[11px] font-bold text-blue-700 hover:text-blue-800 hover:underline cursor-pointer"
-                  >
-                    Forgot Password?
-                  </button>
-                )}
+                <button
+                  type="button"
+                  onClick={() => setForgotModalOpen(true)}
+                  className="text-[11px] font-bold text-blue-700 hover:text-blue-800 hover:underline cursor-pointer"
+                >
+                  Forgot Password?
+                </button>
               </div>
               <div className="relative">
                 <input
@@ -242,7 +174,7 @@ export function MemberLogin() {
                   type={showPassword ? 'text' : 'password'}
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
-                  placeholder={activeTab === 'admin' ? 'Enter admin password' : 'Enter member password'}
+                  placeholder="Enter your password"
                   className="w-full text-xs bg-slate-50 border border-slate-200 rounded-xl pl-10 pr-10 py-2.5 text-slate-900 placeholder:text-slate-400 focus:bg-white focus:border-blue-600 focus:outline-none transition-all"
                   required
                 />
@@ -258,7 +190,7 @@ export function MemberLogin() {
               </div>
             </div>
 
-            {/* REMEMBER ME & HELPER */}
+            {/* REMEMBER ME & HINTS */}
             <div className="flex items-center justify-between text-xs pt-0.5">
               <label className="flex items-center gap-2 cursor-pointer text-slate-600 select-none">
                 <input
@@ -269,33 +201,19 @@ export function MemberLogin() {
                 />
                 <span className="text-[11px] font-medium">Remember this device</span>
               </label>
-
-              {activeTab === 'admin' && (
-                <button
-                  type="button"
-                  onClick={handleQuickFillAdmin}
-                  className="text-[10px] text-blue-600 hover:underline font-bold"
-                >
-                  Fill Default Admin
-                </button>
-              )}
             </div>
 
             {/* SUBMIT BUTTON */}
             <button
               type="submit"
               disabled={isLoading}
-              className={`w-full flex items-center justify-center gap-2 py-3 px-4 rounded-xl text-xs font-black text-white transition-all shadow-md cursor-pointer disabled:opacity-60 ${
-                activeTab === 'admin'
-                  ? 'bg-[#0B1528] hover:bg-slate-900 shadow-slate-900/30'
-                  : 'bg-blue-700 hover:bg-blue-800 shadow-blue-700/20'
-              }`}
+              className="w-full flex items-center justify-center gap-2 py-3 px-4 rounded-xl text-xs font-black text-white bg-blue-700 hover:bg-blue-800 shadow-md shadow-blue-700/20 active:scale-[0.99] transition-all cursor-pointer disabled:opacity-60"
             >
               {isLoading ? (
                 <span>Authenticating...</span>
               ) : (
                 <>
-                  <span>{activeTab === 'admin' ? 'Login to Admin Dashboard' : 'Login to Member Portal'}</span>
+                  <span>Sign In</span>
                   <ArrowRight className="w-4 h-4" />
                 </>
               )}
@@ -329,7 +247,7 @@ export function MemberLogin() {
               Password Assistance
             </h3>
             <p className="text-xs text-slate-600 leading-relaxed">
-              To reset your member password, please contact your registered branch administrator or call our helpline with your Member ID and registered mobile number.
+              To reset your password, please contact your registered branch administrator or call our helpline with your Member ID and registered mobile number.
             </p>
             <div className="bg-slate-50 p-3 rounded-xl border border-slate-200 text-xs space-y-1">
               <div className="text-slate-500 font-medium">Head Office Support:</div>
