@@ -2,27 +2,27 @@ import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { jsPDF } from 'jspdf';
 import html2canvas from 'html2canvas';
-import { 
-  CheckCircle2, 
-  Printer, 
+import {
+  CheckCircle2,
+  Printer,
   Download,
   Loader2,
-  Copy, 
-  Check, 
-  Users, 
-  ArrowRight, 
-  User, 
-  MapPin, 
-  Building2, 
-  UserCheck, 
-  BarChart3, 
-  FileText, 
-  PenTool, 
+  Copy,
+  Check,
+  Users,
+  ArrowRight,
+  User,
+  MapPin,
+  Building2,
+  UserCheck,
+  BarChart3,
+  FileText,
+  PenTool,
   CreditCard,
   ShieldCheck
 } from 'lucide-react';
 import brandLogo from '../../assets/image copy 7.png';
-import boardStamp from '../../assets/board-stamp.png';
+import boardStamp from '../../assets/image copy 27.png';
 
 export function SubmissionSuccess({ referenceNo, formData = {}, onReset }) {
   const navigate = useNavigate();
@@ -72,8 +72,8 @@ export function SubmissionSuccess({ referenceNo, formData = {}, onReset }) {
   const resState = address.state || 'Odisha';
   const resPincode = address.pincode || '751007';
 
-  const commAddr1 = address.sameAsResidential || !address.commAddress1 
-    ? resAddr1 
+  const commAddr1 = address.sameAsResidential || !address.commAddress1
+    ? resAddr1
     : [address.commAddress1, address.commAddress2, address.commVillageTown].filter(Boolean).join(', ');
   const commDistrict = address.sameAsResidential || !address.commDistrict ? resDistrict : address.commDistrict;
   const commState = address.sameAsResidential || !address.commState ? resState : address.commState;
@@ -187,7 +187,7 @@ export function SubmissionSuccess({ referenceNo, formData = {}, onReset }) {
                 if (ctx.fillStyle && !ctx.fillStyle.includes('oklch')) {
                   return ctx.fillStyle;
                 }
-              } catch (_) {}
+              } catch (_) { }
               return fallback || '#0f172a';
             }
             return str;
@@ -236,10 +236,10 @@ export function SubmissionSuccess({ referenceNo, formData = {}, onReset }) {
                 node.style.backgroundColor = node.classList.contains('bg-slate-900')
                   ? '#0f172a'
                   : node.classList.contains('bg-slate-200')
-                  ? '#e2e8f0'
-                  : node.classList.contains('bg-slate-100')
-                  ? '#f1f5f9'
-                  : '#ffffff';
+                    ? '#e2e8f0'
+                    : node.classList.contains('bg-slate-100')
+                      ? '#f1f5f9'
+                      : '#ffffff';
               }
               if (cs.borderColor && cs.borderColor.includes('oklch')) {
                 node.style.borderColor = '#0f172a';
@@ -755,7 +755,7 @@ export function SubmissionSuccess({ referenceNo, formData = {}, onReset }) {
               </span>
             </div>
 
-            <div className="p-5 grid grid-cols-1 md:grid-cols-2 gap-5 text-xs">
+            <div className="p-5 grid grid-cols-1 md:grid-cols-3 gap-5 text-xs">
               <div className="bg-slate-50 p-4 rounded-xl border border-slate-200/80 space-y-3">
                 <span className="text-[10px] font-extrabold text-slate-500 uppercase tracking-wider block">
                   LEGAL UNDERTAKING &amp; DECLARATION
@@ -777,7 +777,7 @@ export function SubmissionSuccess({ referenceNo, formData = {}, onReset }) {
                   CUSTOMER DIGITAL SIGNATURE RECORD
                 </span>
 
-                <div className="my-2 border-2 border-dashed border-blue-200 rounded-xl p-5 bg-white/70 flex items-center justify-center">
+                <div className="my-2 border-2 border-dashed border-blue-200 rounded-xl p-3 bg-white/70 flex items-center justify-center">
                   <span className="text-slate-400 font-mono text-[11px] italic">
                     [ Digitally Signed &amp; Affirmed electronically ]
                   </span>
@@ -786,6 +786,24 @@ export function SubmissionSuccess({ referenceNo, formData = {}, onReset }) {
                 <div className="text-[11px] text-slate-600 font-medium">
                   <span className="font-extrabold text-slate-800">{sigName}</span>
                   <span className="text-emerald-600 font-bold ml-1.5">+ Cryptographically Verified</span>
+                </div>
+              </div>
+
+              <div className="bg-slate-50 p-4 rounded-xl border border-slate-200/80 space-y-2 text-center flex flex-col items-center justify-between">
+                <span className="text-[10px] font-extrabold text-slate-500 uppercase tracking-wider block text-left w-full">
+                  AUTHORIZED SIGNATORY &amp; BOARD STAMP
+                </span>
+
+                <div className="flex items-center justify-center py-1">
+                  <img
+                    src={boardStamp}
+                    alt="Official Board Stamp"
+                    className="w-24 h-24 object-contain mix-blend-multiply select-none pointer-events-none"
+                  />
+                </div>
+
+                <div className="text-[10px] text-slate-600 font-mono font-bold">
+                  [ Official Seal &amp; Authority ]
                 </div>
               </div>
             </div>
@@ -1126,9 +1144,9 @@ export function SubmissionSuccess({ referenceNo, formData = {}, onReset }) {
                 AUTHORIZED SIGNATORY &amp; BOARD STAMP
               </span>
               <div className="relative flex flex-col items-center">
-                <img 
-                  src={boardStamp} 
-                  alt="New Utkal Finance Limited Official Board Stamp" 
+                <img
+                  src={boardStamp}
+                  alt="New Utkal Finance Limited Official Board Stamp"
                   className="w-24 h-24 object-contain mix-blend-multiply -mb-2.5 z-10 select-none pointer-events-none"
                 />
                 <div className="border-b border-slate-900 w-48 text-[9px] text-slate-600 font-mono pt-1 text-center font-bold">
