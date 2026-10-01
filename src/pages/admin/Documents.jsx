@@ -752,7 +752,8 @@ export function Documents() {
 
               {/* PREVIEW CONTAINER */}
               <div className="bg-slate-900 rounded-2xl overflow-hidden flex-1 w-full min-h-0 flex items-center justify-center relative border border-slate-800 p-0">
-                {selectedPreviewDoc.url.match(/\.(jpeg|jpg|png|gif|webp|svg)$/i) ||
+                {selectedPreviewDoc.url.startsWith('data:image') ||
+                selectedPreviewDoc.url.match(/\.(jpeg|jpg|png|gif|webp|svg)($|\?)/i) ||
                 selectedPreviewDoc.type?.toLowerCase().includes('photo') ||
                 selectedPreviewDoc.type?.toLowerCase().includes('signature') ? (
                   <div className="w-full h-full flex items-center justify-center p-3 overflow-hidden bg-slate-950">
@@ -766,13 +767,13 @@ export function Documents() {
                         e.target.parentNode.innerHTML = `
                           <div class="text-center text-slate-300 p-6 space-y-2">
                             <p class="font-bold text-sm">Unable to render image inline</p>
-                            <a href="${selectedPreviewDoc.url}" target="_blank" class="text-blue-400 underline text-xs">Click here to open file</a>
+                            <a href="${selectedPreviewDoc.url}" target="_blank" download class="text-blue-400 underline text-xs">Click here to open file</a>
                           </div>
                         `;
                       }}
                     />
                   </div>
-                ) : selectedPreviewDoc.url.match(/\.pdf$/i) ? (
+                ) : selectedPreviewDoc.url.startsWith('data:application/pdf') || selectedPreviewDoc.url.match(/\.pdf($|\?)/i) ? (
                   <object
                     data={`${selectedPreviewDoc.url}#toolbar=0&navpanes=0&scrollbar=0&view=FitH`}
                     type="application/pdf"

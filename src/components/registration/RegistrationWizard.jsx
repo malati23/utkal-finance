@@ -446,9 +446,30 @@ export function RegistrationWizard({ activeStep = 1, onQuickFillTrigger }) {
         });
       }
 
+      const fileToBase64 = (file) =>
+        new Promise((resolve) => {
+          if (!file || !(file instanceof File || file instanceof Blob)) return resolve('');
+          const reader = new FileReader();
+          reader.onload = () => resolve(reader.result || '');
+          reader.onerror = () => resolve('');
+          reader.readAsDataURL(file);
+        });
+
+      const idProofFallback = docs.idProofFile instanceof File ? await fileToBase64(docs.idProofFile) : '';
+      const addressProofFallback = docs.addressProofFile instanceof File ? await fileToBase64(docs.addressProofFile) : '';
+      const photoFallback = docs.photoFile instanceof File ? await fileToBase64(docs.photoFile) : '';
+      const signatureFallback = docs.signatureFile instanceof File ? await fileToBase64(docs.signatureFile) : '';
+      const receiptFallback = receiptRaw instanceof File ? await fileToBase64(receiptRaw) : '';
+
+      const finalIdProofUrl = uploadedFileUrls.idProof || idProofFallback || docs.idProofUrl || (typeof docs.idProofFile === 'string' ? docs.idProofFile : '');
+      const finalAddressProofUrl = uploadedFileUrls.addressProof || addressProofFallback || docs.addressProofUrl || (typeof docs.addressProofFile === 'string' ? docs.addressProofFile : '');
+      const finalPhotoUrl = uploadedFileUrls.photo || photoFallback || docs.photoUrl || (typeof docs.photoFile === 'string' ? docs.photoFile : '');
+      const finalSignatureUrl = uploadedFileUrls.signature || signatureFallback || docs.signatureUrl || (typeof docs.signatureFile === 'string' ? docs.signatureFile : '');
+
       const paymentReceiptUrl =
         uploadedFileUrls.paymentReceipt ||
         uploadedFileUrls.receiptFile ||
+        receiptFallback ||
         receiptFileObj?.dataUrl ||
         receiptFileObj?.previewUrl ||
         (typeof receiptFileObj === 'string' ? receiptFileObj : '');
@@ -482,11 +503,21 @@ export function RegistrationWizard({ activeStep = 1, onQuickFillTrigger }) {
         },
         documents: {
           idProofType: docs.idProofType || 'Aadhaar Card',
-          idProofUrl: uploadedFileUrls.idProof || (typeof docs.idProofFile === 'string' ? docs.idProofFile : (docs.idProofUrl || '')),
+          idProofUrl: finalIdProofUrl,
           addressProofType: docs.addressProofType || 'Aadhaar Card',
-          addressProofUrl: uploadedFileUrls.addressProof || (typeof docs.addressProofFile === 'string' ? docs.addressProofFile : (docs.addressProofUrl || '')),
-          photoUrl: uploadedFileUrls.photo || (typeof docs.photoFile === 'string' ? docs.photoFile : (docs.photoUrl || '')),
-          signatureUrl: uploadedFileUrls.signature || (typeof docs.signatureFile === 'string' ? docs.signatureFile : (docs.signatureUrl || '')),
+          addressProofUrl: finalAddressProofUrl,
+          photoUrl: finalPhotoUrl,
+          signatureUrl: finalSignatureUrl,
+          paymentReceiptUrl: paymentReceiptUrl,
+          additionalDocuments: additionalDocs,
+        },
+        documentDetails: {
+          idProofType: docs.idProofType || 'Aadhaar Card',
+          idProofUrl: finalIdProofUrl,
+          addressProofType: docs.addressProofType || 'Aadhaar Card',
+          addressProofUrl: finalAddressProofUrl,
+          photoUrl: finalPhotoUrl,
+          signatureUrl: finalSignatureUrl,
           paymentReceiptUrl: paymentReceiptUrl,
           additionalDocuments: additionalDocs,
         },
