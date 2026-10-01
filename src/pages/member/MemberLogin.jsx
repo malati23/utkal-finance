@@ -67,22 +67,11 @@ export function MemberLogin() {
     setIsLoading(true);
 
     try {
-      // 1. Check if credentials match Administrator
-      const adminAuthRes = adminLogin(cleanIdentifier, password);
-      if (adminAuthRes && adminAuthRes.success) {
-        if (loginAdmin) {
-          loginAdmin(cleanIdentifier, password);
-        }
-        navigate('/admin-dashboard');
-        return;
-      }
-
-      // 2. Member Portal Authentication API
+      // 1. Direct Backend API Authentication (POST /api/auth/member-login)
       const res = await login(cleanIdentifier, password);
 
-      // Check role returned from backend API
+      // 2. Check role returned from backend API response
       if (res && (res.role === 'admin' || res.user?.role === 'admin')) {
-        adminLogin(cleanIdentifier, password);
         if (loginAdmin) {
           loginAdmin(cleanIdentifier, password);
         }
@@ -91,16 +80,6 @@ export function MemberLogin() {
         navigate('/member-dashboard');
       }
     } catch (err) {
-      // Fallback check for admin in case backend is offline / prototype credentials
-      const adminFallback = adminLogin(cleanIdentifier, password);
-      if (adminFallback && adminFallback.success) {
-        if (loginAdmin) {
-          loginAdmin(cleanIdentifier, password);
-        }
-        navigate('/admin-dashboard');
-        return;
-      }
-
       console.error('Login error:', err);
       setError(
         err.message ||
