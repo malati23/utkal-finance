@@ -16,7 +16,6 @@ import { Login } from '../pages/Login';
 import { Register } from '../pages/Register';
 
 // Admin Imports
-import { AdminLogin } from '../pages/admin/AdminLogin';
 import { AdminDashboardLayout } from '../pages/admin/AdminDashboardLayout';
 import { ProtectedRoute } from '../components/auth/ProtectedRoute';
 import { AdminDashboard } from '../pages/admin/AdminDashboard';
@@ -36,7 +35,6 @@ import { AdminProfile } from '../pages/admin/AdminProfile';
 import { MyApplication } from '../pages/MyApplication';
 
 // Member Imports
-import { MemberLogin } from '../pages/member/MemberLogin';
 import { MemberDashboardLayout } from '../pages/member/MemberDashboardLayout';
 import { MemberDashboard } from '../pages/member/MemberDashboard';
 import { MemberProfile } from '../pages/member/MemberProfile';
@@ -79,14 +77,15 @@ export function AppRoutes() {
       {/* Standalone Pages */}
       <Route path="brochure" element={<Brochure />} />
 
-      {/* Unified Login Route */}
-      <Route path="login" element={<MemberLogin />} />
+      {/* Single Unified Role-Based Login Route */}
+      <Route path="login" element={<Login />} />
+      <Route path="member-login" element={<Navigate to="/login" replace />} />
+      <Route path="admin-login" element={<Navigate to="/login" replace />} />
 
       {/* Statutory Membership Application Portal */}
       <Route path="register" element={<Register />} />
 
       {/* Member Portal Routes */}
-      <Route path="member-login" element={<MemberLogin />} />
       <Route path="member" element={<Navigate to="/member-dashboard" replace />} />
       <Route path="member-dashboard" element={<MemberDashboardLayout />}>
         <Route index element={<MemberDashboard />} />
@@ -100,7 +99,6 @@ export function AppRoutes() {
       </Route>
 
       {/* Admin Portal Routes */}
-      <Route path="admin-login" element={<AdminLogin />} />
       <Route path="admin" element={<Navigate to="/admin-dashboard" replace />} />
       <Route path="admin/deposits" element={<Navigate to="/admin-dashboard/deposits" replace />} />
       <Route path="admin/transactions" element={<Navigate to="/admin-dashboard/transactions" replace />} />
