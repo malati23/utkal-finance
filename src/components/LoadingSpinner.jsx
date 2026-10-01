@@ -17,7 +17,7 @@ export function LoadingSpinner({ size = 'md', className = '' }) {
     </div>
   );
 }
-
+// skeleton card
 export function SkeletonCard() {
   return (
     <div className="bg-white rounded-2xl border border-slate-200/80 p-6 shadow-xs animate-pulse">
