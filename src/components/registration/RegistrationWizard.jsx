@@ -480,7 +480,7 @@ export function RegistrationWizard({ activeStep = 1, onQuickFillTrigger }) {
       }
     } catch (err) {
       console.error('Submission error:', err);
-      setSubmitError('Unable to submit application. Please check your server connection and try again.');
+      setSubmitError(err.message || 'Unable to submit application. Please check your server connection and try again.');
     } finally {
       setIsSubmitting(false);
     }

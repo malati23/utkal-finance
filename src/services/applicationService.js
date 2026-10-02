@@ -14,7 +14,16 @@ export async function createApplicationApi(applicationData) {
     body: JSON.stringify(applicationData),
   });
 
-  const data = await response.json();
+  let data;
+  try {
+    data = await response.json();
+  } catch (e) {
+    if (response.status === 413) {
+      throw new Error('Uploaded documents/photos are too large. Please upload smaller images.');
+    }
+    throw new Error(`Server returned ${response.status} ${response.statusText}`);
+  }
+
   if (!response.ok || !data.success) {
     throw new Error(data.message || 'Failed to submit application');
   }
