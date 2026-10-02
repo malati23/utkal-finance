@@ -14,6 +14,8 @@ import {
   Clock,
   XCircle,
   FileText,
+  FileCheck,
+  FolderOpen,
   Upload,
   Eye,
   Trash2,
@@ -87,6 +89,9 @@ export function EditApplicationModal({ isOpen, application, onClose, onSave }) {
     addressProofUrl: '',
     photoUrl: '',
     signatureUrl: '',
+    doc3_eduCert: '',
+    doc4_birthCert: '',
+    doc5_utility: '',
     paymentReceiptUrl: '',
     additionalDocuments: [],
 
@@ -97,11 +102,11 @@ export function EditApplicationModal({ isOpen, application, onClose, onSave }) {
   // Load existing application data when modal opens or application changes
   useEffect(() => {
     if (application) {
-      const p = application.personalDetails || {};
-      const c = application.contactDetails || {};
-      const a = application.addressDetails || {};
-      const n = application.nomineeDetails || {};
-      const m = application.membershipDetails || {};
+      const p = application.personalDetails || application.personal || {};
+      const c = application.contactDetails || application.account || {};
+      const a = application.addressDetails || application.address || {};
+      const n = application.nomineeDetails || application.nominee || {};
+      const m = application.membershipDetails || application.shares || {};
       const d = application.documentDetails || application.documents || {};
       const pay = application.paymentDetails || application.payment || {};
 
@@ -122,13 +127,121 @@ export function EditApplicationModal({ isOpen, application, onClose, onSave }) {
         }
       }
 
+      const idProofVal =
+        d.idProofUrl ||
+        d.idProof ||
+        d.doc2_govId ||
+        application.idProofUrl ||
+        application.idProof ||
+        application.doc2_govId ||
+        (typeof d.idProofFile === 'string' ? d.idProofFile : '') ||
+        (typeof application.idProofFile === 'string' ? application.idProofFile : '') ||
+        (typeof d.idProofFile?.previewUrl === 'string' ? d.idProofFile.previewUrl : '') ||
+        (typeof application.idProofFile?.previewUrl === 'string' ? application.idProofFile.previewUrl : '') ||
+        (typeof d.idProofFile?.dataUrl === 'string' ? d.idProofFile.dataUrl : '') ||
+        (typeof application.idProofFile?.dataUrl === 'string' ? application.idProofFile.dataUrl : '') ||
+        '';
+
+      const addrProofVal =
+        d.addressProofUrl ||
+        d.addressProof ||
+        application.addressProofUrl ||
+        application.addressProof ||
+        (typeof d.addressProofFile === 'string' ? d.addressProofFile : '') ||
+        (typeof application.addressProofFile === 'string' ? application.addressProofFile : '') ||
+        (typeof d.addressProofFile?.previewUrl === 'string' ? d.addressProofFile.previewUrl : '') ||
+        (typeof application.addressProofFile?.previewUrl === 'string' ? application.addressProofFile.previewUrl : '') ||
+        (typeof d.addressProofFile?.dataUrl === 'string' ? d.addressProofFile.dataUrl : '') ||
+        (typeof application.addressProofFile?.dataUrl === 'string' ? application.addressProofFile.dataUrl : '') ||
+        '';
+
+      const photoVal =
+        d.photoUrl ||
+        d.photo ||
+        d.doc1_photo ||
+        application.photoUrl ||
+        application.photo ||
+        application.doc1_photo ||
+        (typeof d.photoFile === 'string' ? d.photoFile : '') ||
+        (typeof application.photoFile === 'string' ? application.photoFile : '') ||
+        (typeof d.photoFile?.previewUrl === 'string' ? d.photoFile.previewUrl : '') ||
+        (typeof application.photoFile?.previewUrl === 'string' ? application.photoFile.previewUrl : '') ||
+        (typeof d.photoFile?.dataUrl === 'string' ? d.photoFile.dataUrl : '') ||
+        (typeof application.photoFile?.dataUrl === 'string' ? application.photoFile.dataUrl : '') ||
+        '';
+
+      const sigVal =
+        d.signatureUrl ||
+        d.signature ||
+        application.signatureUrl ||
+        application.signature ||
+        (typeof d.signatureFile === 'string' ? d.signatureFile : '') ||
+        (typeof application.signatureFile === 'string' ? application.signatureFile : '') ||
+        (typeof d.signatureFile?.previewUrl === 'string' ? d.signatureFile.previewUrl : '') ||
+        (typeof application.signatureFile?.previewUrl === 'string' ? application.signatureFile.previewUrl : '') ||
+        (typeof d.signatureFile?.dataUrl === 'string' ? d.signatureFile.dataUrl : '') ||
+        (typeof application.signatureFile?.dataUrl === 'string' ? application.signatureFile.dataUrl : '') ||
+        '';
+
+      const doc3Val =
+        d.doc3_eduCert ||
+        application.doc3_eduCert ||
+        (typeof d.doc3_eduCert === 'string' ? d.doc3_eduCert : '') ||
+        (typeof application.doc3_eduCert === 'string' ? application.doc3_eduCert : '') ||
+        (Array.isArray(d.additionalDocuments)
+          ? d.additionalDocuments.find((x) => x.documentType === 'Educational Certificate')?.documentUrl
+          : '') ||
+        (Array.isArray(application.additionalDocuments)
+          ? application.additionalDocuments.find((x) => x.documentType === 'Educational Certificate')?.documentUrl
+          : '') ||
+        '';
+
+      const doc4Val =
+        d.doc4_birthCert ||
+        application.doc4_birthCert ||
+        (typeof d.doc4_birthCert === 'string' ? d.doc4_birthCert : '') ||
+        (typeof application.doc4_birthCert === 'string' ? application.doc4_birthCert : '') ||
+        (Array.isArray(d.additionalDocuments)
+          ? d.additionalDocuments.find((x) => x.documentType === 'Birth / PAN Certificate' || x.documentType === 'Birth Certificate')?.documentUrl
+          : '') ||
+        (Array.isArray(application.additionalDocuments)
+          ? application.additionalDocuments.find((x) => x.documentType === 'Birth / PAN Certificate' || x.documentType === 'Birth Certificate')?.documentUrl
+          : '') ||
+        '';
+
+      const doc5Val =
+        d.doc5_utility ||
+        application.doc5_utility ||
+        (typeof d.doc5_utility === 'string' ? d.doc5_utility : '') ||
+        (typeof application.doc5_utility === 'string' ? application.doc5_utility : '') ||
+        (Array.isArray(d.additionalDocuments)
+          ? d.additionalDocuments.find((x) => x.documentType === 'Financial / Utility Document' || x.documentType === 'Utility Bill')?.documentUrl
+          : '') ||
+        (Array.isArray(application.additionalDocuments)
+          ? application.additionalDocuments.find((x) => x.documentType === 'Financial / Utility Document' || x.documentType === 'Utility Bill')?.documentUrl
+          : '') ||
+        '';
+
+      const receiptVal =
+        pay.receiptUrl ||
+        d.paymentReceiptUrl ||
+        application.paymentReceiptUrl ||
+        application.payment?.receiptUrl ||
+        (Array.isArray(d.additionalDocuments)
+          ? d.additionalDocuments.find((x) => x.documentType === 'Payment Receipt')?.documentUrl
+          : '') ||
+        (Array.isArray(application.additionalDocuments)
+          ? application.additionalDocuments.find((x) => x.documentType === 'Payment Receipt')?.documentUrl
+          : '') ||
+        '';
+
       setFormData({
         title: initialTitle,
         firstName: initialFirstName,
         middleName: initialMiddleName,
         lastName: initialLastName,
         relationshipPrefix: application.relationshipPrefix || p.relationshipPrefix || 'S/o.',
-        fatherLegalName: application.fatherLegalName || p.fatherLegalName || '',
+        fatherLegalName: application.fatherLegalName || p.fatherLegalName || p.guardianName || '',
         dob: application.dob || p.dob || '',
         age: application.age || p.age || '',
         gender: application.gender || p.gender || 'Male',
@@ -137,11 +250,11 @@ export function EditApplicationModal({ isOpen, application, onClose, onSave }) {
         category: application.category || p.category || 'General',
         education: application.education || p.education || 'Graduate / P.G.',
         occupation: application.occupation || p.occupation || 'Business',
-        pan: application.pan || p.pan || '',
+        pan: application.pan || p.pan || d.docRefNo || '',
 
-        mobile: application.mobile || c.mobile || '',
-        altMobile: application.altMobile || c.altMobile || '',
-        email: application.email || c.email || '',
+        mobile: application.mobile || c.mobile || a.mobile || '',
+        altMobile: application.altMobile || c.altMobile || c.alternateMobile || a.alternateMobile || '',
+        email: application.email || c.email || a.email || '',
 
         address1: application.address1 || a.address1 || '',
         villageTown: application.villageTown || a.villageTown || '',
@@ -149,11 +262,11 @@ export function EditApplicationModal({ isOpen, application, onClose, onSave }) {
         state: application.state || a.state || 'Odisha',
         pincode: application.pincode || a.pincode || '',
 
-        branch: application.branch || m.branch || 'Bhubaneswar HQ (Nayapalli, IRC Village)',
-        introducer: application.introducer || m.introducer || '',
-        empId: application.empId || m.empId || '',
+        branch: application.branch || m.branch || c.registeredBranch || 'Bhubaneswar HQ (Nayapalli, IRC Village)',
+        introducer: application.introducer || m.introducer || c.introducer || '',
+        empId: application.empId || m.empId || c.empId || '',
 
-        nomineeName: application.nomineeName || n.fullName || '',
+        nomineeName: application.nomineeName || n.fullName || n.nomineeName || n.name || '',
         nomineeRel: application.nomineeRel || n.relationship || 'Spouse',
         nomineeDob: application.nomineeDob || n.dob || '',
         nomineeMobile: application.nomineeMobile || n.mobile || '',
@@ -165,13 +278,16 @@ export function EditApplicationModal({ isOpen, application, onClose, onSave }) {
 
         // Documents
         idProofType: d.idProofType || application.idProofType || 'Aadhaar Card',
-        idProofUrl: d.idProofUrl || application.idProofUrl || '',
+        idProofUrl: idProofVal,
         addressProofType: d.addressProofType || application.addressProofType || 'Aadhaar Card',
-        addressProofUrl: d.addressProofUrl || application.addressProofUrl || '',
-        photoUrl: d.photoUrl || application.photoUrl || '',
-        signatureUrl: d.signatureUrl || application.signatureUrl || '',
-        paymentReceiptUrl: pay.receiptUrl || d.paymentReceiptUrl || application.paymentReceiptUrl || '',
-        additionalDocuments: Array.isArray(d.additionalDocuments) ? [...d.additionalDocuments] : [],
+        addressProofUrl: addrProofVal,
+        photoUrl: photoVal,
+        signatureUrl: sigVal,
+        doc3_eduCert: doc3Val,
+        doc4_birthCert: doc4Val,
+        doc5_utility: doc5Val,
+        paymentReceiptUrl: receiptVal,
+        additionalDocuments: Array.isArray(d.additionalDocuments) ? [...d.additionalDocuments] : (Array.isArray(application.additionalDocuments) ? [...application.additionalDocuments] : []),
 
         status: (application.status || 'pending').toLowerCase(),
       });
@@ -274,6 +390,40 @@ export function EditApplicationModal({ isOpen, application, onClose, onSave }) {
         Number(formData.numberOfShares) * Number(formData.shareValue) +
         Number(formData.processingFee);
 
+      const extraDocs = Array.isArray(formData.additionalDocuments) ? [...formData.additionalDocuments] : [];
+      if (formData.doc3_eduCert && !extraDocs.some((d) => d.documentType === 'Educational Certificate' || d.documentUrl === formData.doc3_eduCert)) {
+        extraDocs.push({
+          documentType: 'Educational Certificate',
+          documentName: 'Educational Degree / Certificate',
+          documentUrl: formData.doc3_eduCert,
+          uploadedAt: new Date(),
+        });
+      }
+      if (formData.doc4_birthCert && !extraDocs.some((d) => d.documentType === 'Birth / PAN Certificate' || d.documentUrl === formData.doc4_birthCert)) {
+        extraDocs.push({
+          documentType: 'Birth / PAN Certificate',
+          documentName: 'Birth / PAN / Identity Certificate',
+          documentUrl: formData.doc4_birthCert,
+          uploadedAt: new Date(),
+        });
+      }
+      if (formData.doc5_utility && !extraDocs.some((d) => d.documentType === 'Financial / Utility Document' || d.documentUrl === formData.doc5_utility)) {
+        extraDocs.push({
+          documentType: 'Financial / Utility Document',
+          documentName: 'Electricity Bill / Bank Passbook',
+          documentUrl: formData.doc5_utility,
+          uploadedAt: new Date(),
+        });
+      }
+      if (formData.paymentReceiptUrl && !extraDocs.some((d) => d.documentType === 'Payment Receipt' || d.documentUrl === formData.paymentReceiptUrl)) {
+        extraDocs.push({
+          documentType: 'Payment Receipt',
+          documentName: '₹200 Statutory Membership Payment Screenshot',
+          documentUrl: formData.paymentReceiptUrl,
+          uploadedAt: new Date(),
+        });
+      }
+
       const documentPayload = {
         idProofType: formData.idProofType,
         idProofUrl: formData.idProofUrl,
@@ -281,8 +431,11 @@ export function EditApplicationModal({ isOpen, application, onClose, onSave }) {
         addressProofUrl: formData.addressProofUrl,
         photoUrl: formData.photoUrl,
         signatureUrl: formData.signatureUrl,
+        doc3_eduCert: formData.doc3_eduCert,
+        doc4_birthCert: formData.doc4_birthCert,
+        doc5_utility: formData.doc5_utility,
         paymentReceiptUrl: formData.paymentReceiptUrl,
-        additionalDocuments: formData.additionalDocuments,
+        additionalDocuments: extraDocs,
       };
 
       const payload = {
@@ -1244,7 +1397,7 @@ export function EditApplicationModal({ isOpen, application, onClose, onSave }) {
               <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
                 {/* 1. Identity Proof */}
                 {renderDocumentCard(
-                  'Identity Proof (Govt ID)',
+                  '1. Primary Govt ID Proof',
                   'idProofType',
                   'idProofUrl',
                   ['Aadhaar Card', 'PAN Card', 'Voter ID Card', 'Passport', 'Driving License'],
@@ -1253,16 +1406,16 @@ export function EditApplicationModal({ isOpen, application, onClose, onSave }) {
 
                 {/* 2. Address Proof */}
                 {renderDocumentCard(
-                  'Address Proof Document',
+                  '2. Address Proof Document',
                   'addressProofType',
                   'addressProofUrl',
-                  ['Aadhaar Card', 'Electricity / Utility Bill', 'Bank Passbook / Statement', 'Ration Card', 'Rent Agreement'],
+                  ['Aadhaar Card', 'Electricity / Utility Bill', 'Bank Passbook / Statement', 'Ration Card', 'Rent Agreement', 'Passport'],
                   <MapPin className="w-4 h-4" />
                 )}
 
                 {/* 3. Applicant Photograph */}
                 {renderDocumentCard(
-                  'Applicant Photograph',
+                  '3. Applicant Photograph',
                   null,
                   'photoUrl',
                   null,
@@ -1271,22 +1424,94 @@ export function EditApplicationModal({ isOpen, application, onClose, onSave }) {
 
                 {/* 4. Signature Specimen */}
                 {renderDocumentCard(
-                  'Signature Specimen',
+                  '4. Signature Specimen',
                   null,
                   'signatureUrl',
                   null,
                   <PenTool className="w-4 h-4" />
                 )}
 
-                {/* 5. Payment Receipt Screenshot */}
+                {/* 5. Educational Certificate */}
                 {renderDocumentCard(
-                  'Payment Receipt Proof',
+                  '5. Educational Certificate',
+                  null,
+                  'doc3_eduCert',
+                  null,
+                  <FileText className="w-4 h-4" />
+                )}
+
+                {/* 6. Birth / PAN Certificate */}
+                {renderDocumentCard(
+                  '6. Birth / PAN Certificate',
+                  null,
+                  'doc4_birthCert',
+                  null,
+                  <FileCheck className="w-4 h-4" />
+                )}
+
+                {/* 7. Utility Bill / Passbook */}
+                {renderDocumentCard(
+                  '7. Electricity / Utility Bill',
+                  null,
+                  'doc5_utility',
+                  null,
+                  <Building2 className="w-4 h-4" />
+                )}
+
+                {/* 8. Payment Receipt Screenshot */}
+                {renderDocumentCard(
+                  '8. Payment Receipt (₹200)',
                   null,
                   'paymentReceiptUrl',
                   null,
                   <CreditCard className="w-4 h-4" />
                 )}
               </div>
+
+              {/* ADDITIONAL SUPPORTING ATTACHMENTS LIST IF PRESENT */}
+              {Array.isArray(formData.additionalDocuments) && formData.additionalDocuments.length > 0 && (
+                <div className="pt-3 border-t border-slate-200/80 space-y-2.5">
+                  <div className="text-[11px] font-extrabold text-slate-700 uppercase tracking-wider flex items-center gap-1.5">
+                    <FolderOpen className="w-3.5 h-3.5 text-blue-700" />
+                    <span>Other Supporting Uploaded Files ({formData.additionalDocuments.length})</span>
+                  </div>
+                  <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
+                    {formData.additionalDocuments.map((docItem, idx) => {
+                      const rawUrl = docItem.documentUrl;
+                      const fullUrl = rawUrl ? getBackendAssetUrl(rawUrl) : '';
+                      return (
+                        <div key={idx} className="bg-white rounded-xl border border-slate-200 p-3 flex items-center justify-between gap-2 shadow-2xs">
+                          <div className="min-w-0">
+                            <span className="text-xs font-bold text-slate-800 block truncate">{docItem.documentName || docItem.documentType || `Attachment #${idx + 1}`}</span>
+                            <span className="text-[10px] text-slate-400 block truncate">{docItem.documentType || 'Supporting Document'}</span>
+                          </div>
+                          {fullUrl && (
+                            <div className="flex items-center gap-1 shrink-0">
+                              <button
+                                type="button"
+                                onClick={() => setPreviewDoc({ title: docItem.documentName || 'Attachment', url: fullUrl, type: docItem.documentType })}
+                                className="p-1.5 rounded-lg bg-blue-50 text-blue-700 hover:bg-blue-100 transition-colors"
+                                title="View document"
+                              >
+                                <Eye className="w-3.5 h-3.5" />
+                              </button>
+                              <a
+                                href={fullUrl}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                className="p-1.5 rounded-lg bg-slate-100 text-slate-700 hover:bg-slate-200 transition-colors"
+                                title="Open original file"
+                              >
+                                <ExternalLink className="w-3.5 h-3.5" />
+                              </a>
+                            </div>
+                          )}
+                        </div>
+                      );
+                    })}
+                  </div>
+                </div>
+              )}
             </div>
 
             {/* SECTION 8: APPLICATION STATUS */}

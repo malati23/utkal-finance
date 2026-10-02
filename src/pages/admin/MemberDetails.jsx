@@ -531,54 +531,48 @@ export function MemberDetails() {
 
               {/* PREVIEW CONTAINER */}
               <div className="bg-slate-900 rounded-2xl overflow-hidden flex-1 w-full min-h-0 flex items-center justify-center relative border border-slate-800 p-0">
-                {selectedPreviewDoc.url.match(/\.(jpeg|jpg|png|gif|webp|svg)$/i) ||
-                selectedPreviewDoc.type?.toLowerCase().includes('photo') ||
-                selectedPreviewDoc.type?.toLowerCase().includes('signature') ? (
-                  <div className="w-full h-full flex items-center justify-center p-3 overflow-hidden bg-slate-950">
-                    <img
-                      src={selectedPreviewDoc.url}
-                      alt={selectedPreviewDoc.title}
-                      className="max-w-full max-h-full object-contain rounded shadow-lg"
-                      onError={(e) => {
-                        e.target.onerror = null;
-                        e.target.style.display = 'none';
-                        e.target.parentNode.innerHTML = `
-                          <div class="text-center text-slate-300 p-6 space-y-2">
-                            <p class="font-bold text-sm">Unable to render image inline</p>
-                            <a href="${selectedPreviewDoc.url}" target="_blank" class="text-blue-400 underline text-xs">Click here to open file</a>
-                          </div>
-                        `;
-                      }}
-                    />
-                  </div>
-                ) : selectedPreviewDoc.url.match(/\.pdf$/i) ? (
-                  <object
-                    data={`${selectedPreviewDoc.url}#toolbar=0&navpanes=0&scrollbar=0&view=FitH`}
-                    type="application/pdf"
-                    className="w-full h-full border-0 rounded-2xl bg-white"
-                  >
-                    <iframe
-                      src={`${selectedPreviewDoc.url}#toolbar=0&navpanes=0&scrollbar=0&view=FitH`}
-                      title="PDF Document Preview"
-                      className="w-full h-full border-0 rounded-2xl bg-white"
-                    />
-                  </object>
-                ) : (
-                  <div className="text-center text-white space-y-3 p-8">
-                    <FileText className="w-14 h-14 text-blue-400 mx-auto" />
-                    <p className="font-bold text-sm">{selectedPreviewDoc.title}</p>
-                    <p className="text-xs text-slate-400 font-mono">{selectedPreviewDoc.url}</p>
-                    <a
-                      href={selectedPreviewDoc.url}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl bg-blue-600 hover:bg-blue-700 text-white font-bold text-xs transition-colors"
-                    >
-                      <span>Open / Download File</span>
-                      <ExternalLink className="w-3.5 h-3.5" />
-                    </a>
-                  </div>
-                )}
+                {(() => {
+                  const url = selectedPreviewDoc.url;
+                  const clean = url.toLowerCase();
+                  const isPdf = clean.startsWith('data:application/pdf') || /\.pdf($|\?)/i.test(clean) || selectedPreviewDoc.type?.toLowerCase().includes('pdf');
+
+                  if (isPdf) {
+                    return (
+                      <object
+                        data={`${url}#toolbar=1&navpanes=0&scrollbar=1&view=FitH`}
+                        type="application/pdf"
+                        className="w-full h-full border-0 rounded-2xl bg-white"
+                      >
+                        <iframe
+                          src={`${url}#toolbar=1&navpanes=0&scrollbar=1&view=FitH`}
+                          title="PDF Document Preview"
+                          className="w-full h-full border-0 rounded-2xl bg-white"
+                        />
+                      </object>
+                    );
+                  }
+
+                  return (
+                    <div className="w-full h-full flex items-center justify-center p-3 overflow-hidden bg-slate-950">
+                      <img
+                        src={url}
+                        alt={selectedPreviewDoc.title}
+                        className="max-w-full max-h-full object-contain rounded shadow-lg"
+                        onError={(e) => {
+                          e.currentTarget.style.display = 'none';
+                          if (e.currentTarget.nextSibling) {
+                            e.currentTarget.nextSibling.style.display = 'flex';
+                          }
+                        }}
+                      />
+                      <div className="hidden flex-col items-center justify-center text-center text-slate-300 p-6 space-y-2 bg-slate-900 rounded-2xl border border-slate-800">
+                        <FileText className="w-12 h-12 text-blue-400 mx-auto" />
+                        <p className="font-bold text-sm">Unable to render inline</p>
+                        <a href={url} target="_blank" rel="noopener noreferrer" download className="text-blue-400 underline text-xs">Click here to open file</a>
+                      </div>
+                    </div>
+                  );
+                })()}
               </div>
 
               {/* MODAL FOOTER */}

@@ -35,7 +35,6 @@ export function StepAddress({ data = {}, errors = {}, onChange }) {
               onChange={(e) => onChange('mobile', e.target.value)}
               placeholder="10-digit Indian mobile number"
               icon={Phone}
-              required
               error={errors.mobile}
               helperText="For official communications & OTP"
             />
@@ -48,7 +47,6 @@ export function StepAddress({ data = {}, errors = {}, onChange }) {
               onChange={(e) => onChange('email', e.target.value)}
               placeholder="you@domain.com"
               icon={Mail}
-              required
               error={errors.email}
               helperText="For digital statements & notices"
             />
@@ -71,7 +69,6 @@ export function StepAddress({ data = {}, errors = {}, onChange }) {
               placeholder="House/Plot No., Building Name, Street"
               className="sm:col-span-2"
               icon={MapPin}
-              required
               error={errors.address1}
             />
 
@@ -98,7 +95,6 @@ export function StepAddress({ data = {}, errors = {}, onChange }) {
               value={data.district}
               onChange={(e) => onChange('district', e.target.value)}
               placeholder="e.g. Khurda"
-              required
               error={errors.district}
             />
 
@@ -108,7 +104,6 @@ export function StepAddress({ data = {}, errors = {}, onChange }) {
               value={data.state || 'Odisha'}
               onChange={(e) => onChange('state', e.target.value)}
               options={STATE_OPTIONS}
-              required
               error={errors.state}
             />
 
@@ -118,7 +113,6 @@ export function StepAddress({ data = {}, errors = {}, onChange }) {
               value={data.pincode}
               onChange={(e) => onChange('pincode', e.target.value)}
               placeholder="6-digit Indian PIN (e.g. 751015)"
-              required
               error={errors.pincode}
             />
 
@@ -129,7 +123,6 @@ export function StepAddress({ data = {}, errors = {}, onChange }) {
               onChange={(e) => onChange('country', e.target.value)}
               icon={Globe}
               readOnly
-              required
             />
           </div>
         </div>
@@ -163,7 +156,6 @@ export function StepAddress({ data = {}, errors = {}, onChange }) {
                 onChange={(e) => onChange('commAddress1', e.target.value)}
                 placeholder="House/Plot No., Street"
                 className="sm:col-span-2"
-                required
                 error={errors.commAddress1}
               />
 
@@ -187,7 +179,6 @@ export function StepAddress({ data = {}, errors = {}, onChange }) {
                 name="commDistrict"
                 value={data.commDistrict}
                 onChange={(e) => onChange('commDistrict', e.target.value)}
-                required
                 error={errors.commDistrict}
               />
 
@@ -197,7 +188,6 @@ export function StepAddress({ data = {}, errors = {}, onChange }) {
                 value={data.commState || 'Odisha'}
                 onChange={(e) => onChange('commState', e.target.value)}
                 options={STATE_OPTIONS}
-                required
               />
 
               <FormInput
@@ -206,7 +196,6 @@ export function StepAddress({ data = {}, errors = {}, onChange }) {
                 value={data.commPincode}
                 onChange={(e) => onChange('commPincode', e.target.value)}
                 placeholder="6-digit PIN"
-                required
                 error={errors.commPincode}
               />
             </div>

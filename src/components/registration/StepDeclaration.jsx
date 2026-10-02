@@ -29,7 +29,7 @@ export function StepDeclaration({ data = {}, errors = {}, onChange }) {
         <div className="space-y-3 bg-slate-50 border border-slate-200 rounded-2xl p-4 sm:p-5">
           <div className="text-xs font-bold text-slate-800 uppercase tracking-wider flex items-center gap-1.5 mb-2">
             <CheckSquare className="w-4 h-4 text-blue-700" />
-            <span>Mandatory Declarations (Check all to proceed)</span>
+            <span>Declarations & Undertakings</span>
           </div>
 
           {/* Checkbox 1 */}
@@ -41,7 +41,7 @@ export function StepDeclaration({ data = {}, errors = {}, onChange }) {
               className="mt-0.5 w-4 h-4 rounded text-blue-700 focus:ring-blue-600 border-slate-300 shrink-0"
             />
             <span className="text-xs font-semibold text-slate-800 leading-normal">
-              I confirm that the information provided in this application is true and correct to the best of my knowledge. <span className="text-rose-500 font-bold">*</span>
+              I confirm that the information provided in this application is true and correct to the best of my knowledge.
             </span>
           </label>
 
@@ -54,7 +54,7 @@ export function StepDeclaration({ data = {}, errors = {}, onChange }) {
               className="mt-0.5 w-4 h-4 rounded text-blue-700 focus:ring-blue-600 border-slate-300 shrink-0"
             />
             <span className="text-xs font-semibold text-slate-800 leading-normal">
-              I agree to the membership terms, conditions, and statutory rules of New Utkal Finance Limited. <span className="text-rose-500 font-bold">*</span>
+              I agree to the membership terms, conditions, and statutory rules of New Utkal Finance Limited.
             </span>
           </label>
 
@@ -67,7 +67,7 @@ export function StepDeclaration({ data = {}, errors = {}, onChange }) {
               className="mt-0.5 w-4 h-4 rounded text-blue-700 focus:ring-blue-600 border-slate-300 shrink-0"
             />
             <span className="text-xs font-semibold text-slate-800 leading-normal">
-              I consent to the electronic processing and statutory verification of my application information. <span className="text-rose-500 font-bold">*</span>
+              I consent to the electronic processing and statutory verification of my application information.
             </span>
           </label>
 
@@ -83,7 +83,6 @@ export function StepDeclaration({ data = {}, errors = {}, onChange }) {
             onChange={(e) => onChange('signatureName', e.target.value)}
             placeholder="Type your full legal name as digital signature"
             icon={PenTool}
-            required
             error={errors.signatureName}
           />
 
@@ -95,7 +94,6 @@ export function StepDeclaration({ data = {}, errors = {}, onChange }) {
             onChange={(e) => onChange('declarationDate', e.target.value)}
             icon={Calendar}
             readOnly
-            required
           />
         </div>
       </div>

@@ -27,7 +27,6 @@ export function StepWitness({ data = {}, errors = {}, onChange }) {
               onChange={(e) => onChange('witness1Name', e.target.value)}
               placeholder="e.g. Subhasish Dash"
               icon={UserCheck}
-              required
               error={errors.witness1Name}
             />
 
@@ -39,7 +38,6 @@ export function StepWitness({ data = {}, errors = {}, onChange }) {
               onChange={(e) => onChange('witness1Mobile', e.target.value)}
               placeholder="10-digit mobile"
               icon={Phone}
-              required
               error={errors.witness1Mobile}
             />
 
@@ -60,7 +58,6 @@ export function StepWitness({ data = {}, errors = {}, onChange }) {
               placeholder="Full residence address"
               className="sm:col-span-2"
               icon={MapPin}
-              required
               error={errors.witness1Address}
             />
 
@@ -92,7 +89,6 @@ export function StepWitness({ data = {}, errors = {}, onChange }) {
               onChange={(e) => onChange('witness2Name', e.target.value)}
               placeholder="e.g. Manas Ranjan Sahoo"
               icon={UserCheck}
-              required
               error={errors.witness2Name}
             />
 
@@ -104,7 +100,6 @@ export function StepWitness({ data = {}, errors = {}, onChange }) {
               onChange={(e) => onChange('witness2Mobile', e.target.value)}
               placeholder="10-digit mobile"
               icon={Phone}
-              required
               error={errors.witness2Mobile}
             />
 
@@ -125,7 +120,6 @@ export function StepWitness({ data = {}, errors = {}, onChange }) {
               placeholder="Full residence address"
               className="sm:col-span-2"
               icon={MapPin}
-              required
               error={errors.witness2Address}
             />
 

@@ -141,7 +141,6 @@ export function StepShares({ data = {}, errors = {}, onChange, onGoToStep }) {
               onChange('numberOfShares', isNaN(val) ? 1 : val);
             }}
             placeholder="10"
-            required
             error={errors.numberOfShares}
           />
 
@@ -162,7 +161,6 @@ export function StepShares({ data = {}, errors = {}, onChange, onGoToStep }) {
             value={tdsOption}
             onChange={handleTdsChange}
             options={TDS_OPTIONS}
-            required
             error={errors.tdsOption}
           />
         </div>

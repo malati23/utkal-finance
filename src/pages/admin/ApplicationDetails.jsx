@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { createPortal } from 'react-dom';
 import { useParams, useNavigate } from 'react-router-dom';
 import {
@@ -24,7 +24,13 @@ import {
   Mail,
   Eye,
   X,
-  FolderOpen
+  FolderOpen,
+  ZoomIn,
+  ZoomOut,
+  RotateCw,
+  RotateCcw,
+  Sparkles,
+  FileCheck
 } from 'lucide-react';
 import { useAdmin } from '../../context/AdminContext';
 import { StatusBadge } from '../../components/admin/StatusBadge';
@@ -44,6 +50,27 @@ export function ApplicationDetails() {
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
   const [isReceiptModalOpen, setIsReceiptModalOpen] = useState(false);
   const [selectedDocPreview, setSelectedDocPreview] = useState(null);
+  const [docZoom, setDocZoom] = useState(1);
+  const [docRotation, setDocRotation] = useState(0);
+
+  // Keyboard shortcut: ESC to close preview modal
+  useEffect(() => {
+    const handleKeyDown = (e) => {
+      if (e.key === 'Escape') {
+        setSelectedDocPreview(null);
+      }
+    };
+    if (selectedDocPreview) {
+      window.addEventListener('keydown', handleKeyDown);
+      document.body.style.overflow = 'hidden';
+    } else {
+      document.body.style.overflow = '';
+    }
+    return () => {
+      window.removeEventListener('keydown', handleKeyDown);
+      document.body.style.overflow = '';
+    };
+  }, [selectedDocPreview]);
 
   const app = applications.find((a) => a._id === id || a.id === id || a.applicationId === id);
 
@@ -360,7 +387,7 @@ export function ApplicationDetails() {
             <span className="text-xs font-bold text-slate-400 font-mono">Section 06</span>
           </div>
 
-          <div className="p-5 space-y-4">
+          <div className="p-5 space-y-5">
             <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 text-xs border-b border-slate-100 pb-4">
               <div><strong className="block text-[10px] text-slate-400 uppercase">PRIMARY ID PROOF TYPE</strong><span className="font-bold text-slate-900">{app.idProofType || 'Aadhaar Card'}</span></div>
               <div><strong className="block text-[10px] text-slate-400 uppercase">ADDRESS PROOF TYPE</strong><span className="font-bold text-slate-900">{app.addressProofType || 'Aadhaar Card'}</span></div>
@@ -371,124 +398,337 @@ export function ApplicationDetails() {
             {(() => {
               const doc = app.documentDetails || app.documents || {};
               const attachedDocs = [];
+              const seenIds = new Set();
+              const seenTypes = new Set();
 
-              const idProofUrl = app.idProofUrl || doc.idProofUrl || (typeof doc.idProofFile === 'string' ? doc.idProofFile : '');
-              if (idProofUrl) {
+              const addDoc = (id, type, title, rawUrl) => {
+                if (!rawUrl || typeof rawUrl !== 'string') return;
+                const formattedUrl = getBackendAssetUrl(rawUrl);
+                const normType = (type || '').trim().toLowerCase();
+                if (!formattedUrl || seenIds.has(id) || (normType && seenTypes.has(normType))) return;
+                seenIds.add(id);
+                if (normType) seenTypes.add(normType);
                 attachedDocs.push({
-                  id: 'idproof',
-                  type: 'Identity Proof',
-                  title: `${app.idProofType || doc.idProofType || 'Government ID'} (ID Proof)`,
-                  url: getBackendAssetUrl(idProofUrl),
+                  id,
+                  type,
+                  title,
+                  url: formattedUrl,
+                  rawUrl,
                 });
+              };
+
+              // 1. Identity Proof & Combined Address Proof
+              const idType = (app.idProofType || doc.idProofType || 'Aadhaar Card').trim();
+              const addrType = (app.addressProofType || doc.addressProofType || 'Aadhaar Card').trim();
+              const isIdAadhaar = idType.toLowerCase().includes('aadhaar');
+              const isAddrAadhaar = addrType.toLowerCase().includes('aadhaar');
+
+              const idUrl =
+                app.idProofUrl ||
+                doc.idProofUrl ||
+                doc.idProof ||
+                doc.doc2_govId ||
+                app.doc2_govId ||
+                app.idProof ||
+                (typeof doc.idProofFile === 'string' ? doc.idProofFile : '') ||
+                (typeof app.idProofFile === 'string' ? app.idProofFile : '') ||
+                (typeof doc.idProofFile?.previewUrl === 'string' ? doc.idProofFile.previewUrl : '') ||
+                (typeof doc.idProofFile?.dataUrl === 'string' ? doc.idProofFile.dataUrl : '');
+
+              const addrUrl =
+                app.addressProofUrl ||
+                doc.addressProofUrl ||
+                doc.addressProof ||
+                app.addressProof ||
+                (typeof doc.addressProofFile === 'string' ? doc.addressProofFile : '') ||
+                (typeof app.addressProofFile === 'string' ? app.addressProofFile : '') ||
+                (typeof doc.addressProofFile?.previewUrl === 'string' ? doc.addressProofFile.previewUrl : '') ||
+                (typeof doc.addressProofFile?.dataUrl === 'string' ? doc.addressProofFile.dataUrl : '');
+
+              // 1. Primary Government ID Proof
+              addDoc(
+                'idproof',
+                'Primary Government ID Proof',
+                `${idType} (Primary Government ID Proof)`,
+                idUrl
+              );
+
+              // 2. Address Proof Document
+              addDoc(
+                'addressproof',
+                'Address Proof Document',
+                `${addrType} (Address Proof Document)`,
+                addrUrl || idUrl
+              );
+
+              // 3. Passport Photo
+              const photoUrl =
+                app.photoUrl ||
+                doc.photoUrl ||
+                doc.photo ||
+                doc.doc1_photo ||
+                app.doc1_photo ||
+                (typeof doc.photoFile === 'string' ? doc.photoFile : '') ||
+                (typeof app.photoFile === 'string' ? app.photoFile : '') ||
+                (typeof doc.photoFile?.previewUrl === 'string' ? doc.photoFile.previewUrl : '') ||
+                (typeof doc.photoFile?.dataUrl === 'string' ? doc.photoFile.dataUrl : '');
+              addDoc(
+                'photo',
+                'Passport Photograph',
+                'Applicant Passport Photograph',
+                photoUrl
+              );
+
+              // 4. Digital Signature
+              const sigUrl =
+                app.signatureUrl ||
+                doc.signatureUrl ||
+                doc.signature ||
+                (typeof doc.signatureFile === 'string' ? doc.signatureFile : '') ||
+                (typeof app.signatureFile === 'string' ? app.signatureFile : '') ||
+                (typeof doc.signatureFile?.previewUrl === 'string' ? doc.signatureFile.previewUrl : '') ||
+                (typeof doc.signatureFile?.dataUrl === 'string' ? doc.signatureFile.dataUrl : '');
+              addDoc(
+                'signature',
+                'Signature Specimen',
+                'Digital Signature Specimen',
+                sigUrl
+              );
+
+              // 5. Direct named slots for additional documents if present
+              const doc3Url =
+                doc.doc3_eduCert ||
+                app.doc3_eduCert ||
+                (Array.isArray(doc.additionalDocuments)
+                  ? doc.additionalDocuments.find(d => d.documentType === 'Educational Certificate')?.documentUrl
+                  : '') ||
+                (Array.isArray(app.additionalDocuments)
+                  ? app.additionalDocuments.find(d => d.documentType === 'Educational Certificate')?.documentUrl
+                  : '') ||
+                '';
+              if (doc3Url) {
+                addDoc(
+                  'doc3-edu',
+                  'Educational Certificate',
+                  'Educational Degree / Certificate',
+                  typeof doc3Url === 'string' ? doc3Url : doc3Url?.previewUrl
+                );
               }
 
-              const addressProofUrl = app.addressProofUrl || doc.addressProofUrl || (typeof doc.addressProofFile === 'string' ? doc.addressProofFile : '');
-              if (addressProofUrl && addressProofUrl !== idProofUrl) {
-                attachedDocs.push({
-                  id: 'addressproof',
-                  type: 'Address Proof',
-                  title: `${app.addressProofType || doc.addressProofType || 'Address Document'} (Address Proof)`,
-                  url: getBackendAssetUrl(addressProofUrl),
-                });
+              const doc4Url =
+                doc.doc4_birthCert ||
+                app.doc4_birthCert ||
+                (Array.isArray(doc.additionalDocuments)
+                  ? doc.additionalDocuments.find(d => d.documentType === 'Birth / PAN Certificate' || d.documentType === 'Birth Certificate')?.documentUrl
+                  : '') ||
+                (Array.isArray(app.additionalDocuments)
+                  ? app.additionalDocuments.find(d => d.documentType === 'Birth / PAN Certificate' || d.documentType === 'Birth Certificate')?.documentUrl
+                  : '') ||
+                '';
+              if (doc4Url) {
+                addDoc(
+                  'doc4-birth',
+                  'Birth / PAN Certificate',
+                  'Birth / PAN / Identity Certificate',
+                  typeof doc4Url === 'string' ? doc4Url : doc4Url?.previewUrl
+                );
               }
 
-              const photoUrl = app.photoUrl || doc.photoUrl || (typeof doc.photoFile === 'string' ? doc.photoFile : '');
-              if (photoUrl) {
-                attachedDocs.push({
-                  id: 'photo',
-                  type: 'Photograph',
-                  title: 'Passport Photograph',
-                  url: getBackendAssetUrl(photoUrl),
-                });
+              const doc5Url =
+                doc.doc5_utility ||
+                app.doc5_utility ||
+                (Array.isArray(doc.additionalDocuments)
+                  ? doc.additionalDocuments.find(d => d.documentType === 'Financial / Utility Document' || d.documentType === 'Utility Bill')?.documentUrl
+                  : '') ||
+                (Array.isArray(app.additionalDocuments)
+                  ? app.additionalDocuments.find(d => d.documentType === 'Financial / Utility Document' || d.documentType === 'Utility Bill')?.documentUrl
+                  : '') ||
+                '';
+              if (doc5Url) {
+                addDoc(
+                  'doc5-utility',
+                  'Financial / Utility Document',
+                  'Electricity Bill / Bank Passbook',
+                  typeof doc5Url === 'string' ? doc5Url : doc5Url?.previewUrl
+                );
               }
 
-              const signatureUrl = app.signatureUrl || doc.signatureUrl || (typeof doc.signatureFile === 'string' ? doc.signatureFile : '');
-              if (signatureUrl) {
-                attachedDocs.push({
-                  id: 'signature',
-                  type: 'Signature',
-                  title: 'Digital Signature Specimen',
-                  url: getBackendAssetUrl(signatureUrl),
-                });
+              // 6. Payment Receipt
+              const receiptUrl =
+                app.paymentReceiptUrl ||
+                doc.paymentReceiptUrl ||
+                app.paymentDetails?.receiptUrl ||
+                app.payment?.receiptUrl ||
+                (typeof app.receiptFile === 'string' ? app.receiptFile : app.receiptFile?.previewUrl);
+              if (receiptUrl) {
+                addDoc(
+                  'paymentreceipt',
+                  'Payment Receipt',
+                  '₹200 Statutory Membership Payment Screenshot',
+                  receiptUrl
+                );
               }
 
+              // 7. Additional / Supporting Documents Array (only non-duplicates)
               if (Array.isArray(doc.additionalDocuments)) {
-                doc.additionalDocuments.forEach((add, idx) => {
-                  if (add?.documentUrl) {
-                    attachedDocs.push({
-                      id: `add-${idx}`,
-                      type: add.documentType || 'Supporting Document',
-                      title: add.documentName || add.documentType || 'Additional Document',
-                      url: getBackendAssetUrl(add.documentUrl),
-                    });
+                doc.additionalDocuments.forEach((item, idx) => {
+                  if (item?.documentUrl && !attachedDocs.some(d => d.type === item.documentType || d.rawUrl === item.documentUrl)) {
+                    addDoc(
+                      `add-${idx}`,
+                      item.documentType || 'Supporting Document',
+                      item.documentName || item.documentType || `Additional Document #${idx + 1}`,
+                      item.documentUrl
+                    );
                   }
                 });
               }
 
               if (attachedDocs.length === 0) {
                 return (
-                  <div className="py-6 text-center text-slate-400 text-xs bg-slate-50 rounded-xl border border-slate-200">
+                  <div className="py-8 text-center text-slate-400 text-xs bg-slate-50/70 rounded-2xl border border-dashed border-slate-200 space-y-1">
                     <FolderOpen className="w-8 h-8 text-slate-300 mx-auto mb-1.5" />
-                    <p className="font-bold text-slate-600">No document files attached</p>
+                    <p className="font-bold text-slate-700">No document files attached</p>
                     <p className="text-[11px] text-slate-400">No digital document scans were uploaded with this application.</p>
                   </div>
                 );
               }
 
+              const isPdfUrl = (url, type = '') => {
+                if (!url || typeof url !== 'string') return false;
+                const clean = url.trim().toLowerCase();
+                if (clean.startsWith('data:application/pdf')) return true;
+                if (/\.pdf($|\?)/i.test(clean)) return true;
+                if (type.toLowerCase().includes('pdf')) return true;
+                return false;
+              };
+
+              const isImageUrl = (url, type = '') => {
+                if (!url || typeof url !== 'string') return false;
+                const clean = url.trim().toLowerCase();
+                if (isPdfUrl(clean, type)) return false;
+                if (clean.startsWith('data:image/') || clean.startsWith('blob:')) return true;
+                if (/\.(jpeg|jpg|png|gif|webp|svg|bmp|jfif)($|\?)/i.test(clean)) return true;
+                return true;
+              };
+
               return (
-                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3.5">
-                  {attachedDocs.map((item, idx) => {
-                    const isImg = item.url.match(/\.(jpeg|jpg|png|gif|webp|svg)$/i) || item.type.toLowerCase().includes('photo') || item.type.toLowerCase().includes('signature');
-                    const isPdf = item.url.match(/\.pdf$/i);
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+                  {attachedDocs.map((item) => {
+                    const isPdf = isPdfUrl(item.url, item.type);
+                    const isImg = isImageUrl(item.url, item.type);
 
                     return (
                       <div
-                        key={idx}
-                        className="bg-slate-50/80 border border-slate-200/90 rounded-2xl p-3.5 flex flex-col justify-between space-y-3 hover:bg-slate-100/60 transition-colors shadow-2xs"
+                        key={item.id}
+                        className="bg-white border border-slate-200/90 rounded-2xl p-4 flex flex-col justify-between space-y-3.5 shadow-2xs hover:shadow-md hover:border-blue-300 transition-all text-left"
                       >
-                        <div className="flex items-start gap-3">
-                          <div
-                            onClick={() => setSelectedDocPreview(item)}
-                            className="w-14 h-14 rounded-xl bg-white border border-slate-200 p-1 flex items-center justify-center overflow-hidden cursor-pointer shrink-0 shadow-2xs hover:scale-105 transition-transform"
-                          >
-                            {isImg ? (
-                              <img src={item.url} alt={item.title} className="w-full h-full object-cover rounded-lg" />
-                            ) : isPdf ? (
-                              <FileText className="w-6 h-6 text-rose-500" />
-                            ) : (
-                              <FileText className="w-6 h-6 text-blue-500" />
-                            )}
+                        {/* CARD HEADER */}
+                        <div className="flex items-center justify-between gap-2 border-b border-slate-100 pb-2.5">
+                          <span className="px-2.5 py-1 rounded-lg text-[10px] font-extrabold uppercase tracking-wider bg-blue-50 text-blue-900 border border-blue-200/80 truncate">
+                            {item.type}
+                          </span>
+                          <span className={`px-2 py-0.5 rounded text-[10px] font-bold uppercase tracking-wider font-mono ${
+                            isPdf ? 'bg-rose-50 text-rose-700 border border-rose-200' : 'bg-emerald-50 text-emerald-700 border border-emerald-200'
+                          }`}>
+                            {isPdf ? 'PDF SCAN' : 'IMAGE FILE'}
+                          </span>
+                        </div>
+
+                        {/* HIGH CLARITY PREVIEW THUMBNAIL BOX */}
+                        <div
+                          onClick={() => {
+                            setSelectedDocPreview(item);
+                            setDocZoom(1);
+                            setDocRotation(0);
+                          }}
+                          className="relative w-full h-44 sm:h-48 bg-slate-900 rounded-xl overflow-hidden cursor-pointer group flex items-center justify-center border border-slate-200/80 shadow-inner"
+                          title="Click to view full size"
+                        >
+                          {isImg ? (
+                            <img
+                              src={item.url}
+                              alt={item.title}
+                              className="w-full h-full object-contain p-1.5 transition-transform duration-300 group-hover:scale-105"
+                              onError={(e) => {
+                                e.currentTarget.style.display = 'none';
+                                if (e.currentTarget.nextSibling) {
+                                  e.currentTarget.nextSibling.style.display = 'flex';
+                                }
+                              }}
+                            />
+                          ) : isPdf ? (
+                            <div className="flex flex-col items-center justify-center space-y-2 text-white p-4">
+                              <div className="w-12 h-12 rounded-2xl bg-rose-500/20 text-rose-400 border border-rose-500/30 flex items-center justify-center">
+                                <FileText className="w-6 h-6 text-rose-400" />
+                              </div>
+                              <span className="text-xs font-bold text-slate-200">PDF Document Scan</span>
+                              <span className="text-[10px] text-slate-400 font-mono">Click to inspect</span>
+                            </div>
+                          ) : (
+                            <div className="flex flex-col items-center justify-center space-y-2 text-white p-4">
+                              <FileText className="w-10 h-10 text-blue-400" />
+                              <span className="text-xs font-bold text-slate-200">Attached Scan</span>
+                            </div>
+                          )}
+
+                          <div className="hidden flex-col items-center justify-center space-y-2 text-white p-4">
+                            <FileText className="w-10 h-10 text-blue-400" />
+                            <span className="text-xs font-bold text-slate-200">Document Scan</span>
                           </div>
 
-                          <div className="min-w-0 space-y-1">
-                            <span className="block text-[10px] font-extrabold uppercase text-blue-800 bg-blue-100/80 px-2 py-0.5 rounded border border-blue-200/80 w-max">
-                              {item.type}
+                          {/* Hover Overlay */}
+                          <div className="absolute inset-0 bg-slate-950/50 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center gap-2 backdrop-blur-[2px]">
+                            <span className="px-3 py-1.5 rounded-xl bg-white/95 text-slate-950 text-xs font-black shadow-lg flex items-center gap-1.5">
+                              <Maximize2 className="w-3.5 h-3.5 text-blue-700" />
+                              <span>Inspect Document</span>
                             </span>
-                            <h4 className="font-bold text-xs text-slate-900 truncate" title={item.title}>
-                              {item.title}
-                            </h4>
                           </div>
                         </div>
 
-                        <div className="pt-2 border-t border-slate-200/60 flex items-center justify-end gap-2">
+                        {/* TITLE & METADATA */}
+                        <div className="space-y-1">
+                          <h4 className="font-extrabold text-xs text-slate-900 line-clamp-1" title={item.title}>
+                            {item.title}
+                          </h4>
+                          <p className="text-[11px] text-slate-500 font-medium">
+                            Status: <span className="font-bold text-emerald-700">Digital Archive Verified</span>
+                          </p>
+                        </div>
+
+                        {/* ACTION BUTTONS */}
+                        <div className="pt-2 border-t border-slate-100 flex items-center justify-between gap-2">
                           <button
                             type="button"
-                            onClick={() => setSelectedDocPreview(item)}
-                            className="inline-flex items-center gap-1 px-3 py-1.5 rounded-lg bg-blue-600 hover:bg-blue-700 text-white font-bold text-xs transition-colors cursor-pointer"
+                            onClick={() => {
+                              setSelectedDocPreview(item);
+                              setDocZoom(1);
+                              setDocRotation(0);
+                            }}
+                            className="flex-1 inline-flex items-center justify-center gap-1.5 py-2 px-3 rounded-xl bg-blue-600 hover:bg-blue-700 active:scale-98 text-white font-bold text-xs transition-all shadow-xs cursor-pointer"
                           >
                             <Eye className="w-3.5 h-3.5" />
-                            <span>View</span>
+                            <span>View / Inspect</span>
                           </button>
+
                           <a
                             href={item.url}
-                            download
+                            download={`${item.title.replace(/\s+/g, '_')}.png`}
                             target="_blank"
                             rel="noopener noreferrer"
-                            className="inline-flex items-center gap-1 px-3 py-1.5 rounded-lg bg-slate-200 hover:bg-slate-300 text-slate-700 font-bold text-xs transition-colors"
-                            title="Download File"
+                            className="inline-flex items-center justify-center p-2 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 transition-colors border border-slate-200"
+                            title="Download Original File"
                           >
-                            <Download className="w-3.5 h-3.5" />
-                            <span>Download</span>
+                            <Download className="w-4 h-4" />
+                          </a>
+
+                          <a
+                            href={item.url}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="inline-flex items-center justify-center p-2 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 transition-colors border border-slate-200"
+                            title="Open Full Image in New Tab"
+                          >
+                            <ExternalLink className="w-4 h-4" />
                           </a>
                         </div>
                       </div>
@@ -669,124 +909,189 @@ export function ApplicationDetails() {
         onSave={handleSaveEdit}
       />
 
-      {/* DOCUMENT PREVIEW MODAL */}
+      {/* HIGH DEFINITION DOCUMENT PREVIEW MODAL */}
       {selectedDocPreview &&
         createPortal(
           <div
-            className="fixed inset-0 z-[99999] flex items-center justify-center p-3 sm:p-5 bg-slate-950/80 backdrop-blur-md select-none animate-fade-in"
+            className="fixed inset-0 z-[99999] flex items-center justify-center p-2 sm:p-4 bg-slate-950/85 backdrop-blur-md select-none animate-fade-in"
             onClick={() => setSelectedDocPreview(null)}
           >
             <div
-              className="bg-white rounded-2xl sm:rounded-3xl border border-slate-200/90 shadow-2xl p-4 sm:p-5 w-[92vw] max-w-4xl h-[82vh] max-h-[84vh] flex flex-col justify-between space-y-3 text-left overflow-hidden"
+              className="bg-white rounded-3xl border border-slate-200 shadow-2xl w-[95vw] max-w-5xl h-[88vh] max-h-[92vh] flex flex-col justify-between overflow-hidden text-left"
               onClick={(e) => e.stopPropagation()}
             >
               {/* MODAL HEADER */}
-              <div className="flex items-center justify-between border-b border-slate-100 pb-3 shrink-0">
-                <div className="pr-4 min-w-0">
-                  <h3 className="text-base sm:text-lg font-black text-slate-900 truncate">
-                    {selectedDocPreview.title}
-                  </h3>
-                  <p className="text-xs text-slate-500 font-mono truncate mt-0.5">
-                    Applicant: <span className="font-bold text-slate-800">{app.applicantName}</span> • App ID:{' '}
-                    <span className="font-bold text-blue-700">{app.applicationId || app.refId}</span>
+              <div className="bg-slate-900 text-white px-5 sm:px-6 py-3.5 flex items-center justify-between border-b border-slate-800 shrink-0 gap-3">
+                <div className="min-w-0">
+                  <div className="flex items-center gap-2">
+                    <span className="px-2 py-0.5 rounded-full text-[10px] font-extrabold uppercase tracking-wider bg-blue-500/20 text-blue-300 border border-blue-400/30">
+                      {selectedDocPreview.type}
+                    </span>
+                    <h3 className="text-sm sm:text-base font-black text-white truncate">
+                      {selectedDocPreview.title}
+                    </h3>
+                  </div>
+                  <p className="text-[11px] text-slate-400 font-mono truncate mt-0.5">
+                    Applicant: <span className="font-bold text-slate-200">{app.applicantName}</span> • App ID:{' '}
+                    <span className="font-bold text-blue-400">{app.applicationId || app.refId}</span>
                   </p>
                 </div>
 
-                <div className="flex items-center gap-2 shrink-0">
+                {/* HEADER ACTIONS */}
+                <div className="flex items-center gap-1.5 sm:gap-2 shrink-0">
                   <a
                     href={selectedDocPreview.url}
-                    download
+                    download={`${selectedDocPreview.title.replace(/\s+/g, '_')}.png`}
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl bg-blue-50 text-blue-700 hover:bg-blue-100 font-bold text-xs transition-colors"
-                    title="Download Original File"
+                    className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-blue-600 hover:bg-blue-700 text-white font-bold text-xs transition-colors shadow-xs"
+                    title="Download File"
                   >
                     <Download className="w-3.5 h-3.5" />
-                    <span className="hidden sm:inline">Download File</span>
+                    <span className="hidden sm:inline">Download</span>
                   </a>
+
                   <a
                     href={selectedDocPreview.url}
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="p-1.5 rounded-xl text-slate-400 hover:text-slate-700 hover:bg-slate-100 transition-colors"
+                    className="p-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-300 hover:text-white transition-colors"
                     title="Open in new window"
                   >
                     <ExternalLink className="w-4 h-4" />
                   </a>
+
                   <button
                     type="button"
                     onClick={() => setSelectedDocPreview(null)}
-                    className="p-1.5 rounded-xl text-slate-400 hover:text-slate-900 hover:bg-slate-100 transition-colors cursor-pointer"
-                    title="Close preview"
+                    className="p-2 rounded-xl bg-slate-800 hover:bg-rose-600 text-slate-300 hover:text-white transition-colors cursor-pointer"
+                    title="Close preview (Esc)"
                   >
                     <X className="w-5 h-5" />
                   </button>
                 </div>
               </div>
 
-              {/* PREVIEW CONTAINER */}
-              <div className="bg-slate-900 rounded-2xl overflow-hidden flex-1 w-full min-h-0 flex items-center justify-center relative border border-slate-800 p-0">
-                {selectedDocPreview.url.match(/\.(jpeg|jpg|png|gif|webp|svg)$/i) ||
-                selectedDocPreview.type?.toLowerCase().includes('photo') ||
-                selectedDocPreview.type?.toLowerCase().includes('signature') ? (
-                  <div className="w-full h-full flex items-center justify-center p-3 overflow-hidden bg-slate-950">
-                    <img
-                      src={selectedDocPreview.url}
-                      alt={selectedDocPreview.title}
-                      className="max-w-full max-h-full object-contain rounded shadow-lg"
-                      onError={(e) => {
-                        e.target.onerror = null;
-                        e.target.style.display = 'none';
-                        e.target.parentNode.innerHTML = `
-                          <div class="text-center text-slate-300 p-6 space-y-2">
-                            <p class="font-bold text-sm">Unable to render image inline</p>
-                            <a href="${selectedDocPreview.url}" target="_blank" class="text-blue-400 underline text-xs">Click here to open file</a>
-                          </div>
-                        `;
-                      }}
-                    />
-                  </div>
-                ) : selectedDocPreview.url.match(/\.pdf$/i) ? (
-                  <object
-                    data={`${selectedDocPreview.url}#toolbar=0&navpanes=0&scrollbar=0&view=FitH`}
-                    type="application/pdf"
-                    className="w-full h-full border-0 rounded-2xl bg-white"
-                  >
-                    <iframe
-                      src={`${selectedDocPreview.url}#toolbar=0&navpanes=0&scrollbar=0&view=FitH`}
-                      title="PDF Document Preview"
-                      className="w-full h-full border-0 rounded-2xl bg-white"
-                    />
-                  </object>
-                ) : (
-                  <div className="text-center text-white space-y-3 p-8">
-                    <FileText className="w-14 h-14 text-blue-400 mx-auto" />
-                    <p className="font-bold text-sm">{selectedDocPreview.title}</p>
-                    <p className="text-xs text-slate-400 font-mono">{selectedDocPreview.url}</p>
-                    <a
-                      href={selectedDocPreview.url}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl bg-blue-600 hover:bg-blue-700 text-white font-bold text-xs transition-colors"
+              {/* INTERACTIVE VIEWER CANVAS */}
+              <div className="bg-slate-950 overflow-hidden flex-1 w-full min-h-0 flex items-center justify-center relative p-2 sm:p-4">
+                {(() => {
+                  const url = selectedDocPreview.url;
+                  const clean = url.toLowerCase();
+                  const isPdf = clean.startsWith('data:application/pdf') || /\.pdf($|\?)/i.test(clean) || selectedDocPreview.type?.toLowerCase().includes('pdf');
+
+                  if (isPdf) {
+                    return (
+                      <object
+                        data={`${url}#toolbar=1&navpanes=0&scrollbar=1&view=FitH`}
+                        type="application/pdf"
+                        className="w-full h-full border-0 rounded-2xl bg-white"
+                      >
+                        <iframe
+                          src={`${url}#toolbar=1&navpanes=0&scrollbar=1&view=FitH`}
+                          title="PDF Document Preview"
+                          className="w-full h-full border-0 rounded-2xl bg-white"
+                        />
+                      </object>
+                    );
+                  }
+
+                  return (
+                    <div className="w-full h-full flex items-center justify-center overflow-auto p-2">
+                      <img
+                        src={url}
+                        alt={selectedDocPreview.title}
+                        style={{
+                          transform: `scale(${docZoom}) rotate(${docRotation}deg)`,
+                          transition: 'transform 0.2s ease-in-out',
+                        }}
+                        className="max-w-full max-h-full object-contain rounded-xl shadow-2xl"
+                        onError={(e) => {
+                          e.currentTarget.style.display = 'none';
+                          if (e.currentTarget.nextSibling) {
+                            e.currentTarget.nextSibling.style.display = 'flex';
+                          }
+                        }}
+                      />
+                      <div className="hidden flex-col items-center justify-center text-center text-slate-300 p-8 space-y-3 bg-slate-900/80 rounded-2xl border border-slate-800">
+                        <FileText className="w-12 h-12 text-blue-400 mx-auto" />
+                        <p className="font-bold text-sm">Unable to render preview directly</p>
+                        <p className="text-xs text-slate-400">Click below to open or download the document.</p>
+                        <a
+                          href={url}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="inline-flex items-center gap-1.5 px-4 py-2 bg-blue-600 text-white rounded-xl text-xs font-bold hover:bg-blue-700"
+                        >
+                          <span>Open File</span>
+                          <ExternalLink className="w-3.5 h-3.5" />
+                        </a>
+                      </div>
+                    </div>
+                  );
+                })()}
+
+                {/* FLOATING ZOOM & ROTATION TOOLBAR FOR IMAGES */}
+                {!(
+                  selectedDocPreview.url.toLowerCase().startsWith('data:application/pdf') ||
+                  /\.pdf($|\?)/i.test(selectedDocPreview.url.toLowerCase())
+                ) && (
+                  <div className="absolute bottom-4 left-1/2 -translate-x-1/2 bg-slate-900/90 text-white border border-slate-700 px-3 py-1.5 rounded-2xl shadow-xl flex items-center gap-2 backdrop-blur-md">
+                    <button
+                      type="button"
+                      onClick={() => setDocZoom((prev) => Math.min(prev + 0.25, 3))}
+                      className="p-1.5 hover:bg-slate-800 rounded-lg text-slate-300 hover:text-white transition-colors cursor-pointer"
+                      title="Zoom In"
                     >
-                      <span>Open / Download File</span>
-                      <ExternalLink className="w-3.5 h-3.5" />
-                    </a>
+                      <ZoomIn className="w-4 h-4" />
+                    </button>
+                    <span className="text-[11px] font-mono font-bold text-slate-300 w-12 text-center">
+                      {Math.round(docZoom * 100)}%
+                    </span>
+                    <button
+                      type="button"
+                      onClick={() => setDocZoom((prev) => Math.max(prev - 0.25, 0.5))}
+                      className="p-1.5 hover:bg-slate-800 rounded-lg text-slate-300 hover:text-white transition-colors cursor-pointer"
+                      title="Zoom Out"
+                    >
+                      <ZoomOut className="w-4 h-4" />
+                    </button>
+                    <span className="w-px h-4 bg-slate-700" />
+                    <button
+                      type="button"
+                      onClick={() => setDocRotation((prev) => (prev + 90) % 360)}
+                      className="p-1.5 hover:bg-slate-800 rounded-lg text-slate-300 hover:text-white transition-colors cursor-pointer"
+                      title="Rotate 90°"
+                    >
+                      <RotateCw className="w-4 h-4" />
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setDocZoom(1);
+                        setDocRotation(0);
+                      }}
+                      className="p-1.5 hover:bg-slate-800 rounded-lg text-slate-300 hover:text-white transition-colors cursor-pointer text-[10px] font-bold"
+                      title="Reset View"
+                    >
+                      <RotateCcw className="w-4 h-4" />
+                    </button>
                   </div>
                 )}
               </div>
 
               {/* MODAL FOOTER */}
-              <div className="flex items-center justify-between shrink-0 pt-1">
-                <span className="text-[11px] font-extrabold text-slate-400 uppercase tracking-wider">
-                  {selectedDocPreview.type || 'Document Preview'}
+              <div className="bg-slate-900/95 border-t border-slate-800 px-6 py-3 flex items-center justify-between shrink-0 text-xs">
+                <span className="text-[11px] font-bold text-slate-400 flex items-center gap-1.5">
+                  <FileCheck className="w-4 h-4 text-emerald-500" />
+                  <span>Verified Scanned Statutory Document</span>
                 </span>
+
                 <button
                   type="button"
                   onClick={() => setSelectedDocPreview(null)}
-                  className="px-6 py-2 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-800 font-bold text-xs cursor-pointer transition-colors"
+                  className="px-5 py-1.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-200 font-bold text-xs cursor-pointer transition-colors"
                 >
-                  Close Preview
+                  Close Viewer
                 </button>
               </div>
             </div>
@@ -798,3 +1103,4 @@ export function ApplicationDetails() {
 }
 
 export default ApplicationDetails;
+

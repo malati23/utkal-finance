@@ -57,16 +57,16 @@ import {
 const AdminContext = createContext();
 
 function normalizeApplication(app) {
-  const p = app.personalDetails || {};
-  const c = app.contactDetails || {};
-  const a = app.addressDetails || {};
-  const n = app.nomineeDetails || {};
-  const m = app.membershipDetails || {};
-  const doc = app.documentDetails || {};
-  const w = app.witnessDetails || {};
-  const d = app.declarationDetails || {};
+  const p = app.personalDetails || app.personal || {};
+  const c = app.contactDetails || app.account || {};
+  const a = app.addressDetails || app.address || {};
+  const n = app.nomineeDetails || app.nominee || {};
+  const m = app.membershipDetails || app.shares || {};
+  const doc = app.documentDetails || app.documents || {};
+  const w = app.witnessDetails || app.witness || {};
+  const d = app.declarationDetails || app.declaration || {};
 
-  const nameParts = [p.title, p.firstName, p.middleName, p.lastName].filter(Boolean);
+  const nameParts = [p.title || app.title, p.firstName || app.firstName, p.middleName || app.middleName, p.lastName || app.lastName].filter(Boolean);
   const applicantName = nameParts.length > 0
     ? nameParts.join(' ')
     : app.applicantName || 'Applicant';
@@ -96,6 +96,102 @@ function normalizeApplication(app) {
     app.utrNo ||
     'UPI_VERIFIED';
 
+  const idProofUrl =
+    app.idProofUrl ||
+    doc.idProofUrl ||
+    doc.idProof ||
+    doc.doc2_govId ||
+    app.doc2_govId ||
+    app.idProof ||
+    (typeof doc.idProofFile === 'string' ? doc.idProofFile : '') ||
+    (typeof app.idProofFile === 'string' ? app.idProofFile : '') ||
+    (typeof doc.idProofFile?.previewUrl === 'string' ? doc.idProofFile.previewUrl : '') ||
+    (typeof doc.idProofFile?.dataUrl === 'string' ? doc.idProofFile.dataUrl : '') ||
+    '';
+
+  const addressProofUrl =
+    app.addressProofUrl ||
+    doc.addressProofUrl ||
+    doc.addressProof ||
+    app.addressProof ||
+    (typeof doc.addressProofFile === 'string' ? doc.addressProofFile : '') ||
+    (typeof app.addressProofFile === 'string' ? app.addressProofFile : '') ||
+    (typeof doc.addressProofFile?.previewUrl === 'string' ? doc.addressProofFile.previewUrl : '') ||
+    (typeof doc.addressProofFile?.dataUrl === 'string' ? doc.addressProofFile.dataUrl : '') ||
+    '';
+
+  const photoUrl =
+    app.photoUrl ||
+    doc.photoUrl ||
+    doc.photo ||
+    doc.doc1_photo ||
+    app.doc1_photo ||
+    (typeof doc.photoFile === 'string' ? doc.photoFile : '') ||
+    (typeof app.photoFile === 'string' ? app.photoFile : '') ||
+    (typeof doc.photoFile?.previewUrl === 'string' ? doc.photoFile.previewUrl : '') ||
+    (typeof doc.photoFile?.dataUrl === 'string' ? doc.photoFile.dataUrl : '') ||
+    '';
+
+  const signatureUrl =
+    app.signatureUrl ||
+    doc.signatureUrl ||
+    doc.signature ||
+    (typeof doc.signatureFile === 'string' ? doc.signatureFile : '') ||
+    (typeof app.signatureFile === 'string' ? app.signatureFile : '') ||
+    (typeof doc.signatureFile?.previewUrl === 'string' ? doc.signatureFile.previewUrl : '') ||
+    (typeof doc.signatureFile?.dataUrl === 'string' ? doc.signatureFile.dataUrl : '') ||
+    '';
+
+  const doc3_eduCert =
+    doc.doc3_eduCert ||
+    app.doc3_eduCert ||
+    (Array.isArray(doc.additionalDocuments)
+      ? doc.additionalDocuments.find((d) => d.documentType === 'Educational Certificate')?.documentUrl
+      : '') ||
+    '';
+
+  const doc4_birthCert =
+    doc.doc4_birthCert ||
+    app.doc4_birthCert ||
+    (Array.isArray(doc.additionalDocuments)
+      ? doc.additionalDocuments.find((d) => d.documentType === 'Birth / PAN Certificate' || d.documentType === 'Birth Certificate')?.documentUrl
+      : '') ||
+    '';
+
+  const doc5_utility =
+    doc.doc5_utility ||
+    app.doc5_utility ||
+    (Array.isArray(doc.additionalDocuments)
+      ? doc.additionalDocuments.find((d) => d.documentType === 'Financial / Utility Document' || d.documentType === 'Utility Bill')?.documentUrl
+      : '') ||
+    '';
+
+  const additionalDocuments = Array.isArray(doc.additionalDocuments)
+    ? doc.additionalDocuments
+    : (Array.isArray(app.additionalDocuments) ? app.additionalDocuments : []);
+
+  const sanitizedDocDetails = {
+    ...doc,
+    idProofType: doc.idProofType || app.idProofType || 'Aadhaar Card',
+    idProofUrl: idProofUrl,
+    idProofFile: idProofUrl,
+    idProof: idProofUrl,
+    doc2_govId: idProofUrl,
+    addressProofType: doc.addressProofType || app.addressProofType || 'Aadhaar Card',
+    addressProofUrl: addressProofUrl,
+    addressProofFile: addressProofUrl,
+    addressProof: addressProofUrl,
+    photoUrl: photoUrl,
+    photoFile: photoUrl,
+    signatureUrl: signatureUrl,
+    signatureFile: signatureUrl,
+    doc3_eduCert: doc3_eduCert,
+    doc4_birthCert: doc4_birthCert,
+    doc5_utility: doc5_utility,
+    paymentReceiptUrl: paymentReceiptUrl,
+    additionalDocuments: additionalDocuments,
+  };
+
   return {
     ...app,
     _id: app._id || app.id,
@@ -108,46 +204,63 @@ function normalizeApplication(app) {
     email: c.email || app.email || '',
     mobile: c.mobile || app.mobile || '',
     altMobile: app.altMobile || '9437112233',
-    title: p.title || 'Mr.',
-    firstName: p.firstName || '',
-    middleName: p.middleName || '',
-    lastName: p.lastName || '',
-    relationshipPrefix: p.relationshipPrefix || 'S/o.',
-    fatherLegalName: p.fatherLegalName || 'Legal Guardian',
-    dob: p.dob || '1996-06-20',
-    age: p.age || '30',
-    gender: p.gender || 'Male',
-    maritalStatus: p.maritalStatus || 'Married',
-    religion: p.religion || 'Hindu',
-    category: p.category || 'General',
-    education: p.education || 'Graduate / P.G.',
-    occupation: p.occupation || 'Business',
-    address1: a.address1 || 'Plot 214, Saheed Nagar',
-    villageTown: a.villageTown || 'Bhubaneswar',
-    district: a.district || 'Khurda',
-    state: a.state || 'Odisha',
-    pincode: a.pincode || '751007',
+    title: p.title || app.title || 'Mr.',
+    firstName: p.firstName || app.firstName || '',
+    middleName: p.middleName || app.middleName || '',
+    lastName: p.lastName || app.lastName || '',
+    relationshipPrefix: p.relationshipPrefix || app.relationshipPrefix || 'S/o.',
+    fatherLegalName: p.fatherLegalName || app.fatherLegalName || 'Legal Guardian',
+    dob: p.dob || app.dob || '1996-06-20',
+    age: p.age || app.age || '30',
+    gender: p.gender || app.gender || 'Male',
+    maritalStatus: p.maritalStatus || app.maritalStatus || 'Married',
+    religion: p.religion || app.religion || 'Hindu',
+    category: p.category || app.category || 'General',
+    education: p.education || app.education || 'Graduate / P.G.',
+    occupation: p.occupation || app.occupation || 'Business',
+    address1: a.address1 || app.address1 || 'Plot 214, Saheed Nagar',
+    villageTown: a.villageTown || app.villageTown || 'Bhubaneswar',
+    district: a.district || app.district || 'Khurda',
+    state: a.state || app.state || 'Odisha',
+    pincode: a.pincode || app.pincode || '751007',
     sameAsResidential: a.sameAsResidential !== false,
     branch: a.district ? `${a.district} Branch` : app.branch || 'Bhubaneswar HQ (Nayapalli, IRC Village)',
     introducer: app.introducer || 'Pradeep Kumar Jena',
-    nomineeName: n.fullName || 'Nominee Beneficiary',
-    nomineeRel: n.relationship || 'Spouse',
-    nomineeDob: n.dob || '1998-04-15',
-    nomineeAddr: n.address || 'Same as Applicant Address',
-    numberOfShares: m.numberOfShares || 10,
-    shareValue: m.shareValue || 10,
-    processingFee: m.processingFee || 100,
-    totalPaid: pay.amount || m.totalContribution || 200,
-    idProofType: doc.idProofType || 'Aadhaar Card',
-    addressProofType: doc.addressProofType || 'Aadhaar Card',
-    witness1Name: w.witness1Name || 'Rajesh Kumar Swain',
-    witness1Mobile: w.witness1Mobile || '9861001122',
-    witness1Address: w.witness1Address || 'Bhubaneswar, Odisha',
-    witness2Name: w.witness2Name || 'Manas Ranjan Rout',
-    witness2Mobile: w.witness2Mobile || '9437889900',
-    witness2Address: w.witness2Address || 'Cuttack, Odisha',
-    sigName: d.signatureName || applicantName,
-    declarationDate: d.declarationDate || new Date().toISOString().split('T')[0],
+    nomineeName: n.fullName || app.nomineeName || 'Nominee Beneficiary',
+    nomineeRel: n.relationship || app.nomineeRel || 'Spouse',
+    nomineeDob: n.dob || app.nomineeDob || '1998-04-15',
+    nomineeAddr: n.address || app.nomineeAddr || 'Same as Applicant Address',
+    numberOfShares: m.numberOfShares || app.numberOfShares || 10,
+    shareValue: m.shareValue || app.shareValue || 10,
+    processingFee: m.processingFee || app.processingFee || 100,
+    totalPaid: pay.amount || m.totalContribution || app.totalPaid || 200,
+    idProofType: doc.idProofType || app.idProofType || 'Aadhaar Card',
+    addressProofType: doc.addressProofType || app.addressProofType || 'Aadhaar Card',
+    idProofUrl,
+    idProofFile: idProofUrl,
+    idProof: idProofUrl,
+    doc2_govId: idProofUrl,
+    addressProofUrl,
+    addressProofFile: addressProofUrl,
+    addressProof: addressProofUrl,
+    photoUrl,
+    photoFile: photoUrl,
+    signatureUrl,
+    signatureFile: signatureUrl,
+    doc3_eduCert,
+    doc4_birthCert,
+    doc5_utility,
+    additionalDocuments,
+    documentDetails: sanitizedDocDetails,
+    documents: sanitizedDocDetails,
+    witness1Name: w.witness1Name || app.witness1Name || 'Rajesh Kumar Swain',
+    witness1Mobile: w.witness1Mobile || app.witness1Mobile || '9861001122',
+    witness1Address: w.witness1Address || app.witness1Address || 'Bhubaneswar, Odisha',
+    witness2Name: w.witness2Name || app.witness2Name || 'Manas Ranjan Rout',
+    witness2Mobile: w.witness2Mobile || app.witness2Mobile || '9437889900',
+    witness2Address: w.witness2Address || app.witness2Address || 'Cuttack, Odisha',
+    sigName: d.signatureName || app.sigName || applicantName,
+    declarationDate: d.declarationDate || app.declarationDate || new Date().toISOString().split('T')[0],
     paymentMethod,
     utrNo,
     receiptNo: app.receiptNo || 'REC-2026-1001',
@@ -159,7 +272,7 @@ function normalizeApplication(app) {
       receiptFileName: paymentReceiptName,
       method: paymentMethod,
       utrNumber: utrNo,
-      amount: pay.amount || m.totalContribution || 200,
+      amount: pay.amount || m.totalContribution || app.totalPaid || 200,
     },
     date: app.submittedAt ? new Date(app.submittedAt).toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' }) : app.date || 'Today',
     status: app.status || 'pending',

@@ -50,7 +50,6 @@ export function StepNominee({ data = {}, errors = {}, onChange }) {
             value={data.title || 'Mrs.'}
             onChange={(e) => onChange('title', e.target.value)}
             options={TITLE_OPTIONS}
-            required
             error={errors.title}
           />
 
@@ -65,7 +64,6 @@ export function StepNominee({ data = {}, errors = {}, onChange }) {
               onChange('fullName', `${val} ${data.lastName || ''}`.trim());
             }}
             placeholder="First Name"
-            required
             error={errors.firstName || errors.fullName}
           />
 
@@ -90,7 +88,6 @@ export function StepNominee({ data = {}, errors = {}, onChange }) {
             value={data.relationship || 'Spouse'}
             onChange={(e) => onChange('relationship', e.target.value)}
             options={NOMINEE_RELATIONSHIP_OPTIONS}
-            required
             error={errors.relationship}
           />
         </div>
@@ -163,7 +160,7 @@ export function StepNominee({ data = {}, errors = {}, onChange }) {
           <div className="bg-amber-50/80 border border-amber-300/80 rounded-2xl p-5 space-y-4 animate-fade-in">
             <div className="flex items-center gap-2 text-xs font-extrabold text-amber-950 uppercase tracking-wider">
               <ShieldAlert className="w-4 h-4 text-amber-600" />
-              <span>Nominee is a Minor (Under 18 Years) — Guardian Details Required</span>
+              <span>Nominee is a Minor (Under 18 Years) — Guardian Details</span>
             </div>
 
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
@@ -173,7 +170,6 @@ export function StepNominee({ data = {}, errors = {}, onChange }) {
                 value={data.guardianName}
                 onChange={(e) => onChange('guardianName', e.target.value)}
                 placeholder="Full name of legal guardian"
-                required={isMinor}
                 error={errors.guardianName}
               />
 
@@ -183,7 +179,6 @@ export function StepNominee({ data = {}, errors = {}, onChange }) {
                 value={data.guardianRelationship}
                 onChange={(e) => onChange('guardianRelationship', e.target.value)}
                 placeholder="e.g. Father / Mother / Court Appointed Guardian"
-                required={isMinor}
                 error={errors.guardianRelationship}
               />
             </div>

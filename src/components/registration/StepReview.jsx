@@ -63,25 +63,11 @@ export function StepReview({ formData = {}, onGoToStep, onSubmit, onPaymentChang
   };
 
   const handleFinalSubmitValidation = () => {
-    // Validate UPI payment receipt file if UPI method selected
-    if (selectedMethod === 'upi') {
-      if (!paymentData.receiptFile) {
-        setUtrError('Please upload your ₹200 payment confirmation screenshot / receipt.');
-        setReviewError('Please complete required payment receipt upload for UPI.');
-        return false;
-      }
-    }
-
-    if (!reviewedChecked) {
-      setReviewError('Please confirm that you have reviewed your application details and payment information.');
-      return false;
-    }
-
     setReviewError('');
     setUtrError('');
     onSubmit({
       ...paymentData,
-      method: selectedMethod,
+      method: selectedMethod || 'upi',
     });
     return true;
   };

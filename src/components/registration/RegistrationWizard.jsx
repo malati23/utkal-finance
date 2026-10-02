@@ -201,125 +201,19 @@ export function RegistrationWizard({ activeStep = 1, onQuickFillTrigger }) {
     setErrors({});
   };
 
-  // Validate step before moving forward
+  // Validate step before moving forward (unrestricted navigation allowed)
   const validateStep = (step) => {
-    const newErrors = {};
-
-    if (step === 1) {
-      const p = formData.personal;
-      if (!p.title) newErrors.title = 'Title is required';
-      if (!p.firstName || p.firstName.trim().length < 2) newErrors.firstName = 'First Name is required';
-      if (!p.lastName || p.lastName.trim().length < 1) newErrors.lastName = 'Last Name is required';
-      if (!p.relationshipPrefix) newErrors.relationshipPrefix = 'Relationship prefix is required';
-      if (!p.fatherLegalName || p.fatherLegalName.trim().length < 3) newErrors.fatherLegalName = 'Legal Guardian/Father Name is required';
-      if (!p.dob) newErrors.dob = 'Date of Birth is required';
-      if (!p.age || parseInt(p.age, 10) < 18) newErrors.age = 'Applicant must be at least 18 years old';
-      if (!p.gender) newErrors.gender = 'Gender selection is required';
-      if (!p.maritalStatus) newErrors.maritalStatus = 'Marital Status is required';
-      if (!p.education) newErrors.education = 'Educational qualification is required';
-      if (!p.religion) newErrors.religion = 'Religion is required';
-      if (!p.category) newErrors.category = 'Category is required';
-      if (!p.occupation) newErrors.occupation = 'Occupation is required';
-    }
-
-    if (step === 2) {
-      const a = formData.address;
-      if (!a.mobile || !validatePhone(a.mobile)) {
-        newErrors.mobile = 'Valid 10-digit Indian mobile number required';
-      }
-      if (!a.email || !validateEmail(a.email)) {
-        newErrors.email = 'Valid email address required';
-      }
-      if (!a.address1 || a.address1.trim().length < 3) newErrors.address1 = 'Address Line 1 is required';
-      if (!a.district || a.district.trim().length < 2) newErrors.district = 'District is required';
-      if (!a.state) newErrors.state = 'State is required';
-      if (!a.pincode || !/^\d{6}$/.test(a.pincode.trim())) newErrors.pincode = 'Please enter a valid 6-digit Indian PIN code';
-
-      if (a.sameAsResidential === false) {
-        if (!a.commAddress1 || a.commAddress1.trim().length < 3) newErrors.commAddress1 = 'Communication Address is required';
-        if (!a.commDistrict || a.commDistrict.trim().length < 2) newErrors.commDistrict = 'Communication District is required';
-        if (!a.commPincode || !/^\d{6}$/.test(a.commPincode.trim())) newErrors.commPincode = 'Valid 6-digit PIN code required';
-      }
-    }
-
-    if (step === 3) {
-      const acc = formData.account;
-      if (acc.password && acc.password.length > 0 && acc.password.length < 6) {
-        newErrors.password = 'Password must be at least 6 characters';
-      }
-      if (acc.password && acc.confirmPassword && acc.password !== acc.confirmPassword) {
-        newErrors.confirmPassword = 'Passwords do not match';
-      }
-    }
-
-    if (step === 4) {
-      const n = formData.nominee;
-      if (!n.fullName || n.fullName.trim().length < 3) newErrors.fullName = 'Nominee Full Name is required';
-      if (!n.relationship) newErrors.relationship = 'Relationship with nominee is required';
-      if (!n.dob) newErrors.dob = 'Nominee Date of Birth is required';
-      if (n.sameAsApplicant === false && (!n.address || n.address.trim().length < 5)) newErrors.address = 'Nominee address is required';
-      if (n.isMinor) {
-        if (!n.guardianName || n.guardianName.trim().length < 3) newErrors.guardianName = 'Guardian Name is required for minor nominee';
-        if (!n.guardianRelationship) newErrors.guardianRelationship = 'Guardian Relationship is required';
-      }
-    }
-
-    if (step === 5) {
-      const s = formData.shares;
-      if (!s.numberOfShares || parseInt(s.numberOfShares, 10) < 10) newErrors.numberOfShares = 'Minimum 10 equity shares required';
-    }
-
-    if (step === 6) {
-      const d = formData.documents || {};
-      // Document uploads and ID reference numbers are optional - applicant can move to next step without uploading files
-      if (d.docRefNo && d.docRefNo.trim().length > 0 && d.docRefNo.trim().length < 3) {
-        newErrors.docRefNo = 'Document Reference Number must be at least 3 characters if provided';
-      }
-    }
-
-    if (step === 7) {
-      const w = formData.witness;
-      if (!w.witness1Name || w.witness1Name.trim().length < 3) newErrors.witness1Name = 'Witness 1 Full Name is required';
-      if (!w.witness1Mobile || !validatePhone(w.witness1Mobile)) newErrors.witness1Mobile = 'Valid 10-digit mobile required for Witness 1';
-      if (!w.witness1Address || w.witness1Address.trim().length < 5) newErrors.witness1Address = 'Witness 1 address is required';
-      if (!w.witness2Name || w.witness2Name.trim().length < 3) newErrors.witness2Name = 'Witness 2 Full Name is required';
-      if (!w.witness2Mobile || !validatePhone(w.witness2Mobile)) newErrors.witness2Mobile = 'Valid 10-digit mobile required for Witness 2';
-      if (!w.witness2Address || w.witness2Address.trim().length < 5) newErrors.witness2Address = 'Witness 2 address is required';
-    }
-
-    if (step === 8) {
-      const dec = formData.declaration;
-      if (!dec.confirmInfoTrue || !dec.agreeTerms || !dec.consentProcessing) {
-        newErrors.checkboxes = 'All three statutory declaration checkboxes must be accepted to proceed.';
-      }
-      if (!dec.signatureName || dec.signatureName.trim().length < 3) {
-        newErrors.signatureName = 'Digital signature name is required.';
-      }
-    }
-
-    const stepKeys = ['personal', 'address', 'account', 'nominee', 'shares', 'documents', 'witness', 'declaration'];
-    const currentStepKey = stepKeys[step - 1];
-
-    if (Object.keys(newErrors).length > 0) {
-      setErrors((prev) => ({
-        ...prev,
-        [currentStepKey]: newErrors,
-      }));
-      return false;
-    }
-
+    // Empty fields are allowed and non-blocking
     return true;
   };
 
   const handleNext = () => {
-    if (validateStep(currentStep)) {
-      if (!completedSteps.includes(currentStep)) {
-        setCompletedSteps((prev) => [...prev, currentStep]);
-      }
-      if (currentStep < 9) {
-        setCurrentStep((prev) => prev + 1);
-        window.scrollTo({ top: 0, behavior: 'smooth' });
-      }
+    if (!completedSteps.includes(currentStep)) {
+      setCompletedSteps((prev) => [...prev, currentStep]);
+    }
+    if (currentStep < 9) {
+      setCurrentStep((prev) => prev + 1);
+      window.scrollTo({ top: 0, behavior: 'smooth' });
     }
   };
 
@@ -331,25 +225,11 @@ export function RegistrationWizard({ activeStep = 1, onQuickFillTrigger }) {
   };
 
   const handleStepClick = (stepId) => {
-    if (stepId < currentStep) {
-      // Allow navigating back to completed steps
-      setCurrentStep(stepId);
-      window.scrollTo({ top: 0, behavior: 'smooth' });
-    } else if (stepId > currentStep) {
-      // Validate preceding steps sequentially before advancing forward
-      for (let s = currentStep; s < stepId; s++) {
-        if (!validateStep(s)) {
-          setCurrentStep(s);
-          window.scrollTo({ top: 0, behavior: 'smooth' });
-          return;
-        }
-        if (!completedSteps.includes(s)) {
-          setCompletedSteps((prev) => [...prev, s]);
-        }
-      }
-      setCurrentStep(stepId);
-      window.scrollTo({ top: 0, behavior: 'smooth' });
+    if (!completedSteps.includes(currentStep)) {
+      setCompletedSteps((prev) => [...prev, currentStep]);
     }
+    setCurrentStep(stepId);
+    window.scrollTo({ top: 0, behavior: 'smooth' });
   };
 
   const handleSubmitApplication = async (customPaymentData) => {
@@ -360,51 +240,62 @@ export function RegistrationWizard({ activeStep = 1, onQuickFillTrigger }) {
 
     try {
       const docs = formData.documents || {};
+      const getRawFile = (val) => {
+        if (!val) return null;
+        if (val instanceof File || val instanceof Blob) return val;
+        if (val.rawFile instanceof File || val.rawFile instanceof Blob) return val.rawFile;
+        if (val.file instanceof File || val.file instanceof Blob) return val.file;
+        return null;
+      };
+
+      const idRaw = getRawFile(docs.idProofFile) || getRawFile(docs.idProof) || getRawFile(docs.doc2_govId);
+      const addressRaw = getRawFile(docs.addressProofFile) || getRawFile(docs.addressProof);
+      const photoRaw = getRawFile(docs.photoFile) || getRawFile(docs.photo) || getRawFile(docs.doc1_photo);
+      const signatureRaw = getRawFile(docs.signatureFile) || getRawFile(docs.signature);
+      const doc3Raw = getRawFile(docs.doc3_eduCert);
+      const doc4Raw = getRawFile(docs.doc4_birthCert);
+      const doc5Raw = getRawFile(docs.doc5_utility);
+
+      // Extract raw receipt file
       const paymentInfo = (customPaymentData && typeof customPaymentData === 'object' && customPaymentData.receiptFile !== undefined)
         ? customPaymentData
         : (formData.payment?.data || formData.payment || {});
       const receiptFileObj = paymentInfo.receiptFile || formData.payment?.data?.receiptFile || formData.payment?.receiptFile;
+      const receiptRaw = getRawFile(receiptFileObj);
 
       const fileFormData = new FormData();
       let hasFiles = false;
 
-      if (docs.idProofFile instanceof File) {
-        fileFormData.append('idProof', docs.idProofFile);
+      if (idRaw) {
+        fileFormData.append('idProof', idRaw);
+        fileFormData.append('doc2_govId', idRaw);
         hasFiles = true;
       }
-      if (docs.addressProofFile instanceof File) {
-        fileFormData.append('addressProof', docs.addressProofFile);
+      if (addressRaw) {
+        fileFormData.append('addressProof', addressRaw);
         hasFiles = true;
       }
-      if (docs.photoFile instanceof File) {
-        fileFormData.append('photo', docs.photoFile);
+      if (photoRaw) {
+        fileFormData.append('photo', photoRaw);
+        fileFormData.append('doc1_photo', photoRaw);
         hasFiles = true;
       }
-      if (docs.signatureFile instanceof File) {
-        fileFormData.append('signature', docs.signatureFile);
+      if (signatureRaw) {
+        fileFormData.append('signature', signatureRaw);
         hasFiles = true;
       }
-      if (docs.doc3_eduCert instanceof File) {
-        fileFormData.append('doc3_eduCert', docs.doc3_eduCert);
+      if (doc3Raw) {
+        fileFormData.append('doc3_eduCert', doc3Raw);
         hasFiles = true;
       }
-      if (docs.doc4_birthCert instanceof File) {
-        fileFormData.append('doc4_birthCert', docs.doc4_birthCert);
+      if (doc4Raw) {
+        fileFormData.append('doc4_birthCert', doc4Raw);
         hasFiles = true;
       }
-      if (docs.doc5_utility instanceof File) {
-        fileFormData.append('doc5_utility', docs.doc5_utility);
+      if (doc5Raw) {
+        fileFormData.append('doc5_utility', doc5Raw);
         hasFiles = true;
       }
-
-      // Extract raw receipt file
-      let receiptRaw = null;
-      if (receiptFileObj instanceof File) {
-        receiptRaw = receiptFileObj;
-      } else if (receiptFileObj?.rawFile instanceof File) {
-        receiptRaw = receiptFileObj.rawFile;
-      }
-
       if (receiptRaw) {
         fileFormData.append('paymentReceipt', receiptRaw);
         fileFormData.append('receiptFile', receiptRaw);
@@ -420,32 +311,6 @@ export function RegistrationWizard({ activeStep = 1, onQuickFillTrigger }) {
         }
       }
 
-      const additionalDocs = Array.isArray(docs.additionalDocuments) ? [...docs.additionalDocuments] : [];
-      if (uploadedFileUrls.doc3_eduCert) {
-        additionalDocs.push({
-          documentType: 'Educational Certificate',
-          documentName: 'Educational Degree / Marks Card',
-          documentUrl: uploadedFileUrls.doc3_eduCert,
-          uploadedAt: new Date(),
-        });
-      }
-      if (uploadedFileUrls.doc4_birthCert) {
-        additionalDocs.push({
-          documentType: 'Birth / PAN Certificate',
-          documentName: 'Birth / PAN Card Certificate',
-          documentUrl: uploadedFileUrls.doc4_birthCert,
-          uploadedAt: new Date(),
-        });
-      }
-      if (uploadedFileUrls.doc5_utility) {
-        additionalDocs.push({
-          documentType: 'Financial / Utility Document',
-          documentName: 'Electricity Bill / Bank Statement',
-          documentUrl: uploadedFileUrls.doc5_utility,
-          uploadedAt: new Date(),
-        });
-      }
-
       const fileToBase64 = (file) =>
         new Promise((resolve) => {
           if (!file || !(file instanceof File || file instanceof Blob)) return resolve('');
@@ -455,16 +320,73 @@ export function RegistrationWizard({ activeStep = 1, onQuickFillTrigger }) {
           reader.readAsDataURL(file);
         });
 
-      const idProofFallback = docs.idProofFile instanceof File ? await fileToBase64(docs.idProofFile) : '';
-      const addressProofFallback = docs.addressProofFile instanceof File ? await fileToBase64(docs.addressProofFile) : '';
-      const photoFallback = docs.photoFile instanceof File ? await fileToBase64(docs.photoFile) : '';
-      const signatureFallback = docs.signatureFile instanceof File ? await fileToBase64(docs.signatureFile) : '';
-      const receiptFallback = receiptRaw instanceof File ? await fileToBase64(receiptRaw) : '';
+      const idProofFallback = idRaw ? await fileToBase64(idRaw) : '';
+      const addressProofFallback = addressRaw ? await fileToBase64(addressRaw) : '';
+      const photoFallback = photoRaw ? await fileToBase64(photoRaw) : '';
+      const signatureFallback = signatureRaw ? await fileToBase64(signatureRaw) : '';
+      const doc3Fallback = doc3Raw ? await fileToBase64(doc3Raw) : '';
+      const doc4Fallback = doc4Raw ? await fileToBase64(doc4Raw) : '';
+      const doc5Fallback = doc5Raw ? await fileToBase64(doc5Raw) : '';
+      const receiptFallback = receiptRaw ? await fileToBase64(receiptRaw) : '';
 
-      const finalIdProofUrl = uploadedFileUrls.idProof || idProofFallback || docs.idProofUrl || (typeof docs.idProofFile === 'string' ? docs.idProofFile : '');
-      const finalAddressProofUrl = uploadedFileUrls.addressProof || addressProofFallback || docs.addressProofUrl || (typeof docs.addressProofFile === 'string' ? docs.addressProofFile : '');
-      const finalPhotoUrl = uploadedFileUrls.photo || photoFallback || docs.photoUrl || (typeof docs.photoFile === 'string' ? docs.photoFile : '');
-      const finalSignatureUrl = uploadedFileUrls.signature || signatureFallback || docs.signatureUrl || (typeof docs.signatureFile === 'string' ? docs.signatureFile : '');
+      const finalIdProofUrl =
+        uploadedFileUrls.idProof ||
+        uploadedFileUrls.doc2_govId ||
+        idProofFallback ||
+        docs.idProofUrl ||
+        docs.doc2_govId ||
+        (typeof docs.idProof === 'string' ? docs.idProof : '') ||
+        (typeof docs.idProofFile === 'string' ? docs.idProofFile : '') ||
+        (typeof docs.idProofFile?.previewUrl === 'string' ? docs.idProofFile.previewUrl : '') ||
+        (typeof docs.idProofFile?.dataUrl === 'string' ? docs.idProofFile.dataUrl : '');
+
+      const finalAddressProofUrl =
+        uploadedFileUrls.addressProof ||
+        addressProofFallback ||
+        docs.addressProofUrl ||
+        (typeof docs.addressProof === 'string' ? docs.addressProof : '') ||
+        (typeof docs.addressProofFile === 'string' ? docs.addressProofFile : '') ||
+        (typeof docs.addressProofFile?.previewUrl === 'string' ? docs.addressProofFile.previewUrl : '') ||
+        (typeof docs.addressProofFile?.dataUrl === 'string' ? docs.addressProofFile.dataUrl : '');
+
+      const finalPhotoUrl =
+        uploadedFileUrls.photo ||
+        uploadedFileUrls.doc1_photo ||
+        photoFallback ||
+        docs.photoUrl ||
+        (typeof docs.photo === 'string' ? docs.photo : '') ||
+        (typeof docs.photoFile === 'string' ? docs.photoFile : '') ||
+        (typeof docs.photoFile?.previewUrl === 'string' ? docs.photoFile.previewUrl : '') ||
+        (typeof docs.photoFile?.dataUrl === 'string' ? docs.photoFile.dataUrl : '');
+
+      const finalSignatureUrl =
+        uploadedFileUrls.signature ||
+        signatureFallback ||
+        docs.signatureUrl ||
+        (typeof docs.signature === 'string' ? docs.signature : '') ||
+        (typeof docs.signatureFile === 'string' ? docs.signatureFile : '') ||
+        (typeof docs.signatureFile?.previewUrl === 'string' ? docs.signatureFile.previewUrl : '') ||
+        (typeof docs.signatureFile?.dataUrl === 'string' ? docs.signatureFile.dataUrl : '');
+
+      const additionalDocs = Array.isArray(docs.additionalDocuments) ? [...docs.additionalDocuments] : [];
+
+      const doc3Url =
+        uploadedFileUrls.doc3_eduCert ||
+        doc3Fallback ||
+        (typeof docs.doc3_eduCert === 'string' ? docs.doc3_eduCert : '') ||
+        (typeof docs.doc3_eduCert?.previewUrl === 'string' ? docs.doc3_eduCert.previewUrl : '');
+
+      const doc4Url =
+        uploadedFileUrls.doc4_birthCert ||
+        doc4Fallback ||
+        (typeof docs.doc4_birthCert === 'string' ? docs.doc4_birthCert : '') ||
+        (typeof docs.doc4_birthCert?.previewUrl === 'string' ? docs.doc4_birthCert.previewUrl : '');
+
+      const doc5Url =
+        uploadedFileUrls.doc5_utility ||
+        doc5Fallback ||
+        (typeof docs.doc5_utility === 'string' ? docs.doc5_utility : '') ||
+        (typeof docs.doc5_utility?.previewUrl === 'string' ? docs.doc5_utility.previewUrl : '');
 
       const paymentReceiptUrl =
         uploadedFileUrls.paymentReceipt ||
@@ -473,15 +395,6 @@ export function RegistrationWizard({ activeStep = 1, onQuickFillTrigger }) {
         receiptFileObj?.dataUrl ||
         receiptFileObj?.previewUrl ||
         (typeof receiptFileObj === 'string' ? receiptFileObj : '');
-
-      if (paymentReceiptUrl && !additionalDocs.some((d) => d.documentType === 'Payment Receipt')) {
-        additionalDocs.push({
-          documentType: 'Payment Receipt',
-          documentName: '₹200 Statutory Membership Payment Screenshot',
-          documentUrl: paymentReceiptUrl,
-          uploadedAt: new Date(),
-        });
-      }
 
       const payload = {
         ...formData,
@@ -504,20 +417,44 @@ export function RegistrationWizard({ activeStep = 1, onQuickFillTrigger }) {
         documents: {
           idProofType: docs.idProofType || 'Aadhaar Card',
           idProofUrl: finalIdProofUrl,
+          idProofFile: finalIdProofUrl,
+          idProof: finalIdProofUrl,
+          doc2_govId: finalIdProofUrl,
           addressProofType: docs.addressProofType || 'Aadhaar Card',
           addressProofUrl: finalAddressProofUrl,
+          addressProofFile: finalAddressProofUrl,
+          addressProof: finalAddressProofUrl,
           photoUrl: finalPhotoUrl,
+          photoFile: finalPhotoUrl,
+          photo: finalPhotoUrl,
           signatureUrl: finalSignatureUrl,
+          signatureFile: finalSignatureUrl,
+          signature: finalSignatureUrl,
+          doc3_eduCert: doc3Url,
+          doc4_birthCert: doc4Url,
+          doc5_utility: doc5Url,
           paymentReceiptUrl: paymentReceiptUrl,
           additionalDocuments: additionalDocs,
         },
         documentDetails: {
           idProofType: docs.idProofType || 'Aadhaar Card',
           idProofUrl: finalIdProofUrl,
+          idProofFile: finalIdProofUrl,
+          idProof: finalIdProofUrl,
+          doc2_govId: finalIdProofUrl,
           addressProofType: docs.addressProofType || 'Aadhaar Card',
           addressProofUrl: finalAddressProofUrl,
+          addressProofFile: finalAddressProofUrl,
+          addressProof: finalAddressProofUrl,
           photoUrl: finalPhotoUrl,
+          photoFile: finalPhotoUrl,
+          photo: finalPhotoUrl,
           signatureUrl: finalSignatureUrl,
+          signatureFile: finalSignatureUrl,
+          signature: finalSignatureUrl,
+          doc3_eduCert: doc3Url,
+          doc4_birthCert: doc4Url,
+          doc5_utility: doc5Url,
           paymentReceiptUrl: paymentReceiptUrl,
           additionalDocuments: additionalDocs,
         },

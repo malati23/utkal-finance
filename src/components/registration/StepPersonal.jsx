@@ -48,7 +48,6 @@ export function StepPersonal({ data = {}, errors = {}, onChange }) {
           value={data.title}
           onChange={(e) => onChange('title', e.target.value)}
           options={TITLE_OPTIONS}
-          required
           error={errors.title}
         />
 
@@ -60,7 +59,6 @@ export function StepPersonal({ data = {}, errors = {}, onChange }) {
           onChange={(e) => onChange('firstName', e.target.value)}
           placeholder="e.g. Priyabrata"
           icon={User}
-          required
           error={errors.firstName}
         />
 
@@ -80,7 +78,6 @@ export function StepPersonal({ data = {}, errors = {}, onChange }) {
           value={data.lastName}
           onChange={(e) => onChange('lastName', e.target.value)}
           placeholder="e.g. Mohapatra"
-          required
           error={errors.lastName}
         />
 
@@ -91,7 +88,6 @@ export function StepPersonal({ data = {}, errors = {}, onChange }) {
           value={data.relationshipPrefix}
           onChange={(e) => onChange('relationshipPrefix', e.target.value)}
           options={RELATIONSHIP_PREFIX_OPTIONS}
-          required
           error={errors.relationshipPrefix}
         />
 
@@ -103,7 +99,6 @@ export function StepPersonal({ data = {}, errors = {}, onChange }) {
           onChange={(e) => onChange('fatherLegalName', e.target.value)}
           placeholder="Full legal name as per ID"
           className="sm:col-span-2 lg:col-span-3"
-          required
           error={errors.fatherLegalName}
         />
 
@@ -115,7 +110,6 @@ export function StepPersonal({ data = {}, errors = {}, onChange }) {
           onChange={handleDobChange}
           minYear={1940}
           maxYear={2026}
-          required
           error={errors.dob}
         />
 
@@ -129,8 +123,7 @@ export function StepPersonal({ data = {}, errors = {}, onChange }) {
           placeholder="e.g. 25"
           min="18"
           max="120"
-          helperText="Min age 18 required"
-          required
+          helperText="Age in years"
           error={errors.age}
         />
 
@@ -141,7 +134,6 @@ export function StepPersonal({ data = {}, errors = {}, onChange }) {
           value={data.gender}
           onChange={(e) => onChange('gender', e.target.value)}
           options={GENDER_OPTIONS}
-          required
           error={errors.gender}
         />
 
@@ -152,7 +144,6 @@ export function StepPersonal({ data = {}, errors = {}, onChange }) {
           value={data.maritalStatus}
           onChange={(e) => onChange('maritalStatus', e.target.value)}
           options={MARITAL_STATUS_OPTIONS}
-          required
           error={errors.maritalStatus}
         />
 
@@ -164,7 +155,6 @@ export function StepPersonal({ data = {}, errors = {}, onChange }) {
           onChange={(e) => onChange('education', e.target.value)}
           options={EDUCATION_OPTIONS}
           icon={GraduationCap}
-          required
           error={errors.education}
         />
 
@@ -175,7 +165,6 @@ export function StepPersonal({ data = {}, errors = {}, onChange }) {
           value={data.religion}
           onChange={(e) => onChange('religion', e.target.value)}
           options={RELIGION_OPTIONS}
-          required
           error={errors.religion}
         />
 
@@ -186,7 +175,6 @@ export function StepPersonal({ data = {}, errors = {}, onChange }) {
           value={data.category}
           onChange={(e) => onChange('category', e.target.value)}
           options={CATEGORY_OPTIONS}
-          required
           error={errors.category}
         />
 
@@ -198,7 +186,6 @@ export function StepPersonal({ data = {}, errors = {}, onChange }) {
           onChange={(e) => onChange('occupation', e.target.value)}
           options={OCCUPATION_OPTIONS}
           icon={Briefcase}
-          required
           error={errors.occupation}
         />
       </div>

@@ -72,7 +72,7 @@ export function PaymentReceiptModal({
 
   const hasReceipt = Boolean(receiptUrl);
   const displayUrl = hasReceipt ? getBackendAssetUrl(receiptUrl) : null;
-  const isPdf = typeof displayUrl === 'string' && displayUrl.toLowerCase().includes('.pdf');
+  const isPdf = typeof displayUrl === 'string' && (displayUrl.toLowerCase().includes('.pdf') || displayUrl.toLowerCase().startsWith('data:application/pdf'));
 
   return createPortal(
     <div

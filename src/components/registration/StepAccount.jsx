@@ -25,7 +25,6 @@ export function StepAccount({ data = {}, errors = {}, onChange }) {
             value={data.assignedBranch || 'Bhubaneswar HQ (Nayapalli, Khurda)'}
             onChange={(e) => onChange('assignedBranch', e.target.value)}
             options={BRANCH_OPTIONS}
-            required
             error={errors.assignedBranch}
           />
 

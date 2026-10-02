@@ -83,28 +83,23 @@ export function Documents() {
     const sanitizeDocsList = (rawList) => {
       if (!Array.isArray(rawList)) return [];
       const result = [];
-      const seenUrls = new Set();
+      const seenSlots = new Set();
 
       rawList.forEach((d) => {
         if (!d || !d.documentUrl) return;
-        // Prevent exact duplicate file URLs
-        if (seenUrls.has(d.documentUrl)) {
+        const slotKey = d.id || `${d.documentType}-${d.documentName}`;
+        if (seenSlots.has(slotKey)) {
           return;
         }
 
-        seenUrls.add(d.documentUrl);
+        seenSlots.add(slotKey);
         result.push(d);
       });
 
       return result;
     };
 
-    // If backend already provided extracted documents array, sanitize and return it
-    if (Array.isArray(app.documents) && app.documents.length > 0) {
-      return sanitizeDocsList(app.documents);
-    }
-
-    const doc = app.documentDetails || {};
+    const doc = app.documentDetails || app.documents || {};
     const defaultVerification =
       app.status === 'approved'
         ? 'Verified'
@@ -113,83 +108,189 @@ export function Documents() {
         : 'Pending Verification';
 
     const list = [];
-    const idType = (doc.idProofType || 'Aadhaar Card').trim();
-    const addrType = (doc.addressProofType || 'Aadhaar Card').trim();
-    const isIdAadhaar = idType.toLowerCase().includes('aadhaar');
-    const isAddrAadhaar = addrType.toLowerCase().includes('aadhaar');
-    const isSameUrl = doc.idProofUrl && doc.addressProofUrl && doc.idProofUrl === doc.addressProofUrl;
+    const idType = (doc.idProofType || app.idProofType || 'Aadhaar Card').trim();
+    const addrType = (doc.addressProofType || app.addressProofType || 'Aadhaar Card').trim();
 
-    if (doc.idProofUrl) {
-      const isCombined = (isIdAadhaar && isAddrAadhaar) || isSameUrl;
+    const idUrl =
+      doc.idProofUrl ||
+      app.idProofUrl ||
+      doc.idProof ||
+      doc.doc2_govId ||
+      app.doc2_govId ||
+      app.idProof ||
+      (typeof doc.idProofFile === 'string' ? doc.idProofFile : '') ||
+      (typeof app.idProofFile === 'string' ? app.idProofFile : '') ||
+      (typeof doc.idProofFile?.previewUrl === 'string' ? doc.idProofFile.previewUrl : '') ||
+      (typeof doc.idProofFile?.dataUrl === 'string' ? doc.idProofFile.dataUrl : '');
+
+    const addrUrl =
+      doc.addressProofUrl ||
+      app.addressProofUrl ||
+      doc.addressProof ||
+      app.addressProof ||
+      (typeof doc.addressProofFile === 'string' ? doc.addressProofFile : '') ||
+      (typeof app.addressProofFile === 'string' ? app.addressProofFile : '') ||
+      (typeof doc.addressProofFile?.previewUrl === 'string' ? doc.addressProofFile.previewUrl : '') ||
+      (typeof doc.addressProofFile?.dataUrl === 'string' ? doc.addressProofFile.dataUrl : '');
+
+    // 1. Primary Government ID Proof
+    if (idUrl) {
       list.push({
-        id: `${app._id}-idproof`,
-        documentType: isCombined ? 'Identity & Address Proof' : 'Identity Proof',
-        documentName: isCombined ? `${idType} (Identity & Address Proof)` : (doc.idProofType || 'Aadhaar Card'),
-        documentUrl: doc.idProofUrl,
+        id: `${app._id || app.id}-idproof`,
+        documentType: 'Primary Government ID Proof',
+        documentName: `${idType} (Primary Government ID Proof)`,
+        documentUrl: idUrl,
         uploadedAt: app.submittedAt || app.createdAt,
         verificationStatus: defaultVerification,
       });
     }
 
-    if (doc.addressProofUrl) {
-      const isDuplicateAadhaar = isAddrAadhaar && (isIdAadhaar || isSameUrl);
-      if (!doc.idProofUrl) {
+    // 2. Address Proof Document
+    if (addrUrl || idUrl) {
+      list.push({
+        id: `${app._id || app.id}-addressproof`,
+        documentType: 'Address Proof Document',
+        documentName: `${addrType} (Address Proof Document)`,
+        documentUrl: addrUrl || idUrl,
+        uploadedAt: app.submittedAt || app.createdAt,
+        verificationStatus: defaultVerification,
+      });
+    }
+
+    const photoUrl =
+      doc.photoUrl ||
+      app.photoUrl ||
+      doc.photo ||
+      doc.doc1_photo ||
+      app.doc1_photo ||
+      (typeof doc.photoFile === 'string' ? doc.photoFile : '') ||
+      (typeof app.photoFile === 'string' ? app.photoFile : '') ||
+      (typeof doc.photoFile?.previewUrl === 'string' ? doc.photoFile.previewUrl : '') ||
+      (typeof doc.photoFile?.dataUrl === 'string' ? doc.photoFile.dataUrl : '');
+
+    if (photoUrl) {
+      list.push({
+        id: `${app._id || app.id}-photo`,
+        documentType: 'Passport Photograph',
+        documentName: 'Applicant Passport Photograph',
+        documentUrl: photoUrl,
+        uploadedAt: app.submittedAt || app.createdAt,
+        verificationStatus: defaultVerification,
+      });
+    }
+
+    const sigUrl =
+      doc.signatureUrl ||
+      app.signatureUrl ||
+      doc.signature ||
+      (typeof doc.signatureFile === 'string' ? doc.signatureFile : '') ||
+      (typeof app.signatureFile === 'string' ? app.signatureFile : '') ||
+      (typeof doc.signatureFile?.previewUrl === 'string' ? doc.signatureFile.previewUrl : '') ||
+      (typeof doc.signatureFile?.dataUrl === 'string' ? doc.signatureFile.dataUrl : '');
+
+    if (sigUrl) {
+      list.push({
+        id: `${app._id || app.id}-signature`,
+        documentType: 'Signature',
+        documentName: 'Digital Signature Specimen',
+        documentUrl: sigUrl,
+        uploadedAt: app.submittedAt || app.createdAt,
+        verificationStatus: defaultVerification,
+      });
+    }
+
+    const doc3Url =
+      doc.doc3_eduCert ||
+      app.doc3_eduCert ||
+      (Array.isArray(doc.additionalDocuments)
+        ? doc.additionalDocuments.find(d => d.documentType === 'Educational Certificate')?.documentUrl
+        : '') ||
+      (Array.isArray(app.additionalDocuments)
+        ? app.additionalDocuments.find(d => d.documentType === 'Educational Certificate')?.documentUrl
+        : '') ||
+      '';
+
+    if (doc3Url && !list.some(d => d.documentType === 'Educational Certificate')) {
+      list.push({
+        id: `${app._id || app.id}-edu`,
+        documentType: 'Educational Certificate',
+        documentName: 'Educational Degree / Certificate',
+        documentUrl: doc3Url,
+        uploadedAt: app.submittedAt || app.createdAt,
+        verificationStatus: defaultVerification,
+      });
+    }
+
+    const doc4Url =
+      doc.doc4_birthCert ||
+      app.doc4_birthCert ||
+      (Array.isArray(doc.additionalDocuments)
+        ? doc.additionalDocuments.find(d => d.documentType === 'Birth / PAN Certificate' || d.documentType === 'Birth Certificate')?.documentUrl
+        : '') ||
+      (Array.isArray(app.additionalDocuments)
+        ? app.additionalDocuments.find(d => d.documentType === 'Birth / PAN Certificate' || d.documentType === 'Birth Certificate')?.documentUrl
+        : '') ||
+      '';
+
+    if (doc4Url && !list.some(d => d.documentType === 'Birth / PAN Certificate' || d.documentType === 'Birth Certificate')) {
+      list.push({
+        id: `${app._id || app.id}-birth`,
+        documentType: 'Birth / PAN Certificate',
+        documentName: 'Birth / PAN / Identity Certificate',
+        documentUrl: doc4Url,
+        uploadedAt: app.submittedAt || app.createdAt,
+        verificationStatus: defaultVerification,
+      });
+    }
+
+    const doc5Url =
+      doc.doc5_utility ||
+      app.doc5_utility ||
+      (Array.isArray(doc.additionalDocuments)
+        ? doc.additionalDocuments.find(d => d.documentType === 'Financial / Utility Document' || d.documentType === 'Utility Bill')?.documentUrl
+        : '') ||
+      (Array.isArray(app.additionalDocuments)
+        ? app.additionalDocuments.find(d => d.documentType === 'Financial / Utility Document' || d.documentType === 'Utility Bill')?.documentUrl
+        : '') ||
+      '';
+
+    if (doc5Url && !list.some(d => d.documentType === 'Financial / Utility Document' || d.documentType === 'Utility Bill')) {
+      list.push({
+        id: `${app._id || app.id}-utility`,
+        documentType: 'Financial / Utility Document',
+        documentName: 'Electricity Bill / Bank Passbook',
+        documentUrl: doc5Url,
+        uploadedAt: app.submittedAt || app.createdAt,
+        verificationStatus: defaultVerification,
+      });
+    }
+
+    const receiptUrl = doc.paymentReceiptUrl || app.paymentReceiptUrl || app.paymentDetails?.receiptUrl || app.payment?.receiptUrl;
+    if (receiptUrl && !list.some(d => d.documentType === 'Payment Receipt')) {
+      list.push({
+        id: `${app._id || app.id}-paymentreceipt`,
+        documentType: 'Payment Receipt',
+        documentName: '₹200 Statutory Membership Payment Screenshot',
+        documentUrl: receiptUrl,
+        uploadedAt: app.submittedAt || app.createdAt,
+        verificationStatus: defaultVerification,
+      });
+    }
+
+    // Merge any non-duplicate items from app.documents or additionalDocuments
+    const additionalDocs = Array.isArray(doc.additionalDocuments) ? doc.additionalDocuments : (Array.isArray(app.additionalDocuments) ? app.additionalDocuments : []);
+    additionalDocs.forEach((addDoc, idx) => {
+      if (addDoc && addDoc.documentUrl && !list.some(d => d.documentType === addDoc.documentType || d.documentUrl === addDoc.documentUrl)) {
         list.push({
-          id: `${app._id}-addressproof`,
-          documentType: 'Address Proof',
-          documentName: doc.addressProofType || 'Address Proof Document',
-          documentUrl: doc.addressProofUrl,
-          uploadedAt: app.submittedAt || app.createdAt,
-          verificationStatus: defaultVerification,
-        });
-      } else if (!isDuplicateAadhaar && doc.addressProofUrl !== doc.idProofUrl) {
-        list.push({
-          id: `${app._id}-addressproof`,
-          documentType: 'Address Proof',
-          documentName: doc.addressProofType || 'Address Proof Document',
-          documentUrl: doc.addressProofUrl,
-          uploadedAt: app.submittedAt || app.createdAt,
+          id: addDoc._id ? addDoc._id.toString() : `${app._id || app.id}-add-${idx}`,
+          documentType: addDoc.documentType || 'Additional Document',
+          documentName: addDoc.documentName || addDoc.documentType || `Supporting Document #${idx + 1}`,
+          documentUrl: addDoc.documentUrl,
+          uploadedAt: addDoc.uploadedAt || app.submittedAt || app.createdAt,
           verificationStatus: defaultVerification,
         });
       }
-    }
-
-    if (doc.photoUrl) {
-      list.push({
-        id: `${app._id}-photo`,
-        documentType: 'Photograph',
-        documentName: 'Passport Photograph',
-        documentUrl: doc.photoUrl,
-        uploadedAt: app.submittedAt || app.createdAt,
-        verificationStatus: defaultVerification,
-      });
-    }
-
-    if (doc.signatureUrl) {
-      list.push({
-        id: `${app._id}-signature`,
-        documentType: 'Signature',
-        documentName: 'Digital Signature Specimen',
-        documentUrl: doc.signatureUrl,
-        uploadedAt: app.submittedAt || app.createdAt,
-        verificationStatus: defaultVerification,
-      });
-    }
-
-    if (Array.isArray(doc.additionalDocuments)) {
-      doc.additionalDocuments.forEach((addDoc, idx) => {
-        if (addDoc.documentUrl) {
-          list.push({
-            id: addDoc._id ? addDoc._id.toString() : `${app._id}-add-${idx}`,
-            documentType: addDoc.documentType || 'Additional Document',
-            documentName: addDoc.documentName || addDoc.documentType || 'Supporting Document',
-            documentUrl: addDoc.documentUrl,
-            uploadedAt: addDoc.uploadedAt || app.submittedAt || app.createdAt,
-            verificationStatus: defaultVerification,
-          });
-        }
-      });
-    }
+    });
 
     return sanitizeDocsList(list);
   };
