@@ -51,14 +51,35 @@ export const env = Object.freeze({
 export function getBackendAssetUrl(pathStr) {
   if (!pathStr || typeof pathStr !== 'string') return '';
   const trimmed = pathStr.trim();
+  if (!trimmed || trimmed === '/' || trimmed === 'null' || trimmed === 'undefined') {
+    return '';
+  }
+
+  // If already absolute or base64 data URI
   if (
     trimmed.startsWith('http://') ||
     trimmed.startsWith('https://') ||
     trimmed.startsWith('data:') ||
     trimmed.startsWith('blob:')
   ) {
+    // If it points to an /uploads/documents path on the same or external server, route via API endpoint
+    if (trimmed.includes('/uploads/documents/')) {
+      const filename = trimmed.split('/uploads/documents/')[1];
+      if (filename) {
+        return `${cleanApiUrl}/applications/files/${filename}`;
+      }
+    }
     return trimmed;
   }
+
+  // Route uploaded document files directly through the dedicated Express API file stream
+  if (trimmed.includes('/uploads/documents/') || trimmed.startsWith('uploads/documents/')) {
+    const filename = trimmed.split('documents/')[1] || trimmed.split('/').pop();
+    if (filename) {
+      return `${cleanApiUrl}/applications/files/${filename}`;
+    }
+  }
+
   const cleanPath = trimmed.startsWith('/') ? trimmed : `/${trimmed}`;
   const base = env.SERVER_BASE_URL || (cleanApiUrl.startsWith('http') ? cleanApiUrl.replace(/\/api\/?$/, '') : '');
   if (base) {

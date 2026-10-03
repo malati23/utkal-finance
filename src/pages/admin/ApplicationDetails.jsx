@@ -965,9 +965,9 @@ export function ApplicationDetails() {
               {/* INTERACTIVE VIEWER CANVAS */}
               <div className="bg-slate-950 overflow-hidden flex-1 w-full min-h-0 flex items-center justify-center relative p-2 sm:p-4">
                 {(() => {
-                  const url = selectedDocPreview.url;
+                  const url = selectedDocPreview.url || '';
                   const clean = url.toLowerCase();
-                  const isPdf = clean.startsWith('data:application/pdf') || /\.pdf($|\?)/i.test(clean) || selectedDocPreview.type?.toLowerCase().includes('pdf');
+                  const isPdf = clean.startsWith('data:application/pdf') || /\.pdf($|\?)/i.test(clean) || clean.includes('.pdf');
 
                   if (isPdf) {
                     return (
