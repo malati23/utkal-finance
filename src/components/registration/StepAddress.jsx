@@ -31,6 +31,7 @@ export function StepAddress({ data = {}, errors = {}, onChange }) {
               label="Mobile Number"
               name="mobile"
               type="tel"
+              required={true}
               value={data.mobile}
               onChange={(e) => onChange('mobile', e.target.value)}
               placeholder="10-digit Indian mobile number"

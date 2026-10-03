@@ -348,7 +348,7 @@ export function StepReview({ formData = {}, onGoToStep, onSubmit, onPaymentChang
             onSelectMethod={handleMethodSelect}
             paymentData={paymentData}
             onPaymentDataChange={handlePaymentDataChange}
-            utrError={utrError}
+            utrError={utrError || errors?.payment}
             onGoToStep={onGoToStep}
           />
         </div>

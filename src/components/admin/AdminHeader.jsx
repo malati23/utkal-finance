@@ -14,7 +14,10 @@ export function AdminHeader({ onToggleMobileMenu }) {
   const dropdownRef = useRef(null);
   const notifRef = useRef(null);
 
-  const pendingCount = applications.filter((a) => a.status === 'Pending').length;
+  const pendingCount = applications.filter((a) => {
+    const s = (a.status || '').toLowerCase();
+    return s === 'pending' || s === 'submitted' || s === 'correction required' || s === 'correction_required';
+  }).length;
 
   useEffect(() => {
     const handleClickOutside = (event) => {

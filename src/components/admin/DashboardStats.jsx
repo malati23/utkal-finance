@@ -6,8 +6,11 @@ export function DashboardStats() {
   const { applications } = useAdmin();
 
   const totalApps = applications.length;
-  const pendingApps = applications.filter((a) => a.status === 'Pending').length;
-  const approvedApps = applications.filter((a) => a.status === 'Approved').length;
+  const pendingApps = applications.filter((a) => {
+    const s = (a.status || '').toLowerCase();
+    return s === 'pending' || s === 'submitted' || s === 'payment' || s === 'correction required' || s === 'correction_required';
+  }).length;
+  const approvedApps = applications.filter((a) => (a.status || '').toLowerCase() === 'approved').length;
 
   const totalPaymentSumNumber = applications.reduce((sum, app) => {
     const amt = app.totalPaid || app.payment?.amount || 200;

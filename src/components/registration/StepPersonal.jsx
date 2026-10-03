@@ -55,6 +55,7 @@ export function StepPersonal({ data = {}, errors = {}, onChange }) {
         <FormInput
           label="First Name"
           name="firstName"
+          required={true}
           value={data.firstName}
           onChange={(e) => onChange('firstName', e.target.value)}
           placeholder="e.g. Priyabrata"
@@ -75,6 +76,7 @@ export function StepPersonal({ data = {}, errors = {}, onChange }) {
         <FormInput
           label="Last Name"
           name="lastName"
+          required={true}
           value={data.lastName}
           onChange={(e) => onChange('lastName', e.target.value)}
           placeholder="e.g. Mohapatra"

@@ -26,8 +26,11 @@ export function AdminSidebar() {
   const activeRef = useRef(null);
   const scrollContainerRef = useRef(null);
 
-  const pendingApps = applications.filter((a) => a.status === 'Pending').length;
-  const activeNotices = notices.filter((n) => n.status === 'Published' || n.status === 'Active').length;
+  const pendingApps = applications.filter((a) => {
+    const s = (a.status || '').toLowerCase();
+    return s === 'pending' || s === 'submitted' || s === 'correction required' || s === 'correction_required';
+  }).length;
+  const activeNotices = notices.filter((n) => (n.status || '').toLowerCase() === 'published' || (n.status || '').toLowerCase() === 'active').length;
 
   // Auto-scroll active nav item into view ONLY inside sidebar container without scrolling window
   useEffect(() => {

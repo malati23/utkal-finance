@@ -168,29 +168,279 @@ export function Applications() {
   };
 
   const handleExportCSV = () => {
-    if (applications.length === 0) {
+    if (!applications || applications.length === 0) {
       alert('No application records to export.');
       return;
     }
-    const headers = ['Application ID', 'Applicant Name', 'Email', 'Mobile', 'Branch', 'Status', 'Date', 'Amount'];
-    const rows = applications.map((a) => [
-      a.id,
-      `"${a.applicantName}"`,
-      a.email,
-      a.mobile,
-      `"${a.branch}"`,
-      a.status,
-      a.date,
-      a.totalPaid || 200,
-    ]);
-    const csvContent = 'data:text/csv;charset=utf-8,' + [headers.join(','), ...rows.map((e) => e.join(','))].join('\n');
-    const encodedUri = encodeURI(csvContent);
+
+    const headers = [
+      'Application ID',
+      'Member ID',
+      'Application Status',
+      'Submission Date',
+      // Step 1: Personal Details
+      'Title',
+      'First Name',
+      'Middle Name',
+      'Last Name',
+      'Full Applicant Name',
+      'Relationship Prefix',
+      'Father / Husband / Guardian Name',
+      'Date of Birth',
+      'Age',
+      'Gender',
+      'Marital Status',
+      'Education Qualification',
+      'Religion',
+      'Social Category',
+      'Occupation',
+      'PAN Number',
+      // Step 2: Contact & Address Details
+      'Primary Mobile',
+      'Alternate Mobile',
+      'Email Address',
+      'Residential Address Line 1',
+      'Residential Address Line 2',
+      'Residential Village / Town',
+      'Residential District',
+      'Residential State',
+      'Residential PIN Code',
+      'Country',
+      'Communication Address Same As Residential',
+      'Communication Address Line 1',
+      'Communication Address Line 2',
+      'Communication Village / Town',
+      'Communication District',
+      'Communication State',
+      'Communication PIN Code',
+      // Step 3: Company & Account
+      'Assigned Branch',
+      'Introducer Name',
+      'Employee ID',
+      'Membership Type',
+      'Preferred Communication',
+      // Step 4: Nominee Details
+      'Nominee Full Name',
+      'Nominee Relationship',
+      'Nominee Date of Birth',
+      'Nominee Mobile',
+      'Nominee Address',
+      'Nominee Is Minor',
+      'Guardian Name',
+      'Guardian Relationship',
+      // Step 5: Shares & Contribution
+      'Number of Shares',
+      'Share Value (INR)',
+      'Total Share Capital (INR)',
+      'Processing Fee (INR)',
+      'Total Statutory Contribution (INR)',
+      // Step 6: Verification Documents
+      'Primary ID Proof Type',
+      'ID Proof File / Status',
+      'Address Proof Type',
+      'Address Proof File / Status',
+      'Applicant Photo File / Status',
+      'Signature File / Status',
+      'Educational Certificate File / Status',
+      'Birth / PAN Certificate File / Status',
+      'Utility Document File / Status',
+      // Step 7: Witnesses
+      'Witness 1 Name',
+      'Witness 1 Mobile',
+      'Witness 1 Occupation',
+      'Witness 1 Address',
+      'Witness 1 Relationship',
+      'Witness 2 Name',
+      'Witness 2 Mobile',
+      'Witness 2 Occupation',
+      'Witness 2 Address',
+      'Witness 2 Relationship',
+      // Step 8: Declaration
+      'Confirmed Info True',
+      'Agreed Terms & Conditions',
+      'Consent For Data Processing',
+      'Declaration Signer Name',
+      'Declaration Date',
+      // Step 9: Joining Fee Payment
+      'Payment Method',
+      'Payable Fee (INR)',
+      'Payment UTR / Reference',
+      'Payment Status',
+      'Payment Receipt File / Status',
+      'Payment Date'
+    ];
+
+    const escapeCsv = (val) => {
+      if (val === null || val === undefined) return '""';
+      let str = String(val)
+        .replace(/[\r\n]+/g, ' ')
+        .replace(/"/g, '""')
+        .trim();
+      return `"${str}"`;
+    };
+
+    const formatDate = (val) => {
+      if (!val) return '';
+      if (typeof val === 'string') {
+        const trimmed = val.trim();
+        if (trimmed.length >= 10 && /^\d{4}-\d{2}-\d{2}/.test(trimmed)) {
+          return trimmed.slice(0, 10);
+        }
+      }
+      try {
+        const d = new Date(val);
+        if (!isNaN(d.getTime())) {
+          return d.toISOString().split('T')[0];
+        }
+      } catch (e) {}
+      return String(val);
+    };
+
+    const formatDocField = (val) => {
+      if (!val) return 'Not Attached';
+      if (typeof val === 'object') {
+        return val.name || val.fileName || (val.previewUrl?.startsWith('data:') ? 'Attached (Image Document)' : val.previewUrl) || 'Attached';
+      }
+      if (typeof val === 'string') {
+        const trimmed = val.trim();
+        if (trimmed.startsWith('data:')) {
+          return 'Attached (Image Document)';
+        }
+        return trimmed;
+      }
+      return 'Attached';
+    };
+
+    const rows = applications.map((app) => {
+      const p = app.personalDetails || app.personal || {};
+      const c = app.contactDetails || app.account || {};
+      const a = app.addressDetails || app.address || {};
+      const n = app.nomineeDetails || app.nominee || {};
+      const m = app.membershipDetails || app.shares || {};
+      const doc = app.documentDetails || app.documents || {};
+      const w = app.witnessDetails || app.witness || {};
+      const d = app.declarationDetails || app.declaration || {};
+      const pay = app.paymentDetails || app.payment || {};
+
+      const fullName = [
+        p.title || app.title,
+        p.firstName || app.firstName,
+        p.middleName || app.middleName,
+        p.lastName || app.lastName,
+      ].filter(Boolean).join(' ') || app.applicantName || '';
+
+      const totalShareCap = Number(m.numberOfShares || app.numberOfShares || 10) * Number(m.shareValue || app.shareValue || 10);
+      const totalFee = pay.amount || m.totalContribution || app.totalPaid || 200;
+
+      return [
+        escapeCsv(app.applicationId || app.id || app._id || ''),
+        escapeCsv(app.memberId || ''),
+        escapeCsv(app.status || 'Pending'),
+        escapeCsv(formatDate(app.submittedAt || app.createdAt || app.date || '')),
+        // Step 1: Personal
+        escapeCsv(p.title || app.title || ''),
+        escapeCsv(p.firstName || app.firstName || ''),
+        escapeCsv(p.middleName || app.middleName || ''),
+        escapeCsv(p.lastName || app.lastName || ''),
+        escapeCsv(fullName),
+        escapeCsv(p.relationshipPrefix || app.relationshipPrefix || ''),
+        escapeCsv(p.fatherLegalName || app.fatherLegalName || ''),
+        escapeCsv(formatDate(p.dob || app.dob || '')),
+        escapeCsv(p.age || app.age || ''),
+        escapeCsv(p.gender || app.gender || ''),
+        escapeCsv(p.maritalStatus || app.maritalStatus || ''),
+        escapeCsv(p.education || app.education || ''),
+        escapeCsv(p.religion || app.religion || ''),
+        escapeCsv(p.category || app.category || ''),
+        escapeCsv(p.occupation || app.occupation || ''),
+        escapeCsv(p.pan || app.pan || ''),
+        // Step 2: Contact & Address
+        escapeCsv(c.mobile || app.mobile || ''),
+        escapeCsv(c.altMobile || app.altMobile || ''),
+        escapeCsv(c.email || app.email || ''),
+        escapeCsv(a.address1 || app.address1 || ''),
+        escapeCsv(a.address2 || app.address2 || ''),
+        escapeCsv(a.villageTown || app.villageTown || ''),
+        escapeCsv(a.district || app.district || ''),
+        escapeCsv(a.state || app.state || 'Odisha'),
+        escapeCsv(a.pincode || app.pincode || ''),
+        escapeCsv(a.country || app.country || 'India'),
+        escapeCsv(a.sameAsResidential !== false ? 'Yes' : 'No'),
+        escapeCsv(a.commAddress1 || app.commAddress1 || ''),
+        escapeCsv(a.commAddress2 || app.commAddress2 || ''),
+        escapeCsv(a.commVillageTown || app.commVillageTown || ''),
+        escapeCsv(a.commDistrict || app.commDistrict || ''),
+        escapeCsv(a.commState || app.commState || ''),
+        escapeCsv(a.commPincode || app.commPincode || ''),
+        // Step 3: Company & Account
+        escapeCsv(m.branch || app.branch || 'Bhubaneswar HQ (Nayapalli, IRC Village)'),
+        escapeCsv(m.introducer || app.introducer || ''),
+        escapeCsv(m.empId || app.empId || ''),
+        escapeCsv(m.membershipType || app.membershipType || 'Statutory Associate Member'),
+        escapeCsv(m.preferredCommunication || app.preferredCommunication || 'Email & SMS'),
+        // Step 4: Nominee
+        escapeCsv(n.fullName || app.nomineeName || ''),
+        escapeCsv(n.relationship || app.nomineeRel || ''),
+        escapeCsv(formatDate(n.dob || app.nomineeDob || '')),
+        escapeCsv(n.mobile || app.nomineeMobile || ''),
+        escapeCsv(n.address || app.nomineeAddr || ''),
+        escapeCsv(n.isMinor ? 'Yes' : 'No'),
+        escapeCsv(n.guardianName || app.guardianName || ''),
+        escapeCsv(n.guardianRelationship || app.guardianRelationship || ''),
+        // Step 5: Shares
+        escapeCsv(m.numberOfShares || app.numberOfShares || 10),
+        escapeCsv(m.shareValue || app.shareValue || 10),
+        escapeCsv(totalShareCap),
+        escapeCsv(m.processingFee || app.processingFee || 100),
+        escapeCsv(totalFee),
+        // Step 6: Documents
+        escapeCsv(doc.idProofType || app.idProofType || 'Aadhaar Card'),
+        escapeCsv(formatDocField(doc.idProofUrl || doc.doc2_govId || app.idProofUrl || app.idProof)),
+        escapeCsv(doc.addressProofType || app.addressProofType || 'Aadhaar Card'),
+        escapeCsv(formatDocField(doc.addressProofUrl || app.addressProofUrl || app.addressProof)),
+        escapeCsv(formatDocField(doc.photoUrl || doc.doc1_photo || app.photoUrl || app.photo)),
+        escapeCsv(formatDocField(doc.signatureUrl || app.signatureUrl || app.signature)),
+        escapeCsv(formatDocField(doc.doc3_eduCert || app.doc3_eduCert)),
+        escapeCsv(formatDocField(doc.doc4_birthCert || app.doc4_birthCert)),
+        escapeCsv(formatDocField(doc.doc5_utility || app.doc5_utility)),
+        // Step 7: Witnesses
+        escapeCsv(w.witness1Name || app.witness1Name || ''),
+        escapeCsv(w.witness1Mobile || app.witness1Mobile || ''),
+        escapeCsv(w.witness1Occupation || app.witness1Occupation || ''),
+        escapeCsv(w.witness1Address || app.witness1Address || ''),
+        escapeCsv(w.witness1Relationship || app.witness1Relationship || ''),
+        escapeCsv(w.witness2Name || app.witness2Name || ''),
+        escapeCsv(w.witness2Mobile || app.witness2Mobile || ''),
+        escapeCsv(w.witness2Occupation || app.witness2Occupation || ''),
+        escapeCsv(w.witness2Address || app.witness2Address || ''),
+        escapeCsv(w.witness2Relationship || app.witness2Relationship || ''),
+        // Step 8: Declaration
+        escapeCsv(d.confirmInfoTrue !== false ? 'Yes' : 'No'),
+        escapeCsv(d.agreeTerms !== false ? 'Yes' : 'No'),
+        escapeCsv(d.consentProcessing !== false ? 'Yes' : 'No'),
+        escapeCsv(d.signatureName || app.declarationSignature || fullName),
+        escapeCsv(formatDate(d.declarationDate || app.declarationDate || '')),
+        // Step 9: Payment
+        escapeCsv(pay.method || app.paymentMethod || 'UPI (IndusInd Bank QR)'),
+        escapeCsv(totalFee),
+        escapeCsv(pay.utrNumber || pay.utr || app.utrNo || 'UPI_VERIFIED'),
+        escapeCsv(pay.paymentStatus || (app.status === 'approved' ? 'Verified' : 'Pending Verification')),
+        escapeCsv(formatDocField(pay.receiptUrl || doc.paymentReceiptUrl || app.paymentReceiptUrl)),
+        escapeCsv(formatDate(pay.paidAt || app.submittedAt || app.createdAt || ''))
+      ].join(',');
+    });
+
+    // \uFEFF ensures Excel recognizes UTF-8 properly for symbols and names
+    const csvData = '\uFEFF' + [headers.join(','), ...rows].join('\r\n');
+    const blob = new Blob([csvData], { type: 'text/csv;charset=utf-8;' });
+    const url = URL.createObjectURL(blob);
     const link = document.createElement('a');
-    link.setAttribute('href', encodedUri);
-    link.setAttribute('download', `Membership_Applications_${new Date().toISOString().split('T')[0]}.csv`);
+    link.setAttribute('href', url);
+    link.setAttribute('download', `Utkal_Finance_All_Membership_Applications_${new Date().toISOString().split('T')[0]}.csv`);
     document.body.appendChild(link);
     link.click();
     document.body.removeChild(link);
+    URL.revokeObjectURL(url);
   };
 
   return (

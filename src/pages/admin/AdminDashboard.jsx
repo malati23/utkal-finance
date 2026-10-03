@@ -1,24 +1,41 @@
-import React from 'react';
+import React, { useEffect } from 'react';
 import { DashboardStats } from '../../components/admin/DashboardStats';
 import { RecentApplications } from '../../components/admin/RecentApplications';
 import { useAdmin } from '../../context/AdminContext';
 import { BarChart3, TrendingUp, Users, CheckCircle2, Clock, AlertTriangle, XCircle } from 'lucide-react';
 
 export function AdminDashboard() {
-  const { applications } = useAdmin();
+  const { applications, refreshData } = useAdmin();
 
-  // Compute breakdown for Chart
-  const approved = applications.filter((a) => a.status === 'Approved').length;
-  const pending = applications.filter((a) => a.status === 'Pending').length;
-  const review = applications.filter((a) => a.status === 'Under Review').length;
-  const rejected = applications.filter((a) => a.status === 'Rejected').length;
-  const total = applications.length || 1;
+  useEffect(() => {
+    if (typeof refreshData === 'function') {
+      refreshData();
+    }
+  }, [refreshData]);
+
+  // Compute breakdown for Chart (case-insensitive)
+  const approved = applications.filter((a) => (a.status || '').toLowerCase() === 'approved').length;
+  const pending = applications.filter((a) => {
+    const s = (a.status || '').toLowerCase();
+    return s === 'pending' || s === 'submitted' || s === 'payment';
+  }).length;
+  const review = applications.filter((a) => {
+    const s = (a.status || '').toLowerCase();
+    return s === 'under review' || s === 'under_review' || s === 'correction required' || s === 'correction_required';
+  }).length;
+  const rejected = applications.filter((a) => (a.status || '').toLowerCase() === 'rejected').length;
+  const total = applications.length;
+
+  const calcPercent = (count) => {
+    if (!total || total === 0) return 0;
+    return Math.round((count / total) * 100);
+  };
 
   const chartItems = [
-    { label: 'Approved', count: approved, percent: Math.round((approved / total) * 100), color: 'bg-emerald-500', textColor: 'text-emerald-700', icon: CheckCircle2 },
-    { label: 'Pending', count: pending, percent: Math.round((pending / total) * 100), color: 'bg-amber-500', textColor: 'text-amber-700', icon: Clock },
-    { label: 'Under Review', count: review, percent: Math.round((review / total) * 100), color: 'bg-blue-600', textColor: 'text-blue-700', icon: AlertTriangle },
-    { label: 'Rejected', count: rejected, percent: Math.round((rejected / total) * 100), color: 'bg-rose-500', textColor: 'text-rose-700', icon: XCircle },
+    { label: 'Approved', count: approved, percent: calcPercent(approved), color: 'bg-emerald-500', textColor: 'text-emerald-700', icon: CheckCircle2 },
+    { label: 'Pending', count: pending, percent: calcPercent(pending), color: 'bg-amber-500', textColor: 'text-amber-700', icon: Clock },
+    { label: 'Under Review', count: review, percent: calcPercent(review), color: 'bg-blue-600', textColor: 'text-blue-700', icon: AlertTriangle },
+    { label: 'Rejected', count: rejected, percent: calcPercent(rejected), color: 'bg-rose-500', textColor: 'text-rose-700', icon: XCircle },
   ];
 
   return (
@@ -71,7 +88,7 @@ export function AdminDashboard() {
                   <div className="w-full h-3 rounded-full bg-slate-100 overflow-hidden p-0.5 border border-slate-200/60">
                     <div
                       className={`h-full rounded-full ${item.color} transition-all duration-500`}
-                      style={{ width: `${Math.max(item.percent, 8)}%` }}
+                      style={{ width: item.count > 0 ? `${Math.max(item.percent, 8)}%` : '0%' }}
                     />
                   </div>
                 </div>

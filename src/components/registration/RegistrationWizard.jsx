@@ -201,13 +201,55 @@ export function RegistrationWizard({ activeStep = 1, onQuickFillTrigger }) {
     setErrors({});
   };
 
-  // Validate step before moving forward (unrestricted navigation allowed)
+  // Validate step before moving forward
   const validateStep = (step) => {
-    // Empty fields are allowed and non-blocking
-    return true;
+    let isValid = true;
+    const newErrors = {};
+
+    if (step === 1) {
+      const personal = formData.personal || {};
+      const personalErrors = {};
+      if (!personal.firstName || !personal.firstName.trim()) {
+        personalErrors.firstName = 'First Name is required.';
+        isValid = false;
+      }
+      if (!personal.lastName || !personal.lastName.trim()) {
+        personalErrors.lastName = 'Last Name is required.';
+        isValid = false;
+      }
+      if (!isValid) {
+        newErrors.personal = personalErrors;
+      }
+    }
+
+    if (step === 2) {
+      const address = formData.address || {};
+      const addressErrors = {};
+      const cleanMobile = (address.mobile || '').replace(/\D/g, '');
+      if (!address.mobile || !address.mobile.trim()) {
+        addressErrors.mobile = 'Mobile Number is required.';
+        isValid = false;
+      } else if (cleanMobile.length !== 10) {
+        addressErrors.mobile = 'Please enter a valid 10-digit Indian mobile number.';
+        isValid = false;
+      }
+      if (!isValid) {
+        newErrors.address = addressErrors;
+      }
+    }
+
+    if (!isValid) {
+      setErrors((prev) => ({
+        ...prev,
+        ...newErrors,
+      }));
+    }
+
+    return isValid;
   };
 
   const handleNext = () => {
+    if (!validateStep(currentStep)) return;
     if (!completedSteps.includes(currentStep)) {
       setCompletedSteps((prev) => [...prev, currentStep]);
     }
@@ -235,19 +277,78 @@ export function RegistrationWizard({ activeStep = 1, onQuickFillTrigger }) {
   const handleSubmitApplication = async (customPaymentData) => {
     if (isSubmitting) return;
 
+    // 1. Validate Personal Information (First Name and Last Name)
+    const personal = formData.personal || {};
+    if (!personal.firstName?.trim() || !personal.lastName?.trim()) {
+      setErrors((prev) => ({
+        ...prev,
+        personal: {
+          ...prev.personal,
+          ...(!personal.firstName?.trim() ? { firstName: 'First Name is required.' } : {}),
+          ...(!personal.lastName?.trim() ? { lastName: 'Last Name is required.' } : {}),
+        },
+      }));
+      setSubmitError("Please fill in applicant's First Name and Last Name in Step 1.");
+      setCurrentStep(1);
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+      return;
+    }
+
+    // 2. Validate Contact Mobile Number
+    const address = formData.address || {};
+    const cleanMobile = (address.mobile || '').replace(/\D/g, '');
+    if (!address.mobile?.trim() || cleanMobile.length !== 10) {
+      setErrors((prev) => ({
+        ...prev,
+        address: {
+          ...prev.address,
+          mobile: !address.mobile?.trim()
+            ? 'Mobile Number is required.'
+            : 'Please enter a valid 10-digit mobile number.',
+        },
+      }));
+      setSubmitError('Please provide a valid 10-digit Mobile Number in Step 2.');
+      setCurrentStep(2);
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+      return;
+    }
+
+    const docs = formData.documents || {};
+    const getRawFile = (val) => {
+      if (!val) return null;
+      if (val instanceof File || val instanceof Blob) return val;
+      if (val.rawFile instanceof File || val.rawFile instanceof Blob) return val.rawFile;
+      if (val.file instanceof File || val.file instanceof Blob) return val.file;
+      return null;
+    };
+
+    // 3. Extract and Validate payment receipt screenshot
+    const paymentInfo = (customPaymentData && typeof customPaymentData === 'object' && customPaymentData.receiptFile !== undefined)
+      ? customPaymentData
+      : (formData.payment?.data || formData.payment || {});
+    const receiptFileObj = paymentInfo.receiptFile || formData.payment?.data?.receiptFile || formData.payment?.receiptFile;
+    const receiptRaw = getRawFile(receiptFileObj);
+
+    const hasReceipt = Boolean(
+      receiptRaw ||
+      receiptFileObj?.dataUrl ||
+      receiptFileObj?.previewUrl ||
+      (typeof receiptFileObj === 'string' && receiptFileObj.trim())
+    );
+
+    if (!hasReceipt) {
+      setSubmitError('Payment receipt screenshot is required. Please upload your ₹200 UPI payment receipt screenshot before submitting.');
+      setErrors((prev) => ({
+        ...prev,
+        payment: 'Payment receipt screenshot is required.',
+      }));
+      return;
+    }
+
     setIsSubmitting(true);
     setSubmitError('');
 
     try {
-      const docs = formData.documents || {};
-      const getRawFile = (val) => {
-        if (!val) return null;
-        if (val instanceof File || val instanceof Blob) return val;
-        if (val.rawFile instanceof File || val.rawFile instanceof Blob) return val.rawFile;
-        if (val.file instanceof File || val.file instanceof Blob) return val.file;
-        return null;
-      };
-
       const idRaw = getRawFile(docs.idProofFile) || getRawFile(docs.idProof) || getRawFile(docs.doc2_govId);
       const addressRaw = getRawFile(docs.addressProofFile) || getRawFile(docs.addressProof);
       const photoRaw = getRawFile(docs.photoFile) || getRawFile(docs.photo) || getRawFile(docs.doc1_photo);
@@ -255,13 +356,6 @@ export function RegistrationWizard({ activeStep = 1, onQuickFillTrigger }) {
       const doc3Raw = getRawFile(docs.doc3_eduCert);
       const doc4Raw = getRawFile(docs.doc4_birthCert);
       const doc5Raw = getRawFile(docs.doc5_utility);
-
-      // Extract raw receipt file
-      const paymentInfo = (customPaymentData && typeof customPaymentData === 'object' && customPaymentData.receiptFile !== undefined)
-        ? customPaymentData
-        : (formData.payment?.data || formData.payment || {});
-      const receiptFileObj = paymentInfo.receiptFile || formData.payment?.data?.receiptFile || formData.payment?.receiptFile;
-      const receiptRaw = getRawFile(receiptFileObj);
 
       const fileFormData = new FormData();
       let hasFiles = false;
@@ -614,8 +708,13 @@ export function RegistrationWizard({ activeStep = 1, onQuickFillTrigger }) {
             formData={formData}
             onGoToStep={handleStepClick}
             onSubmit={handleSubmitApplication}
-            onPaymentChange={(val) => handleStepDataChange('payment', 'data', val)}
-            errors={errors.review || {}}
+            onPaymentChange={(val) => {
+              handleStepDataChange('payment', 'data', val);
+              if (errors.payment) {
+                setErrors((prev) => ({ ...prev, payment: null }));
+              }
+            }}
+            errors={errors}
           />
         )}
       </div>
