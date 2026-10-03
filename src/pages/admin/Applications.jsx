@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { createPortal } from 'react-dom';
 import { Search, Download, CheckCircle2, XCircle, FileText, UserPlus, Filter } from 'lucide-react';
 import { useAdmin } from '../../context/AdminContext';
@@ -7,7 +7,13 @@ import { EditApplicationModal } from '../../components/admin/EditApplicationModa
 import { PaymentReceiptModal } from '../../components/admin/PaymentReceiptModal';
 
 export function Applications() {
-  const { applications, updateApplicationStatus, updateApplication } = useAdmin();
+  const { applications, updateApplicationStatus, updateApplication, refreshData } = useAdmin();
+
+  useEffect(() => {
+    if (typeof refreshData === 'function') {
+      refreshData();
+    }
+  }, [refreshData]);
 
   const [search, setSearch] = useState('');
   const [filterStatus, setFilterStatus] = useState('All');

@@ -720,16 +720,6 @@ export function ApplicationDetails() {
                           >
                             <Download className="w-4 h-4" />
                           </a>
-
-                          <a
-                            href={item.url}
-                            target="_blank"
-                            rel="noopener noreferrer"
-                            className="inline-flex items-center justify-center p-2 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 transition-colors border border-slate-200"
-                            title="Open Full Image in New Tab"
-                          >
-                            <ExternalLink className="w-4 h-4" />
-                          </a>
                         </div>
                       </div>
                     );

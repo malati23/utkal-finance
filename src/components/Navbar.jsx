@@ -10,8 +10,13 @@ import {
   Landmark,
   Building2,
   ShieldCheck,
+  Shield,
+  User,
+  LayoutDashboard,
 } from 'lucide-react';
 import { useAuth } from '../hooks/useAuth';
+import { useAdmin } from '../context/AdminContext';
+import { useMemberAuth } from '../context/MemberAuthContext';
 import brandLogo from '../assets/image copy 7.png';
 
 export function Navbar({ onOpenApplyModal }) {
@@ -22,6 +27,8 @@ export function Navbar({ onOpenApplyModal }) {
 
   const location = useLocation();
   const { user, isAuthenticated, logout } = useAuth();
+  const { isAuthenticated: isAdmin } = useAdmin();
+  const { isAuthenticated: isMember } = useMemberAuth();
 
   const productItems = [
     {
@@ -207,13 +214,23 @@ export function Navbar({ onOpenApplyModal }) {
 
         {/* Right: Action Buttons */}
         <div className="hidden xl:flex items-center gap-2.5 xl:gap-3 shrink-0">
-          {/* Login Button */}
-          <Link
-            to="/member-login"
-            className="text-xs xl:text-sm font-bold text-slate-700 hover:text-blue-700 bg-slate-50 hover:bg-slate-100 px-3.5 py-2 rounded-xl transition-all border border-slate-200 shadow-xs whitespace-nowrap"
-          >
-            Login
-          </Link>
+          {/* Auth Button: Admin when admin logged in, otherwise Login */}
+          {isAdmin ? (
+            <Link
+              to="/admin-dashboard"
+              className="text-xs xl:text-sm font-bold text-amber-900 bg-amber-50 hover:bg-amber-100 px-3.5 py-2 rounded-xl transition-all border border-amber-300 shadow-xs whitespace-nowrap flex items-center gap-1.5 hover:shadow-sm"
+            >
+              <Shield className="w-3.5 h-3.5 text-amber-600 fill-amber-500/20" />
+              <span>Admin</span>
+            </Link>
+          ) : (
+            <Link
+              to="/login"
+              className="text-xs xl:text-sm font-bold text-slate-700 hover:text-blue-700 bg-slate-50 hover:bg-slate-100 px-3.5 py-2 rounded-xl transition-all border border-slate-200 shadow-xs whitespace-nowrap"
+            >
+              Login
+            </Link>
+          )}
 
           {/* Join Button */}
           <Link
@@ -349,13 +366,24 @@ export function Navbar({ onOpenApplyModal }) {
           </nav>
 
           <div className="pt-3 border-t border-slate-100 flex flex-col gap-2.5">
-            <Link
-              to="/member-login"
-              onClick={() => setMobileMenuOpen(false)}
-              className="w-full bg-slate-100 hover:bg-slate-200 text-slate-800 font-bold py-2.5 px-4 rounded-xl flex items-center justify-center gap-2 text-sm transition-colors border border-slate-200"
-            >
-              <span>Login</span>
-            </Link>
+            {isAdmin ? (
+              <Link
+                to="/admin-dashboard"
+                onClick={() => setMobileMenuOpen(false)}
+                className="w-full bg-amber-50 hover:bg-amber-100 text-amber-900 font-bold py-2.5 px-4 rounded-xl flex items-center justify-center gap-2 text-sm transition-colors border border-amber-300 shadow-xs"
+              >
+                <Shield className="w-4 h-4 text-amber-600 fill-amber-500/20" />
+                <span>Admin Portal</span>
+              </Link>
+            ) : (
+              <Link
+                to="/login"
+                onClick={() => setMobileMenuOpen(false)}
+                className="w-full bg-slate-100 hover:bg-slate-200 text-slate-800 font-bold py-2.5 px-4 rounded-xl flex items-center justify-center gap-2 text-sm transition-colors border border-slate-200"
+              >
+                <span>Login</span>
+              </Link>
+            )}
 
             <Link
               to="/register"
@@ -373,3 +401,4 @@ export function Navbar({ onOpenApplyModal }) {
 }
 
 export default Navbar;
+

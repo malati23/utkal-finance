@@ -6,10 +6,17 @@ import { AdminHeader } from '../../components/admin/AdminHeader';
 import { AdminMobileMenu } from '../../components/admin/AdminMobileMenu';
 
 export function AdminDashboardLayout() {
-  const { isAuthenticated } = useAdmin();
+  const { isAuthenticated, refreshData } = useAdmin();
   const location = useLocation();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const mainContentRef = useRef(null);
+
+  // Fetch fresh live data from database immediately on mounting and route changes
+  useEffect(() => {
+    if (typeof refreshData === 'function') {
+      refreshData();
+    }
+  }, [location.pathname, refreshData]);
 
   // Reset main container scroll to top when changing admin routes
   useEffect(() => {

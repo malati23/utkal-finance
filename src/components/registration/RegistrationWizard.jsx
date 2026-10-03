@@ -302,6 +302,16 @@ export function RegistrationWizard({ activeStep = 1, onQuickFillTrigger }) {
         hasFiles = true;
       }
 
+      if (Array.isArray(docs.additionalDocuments)) {
+        docs.additionalDocuments.forEach((addDoc, idx) => {
+          const rawAdd = getRawFile(addDoc?.file) || getRawFile(addDoc?.rawFile);
+          if (rawAdd) {
+            fileFormData.append(`addDoc_${idx}`, rawAdd);
+            hasFiles = true;
+          }
+        });
+      }
+
       let uploadedFileUrls = {};
       if (hasFiles) {
         try {
@@ -368,7 +378,15 @@ export function RegistrationWizard({ activeStep = 1, onQuickFillTrigger }) {
         (typeof docs.signatureFile?.previewUrl === 'string' ? docs.signatureFile.previewUrl : '') ||
         (typeof docs.signatureFile?.dataUrl === 'string' ? docs.signatureFile.dataUrl : '');
 
-      const additionalDocs = Array.isArray(docs.additionalDocuments) ? [...docs.additionalDocuments] : [];
+      const additionalDocs = Array.isArray(docs.additionalDocuments)
+        ? docs.additionalDocuments.map((addDoc, idx) => {
+            const uploadedUrl = uploadedFileUrls[`addDoc_${idx}`];
+            if (uploadedUrl) {
+              return { ...addDoc, documentUrl: uploadedUrl };
+            }
+            return addDoc;
+          })
+        : [];
 
       const doc3Url =
         uploadedFileUrls.doc3_eduCert ||
@@ -471,6 +489,9 @@ export function RegistrationWizard({ activeStep = 1, onQuickFillTrigger }) {
           ...payload,
           applicationId: generatedAppId,
         });
+
+        // Trigger live refresh for admin dashboard
+        window.dispatchEvent(new Event('storage'));
 
         setReferenceNo(generatedAppId);
         setIsSubmitted(true);
