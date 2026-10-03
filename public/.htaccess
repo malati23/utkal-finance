@@ -1,0 +1,25 @@
+<IfModule mod_rewrite.c>
+  RewriteEngine On
+  RewriteBase /
+
+  # 1. Do not rewrite if the file or directory exists physically on disk
+  RewriteCond %{REQUEST_FILENAME} -f [OR]
+  RewriteCond %{REQUEST_FILENAME} -d
+  RewriteRule ^ - [L]
+
+  # 2. Do not rewrite backend API and uploads paths to index.html if using reverse proxy or symlink
+  RewriteCond %{REQUEST_URI} ^/api(/.*)?$ [NC,OR]
+  RewriteCond %{REQUEST_URI} ^/uploads(/.*)?$ [NC]
+  RewriteRule ^ - [L]
+
+  # 3. All other Single Page Application (SPA) routes route to index.html
+  RewriteRule ^ index.html [L]
+</IfModule>
+
+# Security and MIME Type Header Settings for Hostinger
+<IfModule mod_headers.c>
+  <FilesMatch "\.(jpg|jpeg|png|gif|webp|svg|pdf)$">
+    Header set Access-Control-Allow-Origin "*"
+    Header set Cross-Origin-Resource-Policy "cross-origin"
+  </FilesMatch>
+</IfModule>
